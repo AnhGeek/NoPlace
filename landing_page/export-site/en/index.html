@@ -106,7 +106,7 @@
       <a href="#tinhnang">Features</a>
       <a href="#cachchoi">How to play</a>
       <a href="#xemtruoc">App preview</a>
-      <a href="/" data-lang-switch style="font-weight:600">VI</a>
+      <a href="/" data-lang-switch="vi" style="font-weight:600">VI</a>
       <a class="navcta" href="#taive">Get the app</a>
     </div>
   </div>
@@ -231,5 +231,13 @@
     <span><a href="#tinhnang">Features</a> · <a href="#cachchoi">How to play</a> · <a href="#xemtruoc">App preview</a></span>
   </div>
 </footer>
+<script>
+  // Remember an explicit language pick so "/" stops guessing from Accept-Language.
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest && e.target.closest('[data-lang-switch]');
+    if (!link) return;
+    document.cookie = 'lang=' + link.dataset.langSwitch + ';path=/;max-age=31536000;samesite=lax';
+  });
+</script>
 </body>
 </html>

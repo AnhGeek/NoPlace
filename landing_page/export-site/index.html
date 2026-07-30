@@ -106,7 +106,7 @@
       <a href="#tinhnang">Tính năng</a>
       <a href="#cachchoi">Cách chơi</a>
       <a href="#xemtruoc">Xem trước app</a>
-      <a href="/en/" data-lang-switch style="font-weight:600">EN</a>
+      <a href="/en/" data-lang-switch="en" style="font-weight:600">EN</a>
       <a class="navcta" href="#taive">Tải ứng dụng</a>
     </div>
   </div>
@@ -231,5 +231,13 @@
     <span><a href="#tinhnang">Tính năng</a> · <a href="#cachchoi">Cách chơi</a> · <a href="#xemtruoc">Xem trước app</a></span>
   </div>
 </footer>
+<script>
+  // Remember an explicit language pick so "/" stops guessing from Accept-Language.
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest && e.target.closest('[data-lang-switch]');
+    if (!link) return;
+    document.cookie = 'lang=' + link.dataset.langSwitch + ';path=/;max-age=31536000;samesite=lax';
+  });
+</script>
 </body>
 </html>
