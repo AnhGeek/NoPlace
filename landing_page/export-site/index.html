@@ -117,6 +117,24 @@
   .shot img{width:100%;height:auto;border-radius:22px;border:1px solid var(--line);box-shadow:0 14px 40px rgba(16,16,19,.14);display:block}
   .shot .cap{font-size:13.5px;font-weight:600;color:var(--dim);text-align:center}
   @media (max-width: 900px){.shots{grid-template-columns:1fr 1fr}}
+  .shot-open{display:block;width:100%;padding:0;border:0;background:none;border-radius:22px;cursor:zoom-in;-webkit-appearance:none;appearance:none}
+  .shot-open:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .lightbox{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,8,10,.93);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);cursor:zoom-out}
+  /* Author `display:flex` above outranks the UA [hidden] rule, so restate it here. */
+  .lightbox[hidden]{display:none}
+  .lb-figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:default}
+  .lb-figure img{
+    width:auto;height:auto;display:block;object-fit:contain;
+    max-width:calc(100vw - 40px);
+    max-height:calc(100vh - 110px);
+    max-height:calc(100dvh - 110px); /* dropped by browsers without dvh, leaving the vh line */
+    border-radius:18px;border:1px solid #2e2e36
+  }
+  .lb-figure figcaption{color:#d8d8de;font-size:14px;font-weight:600;text-align:center}
+  .lb-close{position:absolute;top:14px;right:14px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:24px;line-height:1;cursor:pointer}
+  .lb-close:hover{background:rgba(255,255,255,.24)}
+  .lb-close:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  body.lb-open{overflow:hidden}
   template#__bundler_thumbnail{display:none}
 </style>
 </head>
@@ -230,10 +248,30 @@
       <p class="subh">Bốn màn hình chính — chụp trực tiếp từ bản thiết kế hiện tại.</p>
     </div>
     <div class="shots">
-      <div class="shot"><img src="assets/screen-map.png" alt="Màn hình bản đồ với sương mù"><span class="cap">Bản đồ &amp; sương mù</span></div>
-      <div class="shot"><img src="assets/screen-logs.png" alt="Nhật ký khám phá"><span class="cap">Nhật ký khám phá</span></div>
-      <div class="shot"><img src="assets/screen-profile.png" alt="Hồ sơ &amp; tiến độ thành phố"><span class="cap">Hồ sơ &amp; tiến độ</span></div>
-      <div class="shot"><img src="assets/screen-discover.png" alt="Mở khóa quận mới"><span class="cap">Mở khóa quận mới</span></div>
+      <div class="shot">
+        <button class="shot-open" type="button" aria-label="Xem ảnh lớn: Bản đồ và sương mù">
+          <img src="assets/screen-map.png" width="748" height="1524" loading="lazy" decoding="async" alt="Màn hình bản đồ với sương mù">
+        </button>
+        <span class="cap">Bản đồ &amp; sương mù</span>
+      </div>
+      <div class="shot">
+        <button class="shot-open" type="button" aria-label="Xem ảnh lớn: Nhật ký khám phá">
+          <img src="assets/screen-logs.png" width="748" height="1524" loading="lazy" decoding="async" alt="Nhật ký khám phá">
+        </button>
+        <span class="cap">Nhật ký khám phá</span>
+      </div>
+      <div class="shot">
+        <button class="shot-open" type="button" aria-label="Xem ảnh lớn: Hồ sơ và tiến độ">
+          <img src="assets/screen-profile.png" width="748" height="1524" loading="lazy" decoding="async" alt="Hồ sơ &amp; tiến độ thành phố">
+        </button>
+        <span class="cap">Hồ sơ &amp; tiến độ</span>
+      </div>
+      <div class="shot">
+        <button class="shot-open" type="button" aria-label="Xem ảnh lớn: Mở khóa quận mới">
+          <img src="assets/screen-discover.png" width="748" height="1524" loading="lazy" decoding="async" alt="Mở khóa quận mới">
+        </button>
+        <span class="cap">Mở khóa quận mới</span>
+      </div>
     </div>
   </div>
 </section>
@@ -266,6 +304,67 @@
     <span><a href="#tinhnang">Tính năng</a> · <a href="#cachchoi">Cách chơi</a> · <a href="#xemtruoc">Xem trước app</a></span>
   </div>
 </footer>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Ảnh xem trước ứng dụng" hidden>
+  <button class="lb-close" type="button" aria-label="Đóng">&times;</button>
+  <figure class="lb-figure">
+    <img id="lb-img" alt="" width="748" height="1524">
+    <figcaption id="lb-cap"></figcaption>
+  </figure>
+</div>
+
+<script>
+  // Fullscreen app-preview viewer. Sizing is CSS-only (max-width/max-height with
+  // width:auto), so the image keeps its 748x1524 ratio and is never upscaled past native.
+  (function () {
+    var box = document.getElementById('lightbox');
+    if (!box) return;
+    var img = document.getElementById('lb-img');
+    var cap = document.getElementById('lb-cap');
+    var closeBtn = box.querySelector('.lb-close');
+    var opener = null;
+
+    function open(button) {
+      var thumb = button.querySelector('img');
+      var shot = button.closest('.shot');
+      var label = shot && shot.querySelector('.cap');
+
+      opener = button;
+      img.src = thumb.currentSrc || thumb.src;
+      img.alt = thumb.alt;
+      cap.textContent = label ? label.textContent : '';
+      box.hidden = false;
+      document.body.classList.add('lb-open');
+      closeBtn.focus();
+    }
+
+    function close() {
+      box.hidden = true;
+      document.body.classList.remove('lb-open');
+      img.removeAttribute('src'); // an empty src would re-request the page URL
+      if (opener) opener.focus();
+      opener = null;
+    }
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest) return;
+      var button = e.target.closest('.shot-open');
+      if (button) return open(button);
+      // Backdrop only: clicks on the figure or image must not dismiss.
+      if (!box.hidden && (e.target === box || e.target.closest('.lb-close'))) close();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (box.hidden) return;
+      if (e.key === 'Escape') return close();
+      // Close is the only control in here, so keep Tab from escaping to the page behind.
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        closeBtn.focus();
+      }
+    });
+  })();
+</script>
 <script>
   // Remember an explicit language pick so "/" stops guessing from Accept-Language.
   document.addEventListener('click', function (e) {
