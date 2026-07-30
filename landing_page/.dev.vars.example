@@ -1,0 +1,14 @@
+# Template only. Safe to commit — contains no real values.
+#
+# Production: these live as Cloudflare secrets, never in a file.
+#   npx wrangler secret put SHEET_WEBHOOK_URL
+#   npx wrangler secret put SHEET_WEBHOOK_SECRET
+#
+# Local `npm run dev`: copy this file to `.dev.vars` (git-ignored) and fill it in.
+
+# Apps Script Web App /exec URL, from Deploy -> New deployment -> Web app.
+SHEET_WEBHOOK_URL="https://script.google.com/macros/s/XXXXXXXX/exec"
+
+# Must match the SHARED_SECRET script property in the Apps Script project
+# (Project Settings -> Script Properties), or every write is rejected as unauthorized.
+SHEET_WEBHOOK_SECRET="a-long-random-string"

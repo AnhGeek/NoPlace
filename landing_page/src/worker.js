@@ -47,9 +47,88 @@ function markAsNegotiated(headers) {
   headers.set('Cache-Control', 'no-store');
 }
 
+function jsonResponse(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
+  });
+}
+
+// Deliberately permissive but structural: rejects the typos people actually make
+// (missing @, missing dot, trailing comma) without trying to out-lawyer RFC 5322.
+const EMAIL = /^[^\s@,;]+@[^\s@,;.]+(?:\.[^\s@,;.]+)+$/;
+
+// Browser -> here -> Apps Script -> sheet. The Apps Script URL and its shared secret
+// live in Pages env vars, so they never reach the page source.
+async function handleSubscribe(request, env) {
+  if (request.method !== 'POST') {
+    return jsonResponse({ ok: false, error: 'method_not_allowed' }, 405);
+  }
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    return jsonResponse({ ok: false, error: 'invalid_json' }, 400);
+  }
+
+  // Honeypot: a bot filled the hidden field. Answer 200 so it never learns it failed.
+  if (typeof payload.website === 'string' && payload.website.trim() !== '') {
+    return jsonResponse({ ok: true });
+  }
+
+  const email = String(payload.email ?? '').trim().toLowerCase();
+  if (email.length > 254 || !EMAIL.test(email)) {
+    return jsonResponse({ ok: false, error: 'invalid_email' }, 422);
+  }
+
+  if (!env.SHEET_WEBHOOK_URL || !env.SHEET_WEBHOOK_SECRET) {
+    return jsonResponse({ ok: false, error: 'not_configured' }, 503);
+  }
+
+  const lang = String(payload.lang ?? '').slice(0, 12);
+  const body = new URLSearchParams({
+    secret: env.SHEET_WEBHOOK_SECRET,
+    email,
+    lang,
+    country: request.headers.get('CF-IPCountry') ?? '',
+    referer: (request.headers.get('Referer') ?? '').slice(0, 300),
+  });
+
+  let upstream;
+  try {
+    upstream = await fetch(env.SHEET_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body,
+      // Apps Script answers 302 to googleusercontent.com; the payload is behind it.
+      redirect: 'follow',
+    });
+  } catch {
+    return jsonResponse({ ok: false, error: 'upstream_unreachable' }, 502);
+  }
+
+  let result = {};
+  try {
+    result = await upstream.json();
+  } catch {
+    // Apps Script serves an HTML error page when the script itself throws.
+    return jsonResponse({ ok: false, error: 'upstream_bad_response' }, 502);
+  }
+
+  if (!upstream.ok || !result.ok) {
+    return jsonResponse({ ok: false, error: 'upstream_rejected' }, 502);
+  }
+
+  return jsonResponse({ ok: true, duplicate: result.duplicate === true });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // Must precede the asset fallthrough: a POST would otherwise be handed to ASSETS.
+    if (url.pathname === '/api/subscribe') return handleSubscribe(request, env);
 
     const isRoot = url.pathname === '/' || url.pathname === '/index.html';
     const isReadOnly = request.method === 'GET' || request.method === 'HEAD';
