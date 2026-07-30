@@ -99,7 +99,11 @@
     h1{font-size:38px}
     .features{grid-template-columns:1fr 1fr}
     .steps{grid-template-columns:1fr}
-    .navlinks a:not(.navcta){display:none}
+    /* Hide the section anchors on mobile, but keep the language switcher reachable. */
+    .navlinks a:not(.navcta):not([data-lang-switch]){display:none}
+    /* Bare "EN" is a ~20px tap target; pad it into a comfortable one on touch. */
+    .navlinks a[data-lang-switch]{display:inline-flex;align-items:center;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+    .navlinks{gap:12px}
   }
   @media (max-width: 540px){
     .features{grid-template-columns:1fr}
