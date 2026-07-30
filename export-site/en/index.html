@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NoPlace — Explore Saigon like a game</title>
+<meta name="description" content="Turn Ho Chi Minh City into an RPG map: fog covers the city until you set foot there. Check in for XP and unlock districts one by one.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NoPlace">
+<meta property="og:title" content="NoPlace — Walk the streets, light up the map">
+<meta property="og:description" content="Turn Ho Chi Minh City into an RPG map: fog covers the city until you set foot there. Check in for XP and unlock districts one by one.">
+<meta property="og:url" content="https://noplace.pages.dev/en/">
+<meta property="og:image" content="https://noplace.pages.dev/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="vi_VN">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NoPlace — Walk the streets, light up the map">
+<meta name="twitter:image" content="https://noplace.pages.dev/assets/og-image.png">
+<link rel="canonical" href="https://noplace.pages.dev/en/">
+<link rel="alternate" hreflang="vi" href="https://noplace.pages.dev/">
+<link rel="alternate" hreflang="en" href="https://noplace.pages.dev/en/">
+<link rel="alternate" hreflang="x-default" href="https://noplace.pages.dev/">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--accent:#f56b26;--accent-dark:#d9551a;--ink:#101013;--dim:#5c5c66;--bg:#ffffff;--soft:#f6f6f8;--line:#e8e8ec;--dark:#0d0d0f;--green:#27b263}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Be Vietnam Pro',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}a:hover{color:var(--accent-dark)}
+  .container{max-width:1120px;margin:0 auto;padding:0 24px}
+  nav{position:sticky;top:0;z-index:2000;background:rgba(255,255,255,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .navin{display:flex;align-items:center;gap:28px;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;color:var(--ink)}
+  .brand .mark{width:32px;height:32px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center}
+  .navlinks{display:flex;gap:22px;margin-left:auto;font-size:14.5px;font-weight:500}
+  .navlinks a{color:var(--dim);white-space:nowrap}.navlinks a:hover{color:var(--ink)}
+  .navcta{background:var(--ink);color:#fff !important;border-radius:10px;padding:9px 16px;font-weight:600;white-space:nowrap}
+  .navcta:hover{background:#000}
+  .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding:72px 0 64px}
+  .badge{display:inline-flex;align-items:center;gap:8px;background:#fff3ec;color:var(--accent-dark);font-size:13px;font-weight:600;border-radius:16px;padding:6px 14px;margin-bottom:18px}
+  h1{font-size:52px;line-height:1.08;font-weight:800;letter-spacing:-.02em;margin:0 0 18px;text-wrap:pretty}
+  h1 .hl{color:var(--accent)}
+  .lede{font-size:18px;line-height:1.65;color:var(--dim);margin:0 0 28px;max-width:520px;text-wrap:pretty}
+  .ctas{display:flex;gap:12px;flex-wrap:wrap}
+  .btn-a{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#fff;border-radius:12px;padding:14px 22px;font-size:15.5px;font-weight:700;box-shadow:0 6px 18px rgba(245,107,38,.3);white-space:nowrap}
+  .btn-a:hover{background:var(--accent-dark);color:#fff}
+  .btn-b{display:inline-flex;align-items:center;gap:10px;background:var(--soft);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:14px 22px;font-size:15.5px;font-weight:600}
+  .btn-b:hover{background:#ededf1;color:var(--ink)}
+  .heronote{margin-top:16px;font-size:13px;color:var(--dim)}
+  .heroimg{width:340px;max-width:88vw;height:auto;display:block;margin:0 auto;border-radius:34px;border:1px solid var(--line);box-shadow:0 30px 80px rgba(16,16,19,.35)}
+  section{padding:72px 0}
+  .sechead{max-width:640px;margin:0 auto 44px;text-align:center}
+  h2{font-size:34px;font-weight:800;letter-spacing:-.015em;margin:0 0 12px;text-wrap:pretty}
+  .subh{font-size:16.5px;line-height:1.6;color:var(--dim);margin:0;text-wrap:pretty}
+  .features{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .fcard{background:var(--soft);border:1px solid var(--line);border-radius:18px;padding:26px 22px;display:flex;flex-direction:column;gap:12px}
+  .fico{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center}
+  .fico svg{stroke:#fff}
+  .fcard h3{font-size:17px;font-weight:700;margin:0}
+  .fcard p{font-size:14px;line-height:1.6;color:var(--dim);margin:0}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;counter-reset:step}
+  .step{background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px 24px;position:relative}
+  .step .num{width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;margin-bottom:14px}
+  .step h3{font-size:17px;font-weight:700;margin:0 0 8px}
+  .step p{font-size:14px;line-height:1.6;color:var(--dim);margin:0}
+  .cta-final{background:var(--dark);border-radius:28px;padding:64px 32px;text-align:center;color:#fff}
+  .cta-final h2{color:#fff}
+  .cta-final .subh{color:#8a8a92;max-width:480px;margin:0 auto 28px}
+  footer{border-top:1px solid var(--line);padding:28px 0;font-size:13.5px;color:var(--dim)}
+  .footin{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  @media (max-width: 900px){
+    .hero{grid-template-columns:1fr;gap:40px;padding:48px 0 40px;text-align:center}
+    .lede{margin-left:auto;margin-right:auto}
+    .ctas{justify-content:center}
+    h1{font-size:38px}
+    .features{grid-template-columns:1fr 1fr}
+    .steps{grid-template-columns:1fr}
+    .navlinks a:not(.navcta){display:none}
+  }
+  @media (max-width: 540px){
+    .features{grid-template-columns:1fr}
+    .heroimg{width:min(340px,88vw)}
+    h1{font-size:32px}
+    h2{font-size:27px}
+    section{padding:52px 0}
+  }
+  .shots{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .shot{display:flex;flex-direction:column;gap:10px}
+  .shot img{width:100%;height:auto;border-radius:22px;border:1px solid var(--line);box-shadow:0 14px 40px rgba(16,16,19,.14);display:block}
+  .shot .cap{font-size:13.5px;font-weight:600;color:var(--dim);text-align:center}
+  @media (max-width: 900px){.shots{grid-template-columns:1fr 1fr}}
+  template#__bundler_thumbnail{display:none}
+</style>
+</head>
+<body>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0d0d0f"/><circle cx="50" cy="46" r="13" fill="#f56b26"/><circle cx="50" cy="46" r="23" fill="none" stroke="#f56b26" stroke-opacity=".45" stroke-width="3"/><rect x="30" y="72" width="40" height="7" rx="3.5" fill="#f56b26"/></svg></template>
+<nav>
+  <div class="container navin">
+    <div class="brand">
+      <span class="mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg></span>
+      NoPlace
+    </div>
+    <div class="navlinks">
+      <a href="#tinhnang">Features</a>
+      <a href="#cachchoi">How to play</a>
+      <a href="#xemtruoc">App preview</a>
+      <a href="/" data-lang-switch style="font-weight:600">VI</a>
+      <a class="navcta" href="#taive">Get the app</a>
+    </div>
+  </div>
+</nav>
+
+<header class="container hero">
+  <div>
+    <span class="badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+      For Android · Ho Chi Minh City
+    </span>
+    <h1>Walk the streets, <span class="hl">light up the map</span></h1>
+    <p class="lede">All of Saigon is hidden in fog — the map only reveals where you have actually been. Walk to uncover every alley, check in for XP, and unlock districts like in an RPG.</p>
+    <div class="ctas">
+      <a class="btn-a" href="#taive">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>
+        Get it on Android
+      </a>
+      <a class="btn-b" href="#xemtruoc">See the app</a>
+    </div>
+    <p class="heronote">Free · No account needed · Location data stays on your device</p>
+  </div>
+  <img class="heroimg" src="../assets/screen-map.png" alt="NoPlace map screen — Ben Thanh in the fog">
+</header>
+
+<section id="tinhnang" style="background:var(--bg)">
+  <div class="container">
+    <div class="sechead">
+      <h2>Exploring is the reward</h2>
+      <p class="subh">Four mechanics that turn every trip — commuting, coffee runs, evening walks — into a play session.</p>
+    </div>
+    <div class="features">
+      <div class="fcard">
+        <div class="fico" style="background:#101013">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+        </div>
+        <h3>Fog of war</h3>
+        <p>The map is covered like in Warcraft. Only places you have truly walked through are revealed — and stay revealed forever.</p>
+      </div>
+      <div class="fcard">
+        <div class="fico" style="background:var(--accent)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        </div>
+        <h3>Check in for XP</h3>
+        <p>The app knows which place you are near. One tap to check in, earn XP, and keep your daily streak alive.</p>
+      </div>
+      <div class="fcard">
+        <div class="fico" style="background:#316dca">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6"></polygon><line x1="9" x2="9" y1="3" y2="18"></line><line x1="15" x2="15" y1="6" y2="21"></line></svg>
+        </div>
+        <h3>Unlock districts</h3>
+        <p>First time in District 3? The whole district lights up with a "New area discovered" banner — clear all 12 to finish the game.</p>
+      </div>
+      <div class="fcard">
+        <div class="fico" style="background:#27b263">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path></svg>
+        </div>
+        <h3>Weekly quests</h3>
+        <p>"Reveal 3 unknown sites", "Walk 5 km today" — small quests that keep you out on the street instead of on the couch.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="cachchoi" style="background:var(--bg)">
+  <div class="container">
+    <div class="sechead">
+      <h2>Three steps to start</h2>
+      <p class="subh">No account, no setup. Open the app and step outside.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h3>Turn on location</h3>
+        <p>NoPlace draws a sight radius around your position — like a unit in a strategy game.</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h3>Walk and lift the fog</h3>
+        <p>Every alley you pass is recorded. Nearby places appear as "?" markers — visit them for rewards.</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h3>Climb the city ranks</h3>
+        <p>Compare your explored percentage with friends and other players in your city on the leaderboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="xemtruoc" style="background:var(--soft)">
+  <div class="container">
+    <div class="sechead">
+      <h2>App preview</h2>
+      <p class="subh">The four main screens — captured straight from the current design.</p>
+    </div>
+    <div class="shots">
+      <div class="shot"><img src="../assets/screen-map.png" alt="Map screen with fog of war"><span class="cap">Map &amp; fog</span></div>
+      <div class="shot"><img src="../assets/screen-logs.png" alt="Explorer logs"><span class="cap">Explorer logs</span></div>
+      <div class="shot"><img src="../assets/screen-profile.png" alt="Profile and city progress"><span class="cap">Profile &amp; progress</span></div>
+      <div class="shot"><img src="../assets/screen-discover.png" alt="New district unlocked"><span class="cap">District unlocked</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="taive">
+  <div class="container">
+    <div class="cta-final">
+      <h2>Ready to explore Saigon?</h2>
+      <p class="subh">Join the first wave of players. The Android beta is open for sign-ups today.</p>
+      <a class="btn-a" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>
+        Download the Android beta
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container footin">
+    <span>© 2026 NoPlace. Map data © OpenStreetMap contributors © CARTO.</span>
+    <span><a href="#tinhnang">Features</a> · <a href="#cachchoi">How to play</a> · <a href="#xemtruoc">App preview</a></span>
+  </div>
+</footer>
+</body>
+</html>
