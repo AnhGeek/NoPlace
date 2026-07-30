@@ -1,0 +1,13 @@
+{
+  "name": "noplace-site",
+  "private": true,
+  "comment": "wrangler is pinned: >=4.90 requires Node 22, this machine runs Node 20.x.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "secrets": "wrangler secret put SHEET_WEBHOOK_URL && wrangler secret put SHEET_WEBHOOK_SECRET"
+  },
+  "devDependencies": {
+    "wrangler": "4.80.0"
+  }
+}

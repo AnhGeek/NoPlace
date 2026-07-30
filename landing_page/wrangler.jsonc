@@ -1,0 +1,21 @@
+{
+  // Workers + Static Assets. The `main` script is what makes env vars/secrets possible:
+  // an assets-only Worker has no code to read them, which is why the dashboard refused.
+  "name": "odd-night-aeac",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-01-01",
+
+  "assets": {
+    "directory": "./export-site",
+    "binding": "ASSETS",
+
+    // Without this, a request matching a static file is served before the Worker runs --
+    // "/" would hit export-site/index.html directly and language detection would never fire.
+    "run_worker_first": true
+  }
+
+  // SHEET_WEBHOOK_URL and SHEET_WEBHOOK_SECRET are deliberately NOT here.
+  // Set them as secrets so they stay out of git:
+  //   npx wrangler@4.80.0 secret put SHEET_WEBHOOK_URL
+  //   npx wrangler@4.80.0 secret put SHEET_WEBHOOK_SECRET
+}
