@@ -86,6 +86,8 @@
   .signup .note{font-size:12.5px;line-height:1.55;color:#8a8a92;margin:14px 0 0}
   @media (max-width:460px){
     .signup-row{flex-direction:column}
+    /* Column flips the main axis, so the 210px basis above would set HEIGHT, not width. */
+    .signup input[type=email]{flex:0 0 auto}
     .signup button{justify-content:center}
   }
   footer{border-top:1px solid var(--line);padding:28px 0;font-size:13.5px;color:var(--dim)}
@@ -256,7 +258,7 @@
 
 <footer>
   <div class="container footin">
-    <span>© 2026 NoPlace. Bản đồ © OpenStreetMap contributors © CARTO.</span>
+    <span>© 2026 NoPlace LYA3HC</span>
     <span><a href="#tinhnang">Tính năng</a> · <a href="#cachchoi">Cách chơi</a> · <a href="#xemtruoc">Xem trước app</a></span>
   </div>
 </footer>
