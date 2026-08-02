@@ -1,0 +1,14 @@
+# Configuration for `flutter gen-l10n` (runs automatically on `flutter run`
+# and `flutter build` because `generate: true` is set in pubspec.yaml).
+#
+# app_en.arb is the template: add a key there first, with an @-description, then
+# translate it in app_vi.arb. `required-resource-attributes` makes a missing
+# description a build failure, so no untranslatable string sneaks in.
+arb-dir: lib/l10n/arb
+template-arb-file: app_en.arb
+output-dir: lib/l10n/generated
+output-localization-file: app_localizations.dart
+output-class: AppL10n
+nullable-getter: false
+required-resource-attributes: true
+use-escaping: true

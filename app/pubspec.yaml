@@ -1,0 +1,100 @@
+name: noplace
+description: "NoPlace — explore your city, one district at a time."
+publish_to: "none"
+
+# version: <marketing version>+<build number>
+# Bumped by CI; never edit the build number by hand on a feature branch.
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management. Compile-safe DI + reactive state, no BuildContext lookups.
+  flutter_riverpod: ^3.0.0
+
+  # Declarative routing, deep links and a stateful tab shell.
+  go_router: ^17.3.0
+
+  # Map rendering. Tile-based, renderer-agnostic, no vendor SDK key needed for
+  # the UI phase. See docs/adr/0003-map-rendering.md.
+  flutter_map: ^8.3.1
+  latlong2: ^0.10.1
+
+  # The basemap: OpenStreetMap vector tiles, styled at runtime from our design
+  # tokens. See docs/adr/0008-protomaps-pmtiles-basemap.md.
+  #
+  # Pinned exactly, not with a caret: 9.0.0-beta is the only line that supports
+  # flutter_map 8, and a beta is allowed to break its API between builds. This
+  # moves when somebody upgrades it on purpose.
+  vector_map_tiles: 9.0.0-beta.11
+
+  # Pulled in by vector_map_tiles; declared because the basemap style and theme
+  # are ours and name its types directly.
+  vector_tile_renderer: ^6.1.0
+
+  # Downloads a region pack from any HTTPS object store. Deliberately a plain
+  # HTTP client and not a vendor SDK — the pack lives wherever we point it.
+  http: ^1.2.2
+
+  # Where to put the player's walked trail so the OS will not bin it.
+  # Already pulled in transitively by flutter_map; declared because we use it.
+  path_provider: ^2.1.5
+
+  # Value equality for domain entities without code generation.
+  equatable: ^2.1.0
+
+  # Number/date/distance formatting.
+  intl: ^0.20.2
+
+  # On-device storage: the walked GPS trail, the player's own map points and
+  # their preferences. A single plain SQLite file, openable in any SQLite
+  # browser — see docs/adr/0006-sqlite-storage-and-map-points.md.
+  sqflite: ^2.4.3
+  path: ^1.9.1
+
+  # Where the player actually is. The whole product is "walking uncovers the
+  # map", so this is the one plugin without which nothing else means anything.
+  #
+  # Used with a location **foreground service**, not ACCESS_BACKGROUND_LOCATION:
+  # see docs/adr/0009-real-location.md for why that distinction decides whether
+  # the app is publishable.
+  geolocator: ^14.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  sqflite_common_ffi: ^2.4.2
+
+flutter:
+  uses-material-design: true
+
+  # Generates lib/l10n/generated/app_localizations.dart from lib/l10n/arb/*.arb
+  # (see l10n.yaml).
+  generate: true
+
+  assets:
+    - assets/images/
+
+    # Region packs — the basemap. Cooked, not committed: see
+    # tools/region_cooker/. The directory is empty in a fresh clone, and the
+    # app runs without a basemap until one is put here.
+    - assets/maps/
+
+  fonts:
+    - family: Barlow
+      fonts:
+        - asset: assets/fonts/Barlow-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Barlow-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Barlow-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Barlow-Bold.ttf
+          weight: 700

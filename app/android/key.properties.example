@@ -1,0 +1,26 @@
+# Copy to key.properties and fill in. That file is gitignored and must stay
+# that way — losing control of the upload key means someone else can ship an
+# update as you.
+#
+# Generate the keystore once:
+#
+#   keytool -genkeypair -v -keystore upload-keystore.p12 \
+#           -storetype PKCS12 -keyalg RSA -keysize 2048 -validity 10000 \
+#           -alias upload
+#
+# Keep the file outside the repo (the gitignore catches it either way) and back
+# it up somewhere you will still have in two years. With Play App Signing a lost
+# upload key can be reset by Google; without it, you cannot ship an update to
+# this app ever again.
+
+storePassword=
+keyPassword=
+keyAlias=upload
+
+# Absolute, or relative to android/app/.
+#
+# Use FORWARD slashes even on Windows. This is a Java .properties file, so a
+# backslash is an escape character: `C:\Users\...` silently loads as
+# `C:Users...` with the \t eaten as a tab, and the build then fails looking for
+# a keystore at a path that was never on disk.
+storeFile=
