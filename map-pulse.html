@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NoPlace — Pulse Style</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<style>
+  :root{--accent:#f56b26;--bg:#0d0d0f;--panel:#161618;--line:#26262a;--dim:#8a8a92;--text:#f2f2f4;--green:#27b263;--teal:#2fb9c4;--amber:#d99a2b}
+  body{margin:0;background:#08080a;font-family:Barlow,system-ui,sans-serif;color:var(--text)}
+  a{color:var(--accent)}a:hover{color:#ff8b4d}
+  .wrap{padding:36px 40px;display:flex;flex-direction:column;gap:20px}
+  .kicker{font-size:12px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;font-weight:600}
+  h1{font-size:26px;font-weight:700;margin:0}
+  .sub{font-size:14px;color:var(--dim);max-width:620px;margin:0}
+  .row{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
+  .col{display:flex;flex-direction:column;gap:10px}
+  .label{font-size:12px;letter-spacing:.16em;font-weight:600;color:var(--accent);text-transform:uppercase}
+  .phone{width:372px;height:760px;background:var(--bg);border:1px solid var(--line);border-radius:30px;box-shadow:0 12px 50px rgba(0,0,0,.85);position:relative;overflow:hidden}
+  .statusbar{position:absolute;top:0;left:0;right:0;height:34px;z-index:1200;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:12.5px;font-weight:500;color:var(--text);background:linear-gradient(rgba(8,8,10,.8),transparent);pointer-events:none}
+  .navpill{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:120px;height:4px;border-radius:2px;background:#3a3a40;z-index:1200}
+  #map{position:absolute;inset:0;background:var(--bg)}
+  .leaflet-tile{filter:saturate(1.05)}
+  .leaflet-control-attribution{background:rgba(13,13,15,.8)!important;color:#66666e!important;font-size:9px!important}
+  .leaflet-control-attribution a{color:var(--dim)!important}
+  .leaflet-control-zoom{display:none}
+  .fog{position:absolute;inset:0;z-index:640;pointer-events:none;background:rgba(4,4,6,.96);
+    -webkit-mask:radial-gradient(circle 78px at 50% 44%, transparent 0 55%, rgba(0,0,0,.55) 80%, #000 100%),radial-gradient(circle 55px at 26% 66%, rgba(0,0,0,.4) 0 45%, rgba(0,0,0,.7) 78%, #000 100%),radial-gradient(circle 48px at 62% 30%, rgba(0,0,0,.4) 0 50%, rgba(0,0,0,.75) 80%, #000 100%);
+    mask:radial-gradient(circle 78px at 50% 44%, transparent 0 55%, rgba(0,0,0,.55) 80%, #000 100%),radial-gradient(circle 55px at 26% 66%, rgba(0,0,0,.4) 0 45%, rgba(0,0,0,.7) 78%, #000 100%),radial-gradient(circle 48px at 62% 30%, rgba(0,0,0,.4) 0 50%, rgba(0,0,0,.75) 80%, #000 100%);
+    -webkit-mask-composite:source-in;mask-composite:intersect}
+  .toptabs{position:absolute;top:40px;left:0;right:0;z-index:1100;display:flex}
+  .toptab{flex:1;text-align:center;padding:12px 0 10px;font-size:15px;font-weight:600;letter-spacing:.14em;color:var(--dim);border-bottom:2px solid var(--line);cursor:pointer}
+  .toptab.active{color:var(--text);border-bottom-color:var(--accent)}
+  .searchbar{position:absolute;top:96px;left:16px;right:16px;z-index:1100;display:flex;align-items:center;gap:10px;background:rgba(22,22,24,.9);border:1px solid var(--line);border-radius:22px;padding:10px 16px;backdrop-filter:blur(6px)}
+  .searchbar input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:Barlow,sans-serif;font-size:14px}
+  .searchbar input::placeholder{color:#5c5c64}
+  .pin{width:32px;height:32px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.45);border:2px solid #fff}
+  .pin svg{transform:rotate(45deg);stroke:#fff}
+  .pin.o{background:var(--accent)}.pin.t{background:var(--teal)}.pin.a{background:var(--amber)}.pin.g{background:#8f8f98}
+  .youchip{position:absolute;left:50%;top:37%;transform:translateX(-50%);z-index:1050;background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.5);white-space:nowrap}
+  .nearby{position:absolute;left:14px;right:14px;bottom:92px;z-index:1100;display:flex;align-items:center;gap:12px;background:rgba(27,27,31,.96);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+  .nearby .cbtn{background:var(--accent);color:#fff;font-size:13.5px;font-weight:700;border-radius:11px;padding:10px 16px;white-space:nowrap;cursor:pointer}
+  .player{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:1000;width:26px;height:26px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 0 24px rgba(245,107,38,.7)}
+  .player::after{content:"";position:absolute;inset:-16px;border-radius:50%;border:1px solid rgba(245,107,38,.5);animation:ping 2.4s infinite}
+  @keyframes ping{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.35);opacity:0}}
+  .statblock{position:absolute;left:0;right:0;bottom:92px;z-index:1100;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+  .avatar{width:78px;height:78px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a3a44,#1c1c22);border:3px solid #fff;box-shadow:0 4px 20px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;color:var(--dim)}
+  .bignum{font-size:42px;font-weight:700;letter-spacing:-.01em;text-shadow:0 2px 12px rgba(0,0,0,.8)}
+  .statsub{font-size:15px;color:#cfcfd6;display:flex;align-items:center;gap:8px;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+  .pill{background:var(--green);color:#fff;font-size:12.5px;font-weight:600;border-radius:12px;padding:2px 9px}
+  .tabbar{position:absolute;left:0;right:0;bottom:0;z-index:1100;display:flex;padding:10px 6px 24px;background:linear-gradient(transparent,rgba(8,8,10,.97) 22%)}
+  .tb{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;font-weight:500;color:var(--dim);cursor:pointer}
+  .tb svg{stroke:var(--dim);padding:4px 16px;border-radius:14px}
+  .tb.active{color:var(--accent);font-weight:700}.tb.active svg{stroke:var(--accent);background:rgba(245,107,38,.16)}
+  .logscreen{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;padding:44px 16px 90px;gap:12px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;scrollbar-width:none}
+  .logscreen::-webkit-scrollbar{display:none}
+  .loghead{display:flex;align-items:baseline;gap:10px;padding:8px 2px 2px}
+  .loghead .t{font-size:22px;font-weight:700}
+  .loghead .s{font-size:13px;color:var(--dim);margin-left:auto}
+  .seg{display:flex;border-radius:20px;background:var(--panel);padding:3px;font-size:13px;font-weight:600}
+  .seg div{flex:1;text-align:center;padding:7px 0;border-radius:17px;color:var(--dim);cursor:pointer}
+  .seg .on{background:var(--accent);color:#fff}
+  .logcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 14px;display:flex;gap:12px;align-items:center}
+  .logcard.locked{opacity:.45}
+  .logmark{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff}
+  .logmark.done{background:#347d39}
+  .logmark.q{background:#316dca}
+  .logmark.lock{background:#2c2c31;color:var(--dim)}
+  .logbody{flex:1;display:flex;flex-direction:column;gap:2px}
+  .logtitle{font-size:15px;font-weight:600}
+  .logsub{font-size:12.5px;color:var(--dim)}
+  .logxp{font-size:13px;font-weight:600;color:var(--accent)}
+  .profscreen{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;padding:60px 16px 90px;gap:6px;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+  .profscreen::-webkit-scrollbar{display:none}
+  .profscreen > *{flex-shrink:0}
+  .profscreen::after{content:"";flex:none;height:30px}
+  .pname{font-size:20px;font-weight:700;margin-top:10px}
+  .plevel{font-size:13px;color:var(--dim)}
+  .statgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;margin-top:18px}
+  .statbox{aspect-ratio:1;background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:8px;box-sizing:border-box}
+  .statbox svg{stroke:#fff;border-radius:12px;padding:8px;margin-bottom:4px}
+  .statbox:nth-child(1) svg{background:#316dca}
+  .statbox:nth-child(2) svg{background:#347d39}
+  .statbox:nth-child(3) svg{background:#cc6b2c}
+  .statbox .v{font-size:20px;font-weight:700}
+  .statbox .k{font-size:11.5px;color:var(--dim);line-height:1.2}
+  .rankcard{width:100%;margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-sizing:border-box}
+  .rankcard > svg{stroke:#fff;background:#8256d0;border-radius:12px;padding:8px;flex:none}
+  .viewtitle{align-self:flex-start;font-size:22px;font-weight:700;padding:2px 2px 8px}
+  .citychips{display:flex;gap:8px;width:100%;margin-top:16px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .citychips::-webkit-scrollbar{display:none}
+  .chip{flex:none;display:flex;align-items:center;gap:6px;border-radius:18px;padding:8px 14px;font-size:13px;font-weight:600;background:var(--panel);border:1px solid var(--line);color:var(--dim);cursor:pointer;white-space:nowrap}
+  .chip svg{stroke:var(--dim)}
+  .chip.on{background:rgba(245,107,38,.16);border-color:var(--accent);color:var(--accent)}
+  .chip.on svg{stroke:var(--accent)}
+  .progcard{width:100%;margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box}
+  .prow{display:flex;flex-direction:column;gap:5px}
+  .prow .top{display:flex;justify-content:space-between;font-size:13.5px}
+  .prow .top .n{font-weight:600}.prow .top .p{color:var(--dim)}
+  .pbar{height:6px;border-radius:3px;background:#26262a;overflow:hidden}
+  .pbar i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+  .pbar i.g{background:#347d39}.pbar i.b{background:#316dca}
+  .prow.locked{opacity:.45}
+  .qhead{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,rgba(245,107,38,.18),rgba(49,109,202,.12));border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .sheetwrap{position:absolute;inset:0;background:#141417}
+  .sheetdim{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#1b1b1f;border-radius:22px 22px 0 0;padding:12px 18px 34px;display:flex;flex-direction:column;gap:14px;box-sizing:border-box}
+  .grab{width:44px;height:4px;border-radius:2px;background:#3a3a40;align-self:center}
+  .cta{background:var(--accent);color:#fff;border-radius:12px;padding:14px;text-align:center;font-size:15px;font-weight:700}
+  .ghostbtn{background:var(--panel);border:1px solid var(--line);color:var(--dim);border-radius:12px;padding:13px;text-align:center;font-size:14px;font-weight:600}
+  template#__bundler_thumbnail{display:none}
+</style>
+</head>
+<body>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0d0d0f"/><circle cx="50" cy="46" r="14" fill="#f56b26"/><circle cx="50" cy="46" r="24" fill="none" stroke="#f56b26" stroke-opacity=".4" stroke-width="3"/></svg></template>
+<div class="wrap">
+  <div>
+    <div class="kicker">Turn 3 · Pulse-style dark UI</div>
+    <h1>NoPlace — restyled</h1>
+    <p class="sub">Google-style readable map with location pins and a "you are here" marker; stats moved to a Profile view with square stat boxes. Left map is live — drag it.</p>
+  </div>
+  <div class="row">
+    <div class="col">
+      <div class="label">01 · Map (main view)</div>
+      <div class="phone">
+        <div id="map"></div>
+        <div class="fog"></div>
+        <div class="statusbar"><span>9:41</span><span>100% ▮</span></div>
+        <div class="toptabs"><div class="toptab active">CITY</div><div class="toptab">NEARBY</div></div>
+        <div class="searchbar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5c5c64" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <input placeholder="Search places…">
+        </div>
+        <div class="player"></div>
+        <div class="youchip">You are here · Bến Thành</div>
+        <div class="nearby">
+          <div class="pin t" style="position:static;transform:rotate(-45deg);flex:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path></svg></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">You're near Chợ Bến Thành</div>
+            <div style="font-size:12px;color:var(--dim)">40 m away · never visited · +50 XP</div>
+            <div style="font-size:12px;color:var(--accent);font-weight:600;margin-top:2px">Wrong place? Tap to change ›</div>
+          </div>
+          <div class="cbtn">Check in</div>
+        </div>
+        <div class="tabbar">
+          <div class="tb active">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+            Map
+          </div>
+          <div class="tb">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+            Logs
+          </div>
+          <div class="tb">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path></svg>
+            Quests
+          </div>
+          <div class="tb">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Profile
+          </div>
+        </div>
+        <div class="navpill"></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">02 · Explorer Logs</div>
+      <div class="phone">
+        <div class="logscreen">
+          <div class="loghead"><span class="t">Explorer Logs</span><span class="s">2 / 12 districts</span></div>
+          <div class="seg"><div class="on">Districts</div><div>Quests</div></div>
+          <div class="logcard">
+            <div class="logmark done">✓</div>
+            <div class="logbody"><div class="logtitle">District 1</div><div class="logsub">First entered Tue · 38% charted</div></div>
+            <div class="logxp">+100</div>
+          </div>
+          <div class="logcard">
+            <div class="logmark done">✓</div>
+            <div class="logbody"><div class="logtitle">Saigon Post Office</div><div class="logsub">Checked in today, 9:12</div></div>
+            <div class="logxp">+50</div>
+          </div>
+          <div class="logcard">
+            <div class="logmark q">?</div>
+            <div class="logbody"><div class="logtitle">Unknown site</div><div class="logsub">480 m away · within quest radius</div></div>
+            <div class="logxp">+50</div>
+          </div>
+          <div class="logcard locked">
+            <div class="logmark lock">•</div>
+            <div class="logbody"><div class="logtitle">???</div><div class="logsub">Locked · travel there to reveal</div></div>
+          </div>
+          <div class="logcard locked">
+            <div class="logmark lock">•</div>
+            <div class="logbody"><div class="logtitle">???</div><div class="logsub">Locked · travel there to reveal</div></div>
+          </div>
+        </div>
+        <div class="statusbar"><span>9:41</span><span>100% ▮</span></div>
+        <div class="tabbar">
+          <div class="tb">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+            Map
+          </div>
+          <div class="tb active">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+            Logs
+          </div>
+          <div class="tb">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path></svg>
+            Quests
+          </div>
+          <div class="tb">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Profile
+          </div>
+        </div>
+        <div class="navpill"></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">03 · Profile</div>
+      <div class="phone">
+        <div class="profscreen">
+          <div class="statusbar"><span>9:41</span><span>100% ▮</span></div>
+          <div class="viewtitle">Profile</div>
+          <div class="avatar">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </div>
+          <div class="pname">Wayfarer_01</div>
+          <div class="plevel">Level 4 Explorer · 340 XP</div>
+          <div class="bignum" style="margin-top:10px">38%</div>
+          <div class="statsub">of the city charted</div>
+          <div class="statgrid">
+            <div class="statbox">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17.5a2.5 2.5 0 0 1-5 0c0-1.38 1.12-2.5 2.5-2.5H21"></path><path d="M4 6h11a3 3 0 0 1 0 6H9"></path><circle cx="5" cy="18" r="2"></circle></svg>
+              <div class="v">4.2 km</div><div class="k">Distance today</div>
+            </div>
+            <div class="statbox">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <div class="v">27</div><div class="k">Check-in places</div>
+            </div>
+            <div class="statbox">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5"></path></svg>
+              <div class="v">6 days</div><div class="k">Active streak</div>
+            </div>
+          </div>
+          <div class="citychips">
+            <div class="chip on">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              TP.HCM · current
+            </div>
+            <div class="chip">Hà Nội</div>
+            <div class="chip">Đà Nẵng</div>
+            <div class="chip">+ Add city</div>
+          </div>
+          <div class="progcard">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <span style="font-size:15px;font-weight:600">City progress · TP.HCM</span>
+              <span style="font-size:13px;color:var(--dim)">2 / 12 districts</span>
+            </div>
+            <div class="prow"><div class="top"><span class="n">District 1</span><span class="p">62%</span></div><div class="pbar"><i style="width:62%"></i></div></div>
+            <div class="prow"><div class="top"><span class="n">District 3</span><span class="p">24%</span></div><div class="pbar"><i class="b" style="width:24%"></i></div></div>
+            <div class="prow"><div class="top"><span class="n">Bình Thạnh</span><span class="p">8%</span></div><div class="pbar"><i class="g" style="width:8%"></i></div></div>
+            <div class="prow locked"><div class="top"><span class="n">???</span><span class="p">Locked</span></div><div class="pbar"><i style="width:0%"></i></div></div>
+          </div>
+          <div class="rankcard">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f56b26" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+            <div style="flex:1">
+              <div style="font-size:15px;font-weight:600">City ranking</div>
+              <div style="font-size:12.5px;color:var(--dim)">You're #125 of 430 explorers</div>
+            </div>
+            <span class="pill">+14%</span>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tb">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+            Map
+          </div>
+          <div class="tb">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+            Logs
+          </div>
+          <div class="tb">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path></svg>
+            Quests
+          </div>
+          <div class="tb active">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Profile
+          </div>
+        </div>
+        <div class="navpill"></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">04 · Quests</div>
+      <div class="phone">
+        <div class="logscreen">
+          <div class="statusbar"><span>9:41</span><span>100% ▮</span></div>
+          <div class="loghead"><span class="t">Quests</span><span class="s">3 active</span></div>
+          <div class="qhead">
+            <div>
+              <div style="font-size:15px;font-weight:700">Weekly challenge</div>
+              <div style="font-size:12.5px;color:var(--dim)">Reveal 3 unknown sites · 2/3 done</div>
+            </div>
+            <div style="font-size:18px;font-weight:700;color:var(--accent)">+300</div>
+          </div>
+          <div class="logcard">
+            <div class="logmark q">?</div>
+            <div class="logbody"><div class="logtitle">Reveal the unknown site</div><div class="logsub">480 m away · District 1</div></div>
+            <div class="logxp">+50</div>
+          </div>
+          <div class="logcard">
+            <div class="logmark" style="background:#cc6b2c;color:#fff">↣</div>
+            <div class="logbody"><div class="logtitle">Walk 5 km today</div><div class="logsub">4.2 / 5.0 km</div></div>
+            <div class="logxp">+30</div>
+          </div>
+          <div class="logcard">
+            <div class="logmark" style="background:#8256d0;color:#fff">▦</div>
+            <div class="logbody"><div class="logtitle">Enter a new district</div><div class="logsub">Nearest: Bình Thạnh · 1.8 km</div></div>
+            <div class="logxp">+100</div>
+          </div>
+          <div class="logcard locked">
+            <div class="logmark lock">•</div>
+            <div class="logbody"><div class="logtitle">Night wanderer</div><div class="logsub">Unlocks at level 5</div></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tb">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+            Map
+          </div>
+          <div class="tb">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+            Logs
+          </div>
+          <div class="tb active">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path></svg>
+            Quests
+          </div>
+          <div class="tb">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Profile
+          </div>
+        </div>
+        <div class="navpill"></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">05 · Check-in sheet</div>
+      <div class="phone">
+        <div class="sheetwrap">
+          <svg viewBox="0 0 372 760" style="position:absolute;inset:0;width:100%;height:100%;opacity:.35">
+            <g stroke="#3a3a44" stroke-width="1.5" fill="none"><path d="M0 300 L372 280"></path><path d="M0 460 L372 480"></path><path d="M150 0 L170 760"></path><path d="M280 0 L260 760"></path><path d="M60 0 L80 760"></path></g>
+          </svg>
+          <div class="player" style="top:34%"></div>
+          <div class="statusbar"><span>9:41</span><span>100% ▮</span></div>
+          <div class="sheetdim"></div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <div style="display:flex;gap:12px;align-items:center">
+              <div class="pin o" style="position:static;transform:rotate(-45deg)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path></svg></div>
+              <div style="flex:1">
+                <div style="font-size:17px;font-weight:700">Chợ Bến Thành</div>
+                <div style="font-size:13px;color:var(--dim)">Market · 40 m away · never visited</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:var(--accent)">+50 XP</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <div style="flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:700">12</div><div style="font-size:11.5px;color:var(--dim)">explorers here</div></div>
+              <div style="flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:700">First</div><div style="font-size:11.5px;color:var(--dim)">visit bonus ×2</div></div>
+              <div style="flex:1;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:700">6 d</div><div style="font-size:11.5px;color:var(--dim)">streak kept</div></div>
+            </div>
+            <div class="cta">Check in here</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
+                <span style="font-size:13px;font-weight:600;color:var(--dim)">Not this place? Pick the right one</span>
+                <span style="font-size:12.5px;color:var(--accent);font-weight:600">Search ›</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px">
+                <div class="pin a" style="position:static;transform:rotate(-45deg);flex:none;width:26px;height:26px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"></path></svg></div>
+                <div style="flex:1"><div style="font-size:14px;font-weight:600">Phở Hòa Pasteur</div><div style="font-size:12px;color:var(--dim)">55 m · quán phở</div></div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a8a92" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px">
+                <div class="pin g" style="position:static;transform:rotate(-45deg);flex:none;width:26px;height:26px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"></line><line x1="6" x2="6" y1="18" y2="11"></line><line x1="10" x2="10" y1="18" y2="11"></line><line x1="14" x2="14" y1="18" y2="11"></line><line x1="18" x2="18" y1="18" y2="11"></line><polygon points="12 2 20 7 4 7"></polygon></svg></div>
+                <div style="flex:1"><div style="font-size:14px;font-weight:600">Nhà thờ Đức Bà</div><div style="font-size:12px;color:var(--dim)">70 m · landmark</div></div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a8a92" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+              </div>
+            </div>
+            <div class="ghostbtn">Not now</div>
+          </div>
+        </div>
+        <div class="navpill"></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">06 · District discovered</div>
+      <div class="phone">
+        <div class="sheetwrap">
+          <svg viewBox="0 0 372 760" style="position:absolute;inset:0;width:100%;height:100%;opacity:.35">
+            <g stroke="#3a3a44" stroke-width="1.5" fill="none"><path d="M0 340 L372 320"></path><path d="M190 0 L180 760"></path><path d="M40 500 C150 460 260 520 372 490"></path></g>
+          </svg>
+          <div class="statusbar"><span>9:41</span><span>100% ▮</span></div>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle at 50% 45%, rgba(245,107,38,.14), rgba(8,8,10,.88) 65%)">
+            <div style="width:86px;height:86px;border-radius:50%;background:rgba(245,107,38,.16);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center">
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#f56b26" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6"></polygon><line x1="9" x2="9" y1="3" y2="18"></line><line x1="15" x2="15" y1="6" y2="21"></line></svg>
+            </div>
+            <div style="font-size:12px;letter-spacing:.28em;font-weight:600;color:var(--dim)">NEW DISTRICT DISCOVERED</div>
+            <div style="font-size:34px;font-weight:700">Bình Thạnh</div>
+            <div style="font-size:14px;color:var(--dim)">3rd of 12 districts · TP.HCM</div>
+            <span class="pill" style="font-size:14px;padding:4px 14px">+100 XP</span>
+            <div class="cta" style="margin-top:18px;width:220px">Start exploring</div>
+          </div>
+        </div>
+        <div class="navpill"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const map = L.map('map', { zoomControl: true, attributionControl: true }).setView([10.7725, 106.6980], 16);
+  L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors © CARTO' }).addTo(map);
+  const icons = {
+    food: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>',
+    coffee: '<path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/>',
+    landmark: '<line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/>',
+    park: '<path d="M17 14h.01"/><path d="M12 2 5 12h4l-3 8h12l-3-8h4Z"/>',
+    q: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>'
+  };
+  function pin(cls, icon){ return L.divIcon({ className:'', html:'<div class="pin '+cls+'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+icons[icon]+'</svg></div>', iconSize:[32,32], iconAnchor:[16,30] }); }
+  L.marker([10.7745, 106.6995], {icon: pin('o','food')}).addTo(map);
+  L.marker([10.7710, 106.6950], {icon: pin('t','coffee')}).addTo(map);
+  L.marker([10.7695, 106.7010], {icon: pin('a','landmark')}).addTo(map);
+  L.marker([10.7760, 106.6955], {icon: pin('g','q')}).addTo(map);
+  L.marker([10.7690, 106.6940], {icon: pin('a','park')}).addTo(map);
+</script>
+</body>
+</html>
