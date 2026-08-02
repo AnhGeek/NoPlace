@@ -117,8 +117,8 @@ class MapCanvas extends StatelessWidget {
         // that reads as a bug because it is one.
         //
         // The ceiling is deliberately *above* the pack's maximum: the renderer
-        // scales the deepest tile it has, which is how NEARBY works at 17.2 on
-        // a pack that stops at 15. Nothing is missing up there, only softer.
+        // scales the deepest tile it has, so pinching in past 15 on a pack that
+        // stops there still draws. Nothing is missing up there, only softer.
         minZoom: basemap?.info.minZoom.toDouble() ?? _fallbackMinZoom,
         maxZoom: _maxZoom,
 

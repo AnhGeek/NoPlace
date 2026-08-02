@@ -6,6 +6,7 @@ import '../../domain/entities/place.dart';
 import '../../domain/entities/player.dart';
 import '../../domain/entities/quest.dart';
 import '../../domain/repositories/repositories.dart';
+import '../../domain/rules/exploration_rules.dart';
 import 'fake_world_store.dart';
 
 /// Repository implementations backed by [FakeWorldStore].
@@ -37,8 +38,9 @@ class FakeWorldRepository implements WorldRepository {
   /// the nearby list at wherever the app started. Places are static in the fake
   /// world; the position is the thing that moves.
   @override
-  Stream<List<Place>> watchNearbyPlaces({double radiusMeters = 500}) =>
-      _store.position.map((_) => _store.nearbyPlaces(radiusMeters));
+  Stream<List<Place>> watchNearbyPlaces({
+    double radiusMeters = ExplorationRules.defaultNearbyRadiusMeters,
+  }) => _store.position.map((_) => _store.nearbyPlaces(radiusMeters));
 }
 
 class FakePlayerRepository implements PlayerRepository {

@@ -8,6 +8,7 @@ import '../../domain/entities/fog_settings.dart';
 import '../../domain/entities/map_layer_visibility.dart';
 import '../../domain/entities/map_point.dart';
 import '../../domain/repositories/repositories.dart';
+import '../../domain/rules/exploration_rules.dart';
 import 'app_database.dart';
 
 /// Small settings, in the same database as everything else.
@@ -26,11 +27,16 @@ class SqlitePreferencesRepository implements PreferencesRepository {
 
   final ReplaySubject<FogSettings> _fog = ReplaySubject(const FogSettings());
 
+  final ReplaySubject<double> _nearbyRadius = ReplaySubject(
+    ExplorationRules.defaultNearbyRadiusMeters,
+  );
+
   static const String _suggestedKey = 'map.show_suggested_points';
   static const String _userKey = 'map.show_user_points';
   static const String _pictureKey = 'map.show_picture_points';
   static const String _clearingRadiusKey = 'fog.clearing_radius_meters';
   static const String _precisionKey = 'fog.recording_precision_meters';
+  static const String _nearbyRadiusKey = 'nearby.radius_meters';
 
   @override
   Stream<MapLayerVisibility> watchMapLayerVisibility() => _visibility.stream;
@@ -38,9 +44,14 @@ class SqlitePreferencesRepository implements PreferencesRepository {
   @override
   Stream<FogSettings> watchFogSettings() => _fog.stream;
 
+  @override
+  Stream<double> watchNearbyRadiusMeters() => _nearbyRadius.stream;
+
   MapLayerVisibility get currentVisibility => _visibility.value;
 
   FogSettings get currentFogSettings => _fog.value;
+
+  double get currentNearbyRadiusMeters => _nearbyRadius.value;
 
   Future<void> load() async {
     if (_loaded) return;
@@ -70,6 +81,10 @@ class SqlitePreferencesRepository implements PreferencesRepository {
             double.tryParse(values[_precisionKey] ?? '') ??
             defaults.recordingPrecisionMeters,
       );
+
+      _nearbyRadius.value =
+          double.tryParse(values[_nearbyRadiusKey] ?? '') ??
+          ExplorationRules.defaultNearbyRadiusMeters;
     } on Object catch (error) {
       // Falling back to "show everything" is the safe default: a preference we
       // cannot read must never hide the player's own points.
@@ -82,6 +97,12 @@ class SqlitePreferencesRepository implements PreferencesRepository {
     _fog.value = settings;
     await _write(_clearingRadiusKey, '${settings.clearingRadiusMeters}');
     await _write(_precisionKey, '${settings.recordingPrecisionMeters}');
+  }
+
+  @override
+  Future<void> setNearbyRadiusMeters(double meters) async {
+    _nearbyRadius.value = meters;
+    await _write(_nearbyRadiusKey, '$meters');
   }
 
   Future<void> _write(String key, String value) async {

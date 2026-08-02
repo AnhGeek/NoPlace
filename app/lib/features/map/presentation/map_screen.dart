@@ -27,6 +27,7 @@ import 'place_visuals.dart';
 import 'widgets/location_banner.dart';
 import 'widgets/map_canvas.dart';
 import 'widgets/nearby_card.dart';
+import 'widgets/nearby_list.dart';
 import 'widgets/recentre_button.dart';
 
 /// The home screen: the city, the fog, and the one thing worth doing next.
@@ -123,32 +124,40 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ref.watch(currentCityProvider).value?.center ??
             const GeoPoint(10.7725, 106.6980);
 
+        // The two scopes are two screens sharing one header, not one screen
+        // with two zooms: NEARBY is a list, so the map is not built at all
+        // while it is showing. Building it offstage would keep the tile
+        // renderer working for something nobody can see.
+        final showMap = scope == MapScope.city;
+
         return Stack(
           children: [
-            Positioned.fill(
-              child: MapCanvas(
-                mapController: _mapController,
-                basemap: ref.watch(basemapProvider),
-                center: playerPosition,
-                zoom: scope.zoom,
-                playerPosition: playerPosition,
-                places: places,
-                mapPoints: mapPoints,
-                exploredArea: exploredArea,
-                visibility: visibility,
-                fogSettings: fogSettings,
-                thumbnails: _thumbnails,
-                onPlaceTap: _openCheckInSheet,
-                onMapPointTap: _showMapPoint,
-                onUserMovedMap: _stopFollowing,
-                playerLabel: candidate == null
-                    ? null
-                    : YouAreHereChip(
-                        placeName: placeDisplayName(candidate, l10n),
-                      ),
+            if (showMap) ...[
+              Positioned.fill(
+                child: MapCanvas(
+                  mapController: _mapController,
+                  basemap: ref.watch(basemapProvider),
+                  center: playerPosition,
+                  zoom: mapDefaultZoom,
+                  playerPosition: playerPosition,
+                  places: places,
+                  mapPoints: mapPoints,
+                  exploredArea: exploredArea,
+                  visibility: visibility,
+                  fogSettings: fogSettings,
+                  thumbnails: _thumbnails,
+                  onPlaceTap: _openCheckInSheet,
+                  onMapPointTap: _showMapPoint,
+                  onUserMovedMap: _stopFollowing,
+                  playerLabel: candidate == null
+                      ? null
+                      : YouAreHereChip(
+                          placeName: placeDisplayName(candidate, l10n),
+                        ),
+                ),
               ),
-            ),
-            const _TopScrim(),
+              const _TopScrim(),
+            ],
             SafeArea(
               bottom: false,
               child: Column(
@@ -178,14 +187,26 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                   ),
 
-                  // A licence condition of the map data. Here because it is
-                  // the one strip of the screen that is over the map and never
-                  // covered by anything.
-                  BasemapAttribution(basemap: ref.watch(basemapProvider)),
+                  // A licence condition of the map data. Only where the data is
+                  // actually drawn — the list shows no tiles to attribute.
+                  if (showMap)
+                    BasemapAttribution(basemap: ref.watch(basemapProvider)),
 
                   // Only present when there is something wrong the player can
                   // fix — no permission, or the location service switched off.
+                  // On both scopes: the list needs a position as much as the
+                  // map does.
                   const LocationBanner(),
+
+                  if (!showMap)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: NpSpace.lg,
+                        ),
+                        child: NearbyList(onCheckIn: _openCheckInSheet),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -200,35 +221,36 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             // The recentre button rides in the same column rather than being
             // positioned on its own, so the two can never be measured apart
             // and end up on top of each other.
-            Positioned(
-              left: NpSpace.md,
-              right: NpSpace.md,
-              bottom: HomeShell.bottomInsetFor(context),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  RecentreButton(following: _following, onPressed: _recentre),
-                  const SizedBox(height: NpSpace.sm),
-                  switch (nearest) {
-                    null => const NearbyCard.empty(),
-                    (final place, final distance) => NearbyCard(
-                      place: place,
-                      distanceMeters: distance,
-                      // Only the check-in candidate is claimable; the nearest
-                      // place may be kilometres away.
-                      inRange: candidate != null && candidate.id == place.id,
-                      onCheckIn: candidate == null
-                          ? null
-                          : () => _openCheckInSheet(candidate),
-                      onCorrect: candidate == null
-                          ? null
-                          : () => _openCheckInSheet(candidate),
-                    ),
-                  },
-                ],
+            if (showMap)
+              Positioned(
+                left: NpSpace.md,
+                right: NpSpace.md,
+                bottom: HomeShell.bottomInsetFor(context),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    RecentreButton(following: _following, onPressed: _recentre),
+                    const SizedBox(height: NpSpace.sm),
+                    switch (nearest) {
+                      null => const NearbyCard.empty(),
+                      (final place, final distance) => NearbyCard(
+                        place: place,
+                        distanceMeters: distance,
+                        // Only the check-in candidate is claimable; the
+                        // nearest place may be kilometres away.
+                        inRange: candidate != null && candidate.id == place.id,
+                        onCheckIn: candidate == null
+                            ? null
+                            : () => _openCheckInSheet(candidate),
+                        onCorrect: candidate == null
+                            ? null
+                            : () => _openCheckInSheet(candidate),
+                      ),
+                    },
+                  ],
+                ),
               ),
-            ),
           ],
         );
       },
@@ -252,7 +274,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final position = ref.read(playerPositionProvider).value;
     setState(() => _following = true);
     if (position == null) return;
-    _moveTo(position, ref.read(mapScopeProvider).zoom);
+    _moveTo(position, mapDefaultZoom);
   }
 
   void _moveTo(GeoPoint position, double zoom) {
@@ -264,9 +286,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
+  /// Switching scopes tears the map down and builds it again, so there is no
+  /// camera to move here — only the follow flag to restore.
+  ///
+  /// The rebuilt map opens centred on the player at [mapDefaultZoom], which is
+  /// what somebody coming back from the list wants: they left the map to look
+  /// at what is around them, not to keep a viewport.
   void _onScopeChanged(MapScope scope) {
     ref.read(mapScopeProvider.notifier).select(scope);
-    _mapController.move(_mapController.camera.center, scope.zoom);
+    if (scope == MapScope.city && !_following) {
+      setState(() => _following = true);
+    }
   }
 
   /// Tapping the player's own point. A proper detail sheet — rename, change

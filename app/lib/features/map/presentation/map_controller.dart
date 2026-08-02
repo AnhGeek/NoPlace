@@ -1,10 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// What the map is showing.
+/// Which half of the home screen the player is looking at.
 ///
-/// `city` frames the whole city; `nearby` zooms to walking distance. It is the
-/// only piece of map state worth lifting out of the widget — the camera itself
-/// belongs to `flutter_map`.
+/// `city` is the map; `nearby` is the list of what is within walking distance.
+/// They are two answers to two questions — "where am I" and "what is around
+/// me" — and the second one was never a camera position: a map zoomed to one
+/// street shows fewer places than a list of the same places, not more.
+///
+/// It is the only piece of map state worth lifting out of the widget — the
+/// camera itself belongs to `flutter_map`.
 enum MapScope { city, nearby }
 
 class MapScopeController extends Notifier<MapScope> {
@@ -19,11 +23,9 @@ final mapScopeProvider = NotifierProvider<MapScopeController, MapScope>(
   MapScopeController.new,
 );
 
-/// Zoom level per scope. Tuned for a dense Asian city centre: 16 shows a
-/// handful of blocks, 17.5 shows the street you are standing on.
-extension MapScopeCamera on MapScope {
-  double get zoom => switch (this) {
-    MapScope.city => 15.5,
-    MapScope.nearby => 17.2,
-  };
-}
+/// The zoom the map opens at, and the one [MapScope.nearby] hands back to when
+/// the player returns to the map.
+///
+/// Tuned for a dense Asian city centre: 15.5 shows a handful of blocks around
+/// the player, which is the scale at which the fog reads as progress.
+const double mapDefaultZoom = 15.5;

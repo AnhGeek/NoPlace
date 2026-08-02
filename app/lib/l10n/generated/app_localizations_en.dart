@@ -90,6 +90,11 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
+  String mapNearbyVisitedName(String place) {
+    return '$place · checked in';
+  }
+
+  @override
   String get mapNearbyWrongPlace => 'Wrong place? Tap to change ›';
 
   @override
@@ -310,6 +315,16 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get settingsHidePicturePointsDetail => 'Places you photographed';
+
+  @override
+  String get settingsNearby => 'Nearby';
+
+  @override
+  String get settingsNearbyRadius => 'How far to look';
+
+  @override
+  String get settingsNearbyRadiusDetail =>
+      'Places within this distance show up in NEARBY';
 
   @override
   String get settingsFogTitle => 'Fog';

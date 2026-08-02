@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/shell/home_shell.dart';
 import '../../../core/formatting/unit_formatter.dart';
 import '../../../data/repository_providers.dart';
 import '../../../design_system/components/components.dart';
@@ -30,7 +31,14 @@ class FogSettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsFogTitle)),
       body: ListView(
-        padding: const EdgeInsets.all(NpSpace.lg),
+        // Same shell, same navigation bar over the body: the last control
+        // needs the inset or it sits under it.
+        padding: EdgeInsets.fromLTRB(
+          NpSpace.lg,
+          NpSpace.lg,
+          NpSpace.lg,
+          HomeShell.bottomInsetFor(context),
+        ),
         children: [
           _Preview(settings: settings),
           const SizedBox(height: NpSpace.xl),

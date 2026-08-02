@@ -140,6 +140,13 @@ abstract interface class PreferencesRepository {
   Stream<FogSettings> watchFogSettings();
 
   Future<void> setFogSettings(FogSettings settings);
+
+  /// How far the NEARBY list reaches, in metres. One number rather than an
+  /// entity because there is exactly one thing to choose — the values on offer
+  /// are `ExplorationRules.nearbyRadiusSteps`.
+  Stream<double> watchNearbyRadiusMeters();
+
+  Future<void> setNearbyRadiusMeters(double meters);
 }
 
 /// The player's own progression.

@@ -89,6 +89,11 @@ class AppL10nVi extends AppL10n {
   }
 
   @override
+  String mapNearbyVisitedName(String place) {
+    return '$place · đã ghé';
+  }
+
+  @override
   String get mapNearbyWrongPlace => 'Không đúng chỗ? Chạm để đổi ›';
 
   @override
@@ -309,6 +314,16 @@ class AppL10nVi extends AppL10n {
 
   @override
   String get settingsHidePicturePointsDetail => 'Những nơi bạn đã chụp ảnh';
+
+  @override
+  String get settingsNearby => 'Gần đây';
+
+  @override
+  String get settingsNearbyRadius => 'Tìm trong bán kính';
+
+  @override
+  String get settingsNearbyRadiusDetail =>
+      'Những nơi trong khoảng này sẽ hiện ở GẦN ĐÂY';
 
   @override
   String get settingsFogTitle => 'Sương mù';

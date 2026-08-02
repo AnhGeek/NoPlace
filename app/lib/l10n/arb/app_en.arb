@@ -103,6 +103,13 @@
       "xp": { "type": "int", "example": "50" }
     }
   },
+  "mapNearbyVisitedName": "{place} · checked in",
+  "@mapNearbyVisitedName": {
+    "description": "Name of a place in the nearby list the player has already checked in to.",
+    "placeholders": {
+      "place": { "type": "String", "example": "Chợ Bến Thành" }
+    }
+  },
   "mapNearbyWrongPlace": "Wrong place? Tap to change ›",
   "@mapNearbyWrongPlace": {
     "description": "Hint letting the player correct the auto-detected place."
@@ -409,6 +416,19 @@
   "settingsHidePicturePointsDetail": "Places you photographed",
   "@settingsHidePicturePointsDetail": {
     "description": "Supporting line for photo points."
+  },
+
+  "settingsNearby": "Nearby",
+  "@settingsNearby": {
+    "description": "Settings section grouping the options for the NEARBY list."
+  },
+  "settingsNearbyRadius": "How far to look",
+  "@settingsNearbyRadius": {
+    "description": "Setting for the radius the nearby list collects places within."
+  },
+  "settingsNearbyRadiusDetail": "Places within this distance show up in NEARBY",
+  "@settingsNearbyRadiusDetail": {
+    "description": "Explains what the nearby radius setting changes."
   },
 
   "settingsFogTitle": "Fog",

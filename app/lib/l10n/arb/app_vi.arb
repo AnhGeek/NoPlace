@@ -23,6 +23,7 @@
   "mapYouAreHere": "Bạn đang ở · {place}",
   "mapNearbyTitle": "Bạn đang ở gần {place}",
   "mapNearbyMeta": "Cách {distance} · {visited, select, never{chưa từng ghé} other{đã từng ghé}} · +{xp} XP",
+  "mapNearbyVisitedName": "{place} · đã ghé",
   "mapNearbyWrongPlace": "Không đúng chỗ? Chạm để đổi ›",
   "mapCheckIn": "Điểm danh",
 
@@ -87,6 +88,10 @@
   "settingsHideUserPointsDetail": "Những ghim bạn tự đánh dấu",
   "settingsHidePicturePoints": "Điểm có ảnh",
   "settingsHidePicturePointsDetail": "Những nơi bạn đã chụp ảnh",
+
+  "settingsNearby": "Gần đây",
+  "settingsNearbyRadius": "Tìm trong bán kính",
+  "settingsNearbyRadiusDetail": "Những nơi trong khoảng này sẽ hiện ở GẦN ĐÂY",
 
   "settingsFogTitle": "Sương mù",
   "settingsFogSubtitle": "Đi bộ mở ra được bao nhiêu",

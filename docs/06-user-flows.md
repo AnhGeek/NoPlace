@@ -22,6 +22,9 @@ Tapping the active tab again pops that tab back to its root.
 
 ## 1 · Map — the home screen
 
+The two tabs are two views of the same world, not two zooms. **CITY** is the
+map below; **NEARBY** is a list.
+
 ```
 ┌─────────────────────────────┐
 │  CITY        │     NEARBY   │  scope tabs
@@ -45,6 +48,30 @@ Tapping the active tab again pops that tab back to its root.
 States: no nearby place → the card is absent, nothing else changes. Tiles still
 loading → the canvas colour shows through the fog, which reads as "unexplored"
 rather than "broken".
+
+### NEARBY — the list
+
+```
+┌─────────────────────────────┐
+│  CITY        │     NEARBY   │
+│  ┌───────────────────────┐  │
+│  │  Search places…       │  │
+│  └───────────────────────┘  │
+│  📍 Chợ Bến Thành    [Check]│  in range: tappable, check-in enabled
+│     40 m · never · +100 XP  │
+│  📍 Saigon Post Office [Chk]│
+│     250 m · visited · +50XP │
+│  📍 Công viên Tao Đàn  [Chk]│  out of range: dimmed, button disabled
+│     630 m · walk closer…    │
+│  Map   Logs   Quests  Profile│
+└─────────────────────────────┘
+```
+
+Every place within the nearby radius, closest first — **2 km by default**, and
+changeable in Settings › Nearby (500 m to 10 km). Out-of-range rows are dimmed
+rather than dropped: the list is also how a player picks the next walk, and one
+that showed only claimable places would be empty exactly when it matters most.
+Nothing within the radius → an empty state that still says walking works.
 
 The fog is cumulative and **stored on the device**: everywhere the player has
 stood stays uncovered across launches, and previously-visited streets still

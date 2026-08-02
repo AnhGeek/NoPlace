@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/routes.dart';
+import '../../../app/shell/home_shell.dart';
+import '../../../core/formatting/unit_formatter.dart';
 import '../../../core/settings/locale_controller.dart';
 import '../../../data/repository_providers.dart';
 import '../../../design_system/components/components.dart';
@@ -13,6 +15,7 @@ import '../../../design_system/theme/np_typography.dart';
 import '../../../design_system/tokens/design_tokens.g.dart';
 import '../../../domain/entities/map_layer_visibility.dart';
 import '../../../domain/entities/map_point.dart';
+import '../../../domain/rules/exploration_rules.dart';
 import '../../../l10n/l10n.dart';
 
 /// Settings. Short on purpose — the only thing worth choosing today is the
@@ -27,11 +30,21 @@ class SettingsScreen extends ConsumerWidget {
     final visibility =
         ref.watch(mapLayerVisibilityProvider).value ??
         const MapLayerVisibility();
+    final radius =
+        ref.watch(nearbyRadiusProvider).value ??
+        ExplorationRules.defaultNearbyRadiusMeters;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
-        padding: const EdgeInsets.all(NpSpace.lg),
+        // Settings lives inside the shell, whose body extends behind the
+        // navigation bar — without the inset the last card is half under it.
+        padding: EdgeInsets.fromLTRB(
+          NpSpace.lg,
+          NpSpace.lg,
+          NpSpace.lg,
+          HomeShell.bottomInsetFor(context),
+        ),
         children: [
           Text(
             l10n.settingsLanguage,
@@ -96,6 +109,56 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: NpSpace.xl),
+          Text(
+            l10n.settingsNearby,
+            style: NpTypography.footnote.copyWith(color: NpColors.contentMuted),
+          ),
+          const SizedBox(height: NpSpace.xs),
+          NpCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.settingsNearbyRadius,
+                        style: NpTypography.label,
+                      ),
+                    ),
+                    Text(
+                      _radiusLabel(l10n, radius),
+                      style: NpTypography.label.copyWith(
+                        color: NpColors.accentDefault,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  l10n.settingsNearbyRadiusDetail,
+                  style: NpTypography.caption,
+                ),
+                const SizedBox(height: NpSpace.sm),
+
+                // Chips rather than a slider: these are five choices, not a
+                // continuum, and "2 km" is a decision a player can make from
+                // the label alone.
+                Wrap(
+                  spacing: NpSpace.xs,
+                  runSpacing: NpSpace.xs,
+                  children: [
+                    for (final step in ExplorationRules.nearbyRadiusSteps)
+                      NpChip(
+                        label: _radiusLabel(l10n, step),
+                        selected: radius == step,
+                        onTap: () => _setNearbyRadius(ref, step),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: NpSpace.md),
           NpCard(
             onTap: () => context.pushNamed(AppRoute.fogSettingsName),
@@ -151,6 +214,20 @@ class SettingsScreen extends ConsumerWidget {
           ],
         ],
       ),
+    );
+  }
+
+  /// "500 m", "2 km" — never "2.0 km", which reads like a measurement rather
+  /// than a choice.
+  String _radiusLabel(AppL10n l10n, double meters) {
+    final format = UnitFormatter.of(l10n);
+    if (meters < 1000) return format.distance(meters);
+    return l10n.commonDistanceKilometers(format.kilometersCompact(meters));
+  }
+
+  void _setNearbyRadius(WidgetRef ref, double meters) {
+    unawaited(
+      ref.read(preferencesRepositoryProvider).setNearbyRadiusMeters(meters),
     );
   }
 

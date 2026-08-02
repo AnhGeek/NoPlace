@@ -13,8 +13,17 @@ abstract final class ExplorationRules {
   /// optimistic one.
   static const double checkInRadiusMeters = 200;
 
-  /// How far around the player we look for things worth showing.
-  static const double nearbyRadiusMeters = 500;
+  /// How far around the player we look for things worth showing, by default.
+  ///
+  /// Two kilometres is a walk, not a glance: it is far enough that the NEARBY
+  /// list has somewhere to send you on a quiet street, and close enough that
+  /// everything on it is reachable on foot. Players who want a tighter or
+  /// wider list change it in settings — see [nearbyRadiusSteps].
+  static const double defaultNearbyRadiusMeters = 2000;
+
+  /// The radii worth offering. Coarse on purpose: the difference between 2 km
+  /// and 2.2 km is not a decision anybody makes.
+  static const List<double> nearbyRadiusSteps = [500, 1000, 2000, 5000, 10000];
 
   /// First visits pay double.
   static const int firstVisitMultiplier = 2;

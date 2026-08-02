@@ -275,11 +275,40 @@ final weeklyChallengeProvider = StreamProvider<WeeklyChallenge>((ref) {
   return ref.watch(questRepositoryProvider).watchWeeklyChallenge();
 });
 
+/// How far the NEARBY list reaches. A setting, so a player in a quiet suburb
+/// can widen it and one in the centre can cut it down.
+final nearbyRadiusProvider = StreamProvider<double>((ref) {
+  return ref.watch(preferencesRepositoryProvider).watchNearbyRadiusMeters();
+});
+
 /// Places close enough to matter, nearest first.
 final nearbyPlacesProvider = StreamProvider<List<Place>>((ref) {
+  final radiusMeters =
+      ref.watch(nearbyRadiusProvider).value ??
+      ExplorationRules.defaultNearbyRadiusMeters;
+
   return ref
       .watch(worldRepositoryProvider)
-      .watchNearbyPlaces(radiusMeters: ExplorationRules.nearbyRadiusMeters);
+      .watchNearbyPlaces(radiusMeters: radiusMeters);
+});
+
+/// The same places with how far each one is, closest first — what the NEARBY
+/// tab lists.
+///
+/// The distances are measured here rather than taken from the repository: the
+/// contract promises a set of places, not an order or a distance, and the
+/// number on screen has to count down as the player walks. Sorting on top of a
+/// list a remote implementation might return unsorted costs nothing at this
+/// size and removes a way for the list to look wrong.
+final nearbyPlacesByDistanceProvider = Provider<List<(Place, double)>>((ref) {
+  final nearby = ref.watch(nearbyPlacesProvider).value ?? const <Place>[];
+  final position = ref.watch(playerPositionProvider).value;
+  if (position == null) return const [];
+
+  return nearby
+      .map((place) => (place, position.distanceTo(place.location)))
+      .toList()
+    ..sort((a, b) => a.$2.compareTo(b.$2));
 });
 
 /// Places the player is actually allowed to claim right now. The check-in

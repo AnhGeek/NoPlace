@@ -211,6 +211,12 @@ abstract class AppL10n {
   /// **'{distance} away · {visited, select, never{never visited} other{visited before}} · +{xp} XP'**
   String mapNearbyMeta(String distance, String visited, int xp);
 
+  /// Name of a place in the nearby list the player has already checked in to.
+  ///
+  /// In en, this message translates to:
+  /// **'{place} · checked in'**
+  String mapNearbyVisitedName(String place);
+
   /// Hint letting the player correct the auto-detected place.
   ///
   /// In en, this message translates to:
@@ -552,6 +558,24 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Places you photographed'**
   String get settingsHidePicturePointsDetail;
+
+  /// Settings section grouping the options for the NEARBY list.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get settingsNearby;
+
+  /// Setting for the radius the nearby list collects places within.
+  ///
+  /// In en, this message translates to:
+  /// **'How far to look'**
+  String get settingsNearbyRadius;
+
+  /// Explains what the nearby radius setting changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Places within this distance show up in NEARBY'**
+  String get settingsNearbyRadiusDetail;
 
   /// Title of the screen for tuning how the fog of war behaves.
   ///

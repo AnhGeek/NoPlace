@@ -7,6 +7,7 @@ import 'package:noplace/data/local/sqlite_preferences_repository.dart';
 import 'package:noplace/data/local/sqlite_trail_repository.dart';
 import 'package:noplace/domain/entities/geo_point.dart';
 import 'package:noplace/domain/entities/map_point.dart';
+import 'package:noplace/domain/rules/exploration_rules.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -320,6 +321,25 @@ void main() {
       expect(reopened.currentVisibility.showPictures, isFalse);
       expect(reopened.currentVisibility.showUser, isTrue);
       expect(reopened.currentVisibility.showSuggested, isTrue);
+    });
+
+    test('the nearby radius defaults to 2 km and survives a restart', () async {
+      final preferences = SqlitePreferencesRepository(database);
+      await preferences.load();
+
+      expect(
+        preferences.currentNearbyRadiusMeters,
+        ExplorationRules.defaultNearbyRadiusMeters,
+      );
+
+      await preferences.setNearbyRadiusMeters(5000);
+
+      final reopened = SqlitePreferencesRepository(
+        AppDatabase(directory: directory),
+      );
+      await reopened.load();
+
+      expect(reopened.currentNearbyRadiusMeters, 5000);
     });
 
     test('the stream reports the change', () async {
