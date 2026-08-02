@@ -1,0 +1,164 @@
+# Builds signed release APKs and attaches them to a GitHub Release.
+#
+# Triggered by pushing a version tag:
+#
+#     git tag v0.1.0 && git push origin v0.1.0
+#
+# The tag is the source of truth for the marketing version; the build number is
+# the workflow run number, which only ever goes up. Neither is read from
+# pubspec.yaml — see docs/10-engineering-standards.md, "the build number is
+# bumped by CI, never by hand on a feature branch".
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  # Re-run a release by hand, e.g. after fixing an expired secret.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build and release (e.g. v0.1.0)"
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: "3.44.1"
+
+permissions:
+  # Needed to create the Release and upload the APKs to it.
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish APKs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      # v0.1.0 -> 0.1.0. `flutter build --build-name` rejects the leading v.
+      - name: Resolve version
+        id: version
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "name=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: app
+        run: flutter pub get
+
+      # The same gate as CI. A tag can be pushed to a commit that never opened a
+      # pull request, so this is not redundant.
+      - name: Analyze
+        working-directory: app
+        run: flutter analyze --fatal-infos
+
+      - name: Test
+        working-directory: app
+        run: flutter test
+
+      # Without this the Gradle config falls back to the debug key, and the
+      # debug keystore is generated fresh on every runner — so each release
+      # would be signed by a different key and users could not upgrade in
+      # place. Fail here rather than ship that.
+      - name: Require signing secrets
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 is not set. See README, 'Releasing'."
+            exit 1
+          fi
+
+      # Written into the workspace, which is discarded when the job ends. The
+      # paths match android/app/build.gradle.kts: key.properties sits at
+      # android/, storeFile resolves against android/app/.
+      - name: Restore upload keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > app/android/app/upload-keystore.jks
+          cat > app/android/key.properties <<EOF
+          storePassword=$STORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+
+      # Split per ABI: three ~40% smaller APKs instead of one fat universal
+      # binary. The universal one is built too, for anyone who does not know
+      # their device's ABI and just wants a file that installs.
+      - name: Build split APKs
+        working-directory: app
+        run: |
+          flutter build apk --release --split-per-abi \
+            --build-name "${{ steps.version.outputs.name }}" \
+            --build-number "${{ github.run_number }}"
+
+      - name: Build universal APK
+        working-directory: app
+        run: |
+          flutter build apk --release \
+            --build-name "${{ steps.version.outputs.name }}" \
+            --build-number "${{ github.run_number }}"
+
+      # Flutter names every build app-<abi>-release.apk, which tells a user who
+      # downloaded it nothing about which version they have.
+      - name: Name the artifacts after the release
+        id: artifacts
+        run: |
+          mkdir -p dist
+          V="${{ steps.version.outputs.name }}"
+          SRC=app/build/app/outputs/flutter-apk
+          for abi in armeabi-v7a arm64-v8a x86_64; do
+            cp "$SRC/app-$abi-release.apk" "dist/noplace-$V-$abi.apk"
+          done
+          cp "$SRC/app-release.apk" "dist/noplace-$V-universal.apk"
+          ls -lh dist
+
+      # Checksums, so a download can be verified without trusting the CDN.
+      - name: Checksums
+        run: |
+          cd dist
+          sha256sum *.apk > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: NoPlace ${{ steps.version.outputs.name }}
+          generate_release_notes: true
+          # A tag ending in -beta/-rc marks the release as a pre-release.
+          prerelease: ${{ contains(steps.version.outputs.tag, '-') }}
+          files: |
+            dist/*.apk
+            dist/SHA256SUMS.txt
+
+      # The keystore only ever lived on this runner, but leaving it in the
+      # workspace of a job that later gains an artifact upload step is how it
+      # would leak.
+      - name: Shred the keystore
+        if: always()
+        run: rm -f app/android/app/upload-keystore.jks app/android/key.properties

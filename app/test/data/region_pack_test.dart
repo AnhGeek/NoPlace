@@ -107,9 +107,7 @@ void main() {
     test('gunzips tiles that were stored compressed', () async {
       const payload = 'not really a vector tile, but it round-trips';
       final path = await writePack(
-        tiles: [
-          (12, 5, (1 << 12) - 1 - 5, gzip.encode(utf8.encode(payload))),
-        ],
+        tiles: [(12, 5, (1 << 12) - 1 - 5, gzip.encode(utf8.encode(payload)))],
       );
 
       final pack = await RegionPack.open(path);
@@ -160,9 +158,7 @@ void main() {
     });
 
     test('refuses a pack with no format version', () async {
-      final path = await writePack(
-        metadata: {'np:format_version': _absent},
-      );
+      final path = await writePack(metadata: {'np:format_version': _absent});
 
       await expectLater(
         RegionPack.open(path),

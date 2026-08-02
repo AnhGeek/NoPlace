@@ -113,10 +113,7 @@ class RegionPack {
     if (values.any((v) => v == null)) {
       throw RegionPackException('malformed bounds: $raw');
     }
-    return (
-      GeoPoint(values[1]!, values[0]!),
-      GeoPoint(values[3]!, values[2]!),
-    );
+    return (GeoPoint(values[1]!, values[0]!), GeoPoint(values[3]!, values[2]!));
   }
 
   /// The tile at slippy-map (XYZ) coordinates, or null where the pack has no

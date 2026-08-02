@@ -143,12 +143,15 @@ class AppDatabase {
         '(region_id, lat_cell, lng_cell)',
       );
 
-      await db.execute('''
+      await db.execute(
+        '''
         INSERT INTO trail_points
           (region_id, lat_cell, lng_cell, latitude, longitude, recorded_at)
         SELECT ?, lat_cell, lng_cell, latitude, longitude, recorded_at
         FROM trail_points_v1
-      ''', [legacyRegionId]);
+      ''',
+        [legacyRegionId],
+      );
 
       await db.execute('DROP TABLE trail_points_v1');
     }

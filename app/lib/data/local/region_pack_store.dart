@@ -101,7 +101,9 @@ class RegionPackStore {
     Directory directory,
     String regionId,
   ) async {
-    final destination = File(p.join(directory.path, '$regionId.bundled.mbtiles'));
+    final destination = File(
+      p.join(directory.path, '$regionId.bundled.mbtiles'),
+    );
 
     try {
       final data = await rootBundle.load(asset);
@@ -139,7 +141,9 @@ class RegionPackStore {
     if (url == null) return false;
 
     final directory = await _packDirectory();
-    final destination = File(p.join(directory.path, '${source.regionId}.mbtiles'));
+    final destination = File(
+      p.join(directory.path, '${source.regionId}.mbtiles'),
+    );
     final temporary = File('${destination.path}.tmp');
 
     try {
@@ -173,8 +177,7 @@ class RegionPackStore {
   }
 
   Future<Directory> _packDirectory() async {
-    final base =
-        _overrideDirectory ?? await getApplicationSupportDirectory();
+    final base = _overrideDirectory ?? await getApplicationSupportDirectory();
     final directory = Directory(p.join(base.path, _directoryName));
     if (!directory.existsSync()) directory.createSync(recursive: true);
     return directory;

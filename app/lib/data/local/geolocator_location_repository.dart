@@ -56,20 +56,18 @@ class GeolocatorLocationRepository implements LocationRepository {
     _availability.value = state;
     if (state != LocationAvailability.ready) return state;
 
-    _subscription = Geolocator.getPositionStream(
-      locationSettings: _settings(),
-    ).listen(
-      (position) => _positions.add(
-        GeoPoint(position.latitude, position.longitude),
-      ),
-      onError: (Object error) {
-        // A stream that dies mid-walk must leave the app in a state the player
-        // can act on, not a silent one where the fog simply stops opening.
-        debugPrint('Location: stream failed ($error)');
-        unawaited(_recheck());
-      },
-      cancelOnError: false,
-    );
+    _subscription = Geolocator.getPositionStream(locationSettings: _settings())
+        .listen(
+          (position) =>
+              _positions.add(GeoPoint(position.latitude, position.longitude)),
+          onError: (Object error) {
+            // A stream that dies mid-walk must leave the app in a state the player
+            // can act on, not a silent one where the fog simply stops opening.
+            debugPrint('Location: stream failed ($error)');
+            unawaited(_recheck());
+          },
+          cancelOnError: false,
+        );
 
     return state;
   }
@@ -88,7 +86,8 @@ class GeolocatorLocationRepository implements LocationRepository {
       LocationPermission.always ||
       LocationPermission.whileInUse => LocationAvailability.ready,
       LocationPermission.deniedForever ||
-      LocationPermission.unableToDetermine => LocationAvailability.deniedForever,
+      LocationPermission.unableToDetermine =>
+        LocationAvailability.deniedForever,
       LocationPermission.denied => LocationAvailability.denied,
     };
   }
@@ -127,8 +126,7 @@ class GeolocatorLocationRepository implements LocationRepository {
     // The distance filter is the same number the trail records at, so the OS
     // does the throttling for us and we are not woken for movement we would
     // immediately discard.
-    final distanceFilter = ExplorationRules
-        .defaultRecordingPrecisionMeters
+    final distanceFilter = ExplorationRules.defaultRecordingPrecisionMeters
         .round();
 
     if (defaultTargetPlatform == TargetPlatform.android) {

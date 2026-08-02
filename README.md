@@ -63,6 +63,57 @@ cp dist/vn-hcmc.mbtiles ../../app/assets/maps/
 
 See [tools/region_cooker/README.md](tools/region_cooker/README.md).
 
+## Releasing
+
+Every push and pull request runs
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml): token sync, format,
+`flutter analyze --fatal-infos`, tests, and a debug Android build.
+
+Shipping an APK is a tag push:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+[`.github/workflows/release.yml`](.github/workflows/release.yml) then builds
+three per-ABI APKs plus a universal one, signs them, and attaches them with a
+`SHA256SUMS.txt` to a GitHub Release named after the tag. The marketing version
+comes from the tag (`v0.1.0` → `0.1.0`) and the build number from the workflow
+run number, so neither is edited in `pubspec.yaml` by hand. A tag containing a
+hyphen (`v0.2.0-rc1`) is published as a pre-release.
+
+**The released APKs contain no basemap.** Region packs are gitignored, so CI has
+nothing to bundle and the app draws no streets — see [The map](#the-map). Wiring
+a pack into the release means hosting it and downloading it at runtime.
+
+### One-time signing setup
+
+The release job refuses to run without an upload key, because the Gradle
+fallback is the debug key and the runner generates a fresh one on every build —
+users could not upgrade in place. Generate the keystore once:
+
+```bash
+keytool -genkeypair -v -keystore upload-keystore.jks \
+        -storetype PKCS12 -keyalg RSA -keysize 2048 -validity 10000 \
+        -alias upload
+base64 -w0 upload-keystore.jks     # macOS: base64 -i upload-keystore.jks
+```
+
+Keep that file out of the repo and backed up — without it you can never ship an
+update to this app again. Then add four repository secrets under
+**Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | the base64 output above |
+| `ANDROID_KEYSTORE_PASSWORD` | the store password |
+| `ANDROID_KEY_PASSWORD` | the key password |
+| `ANDROID_KEY_ALIAS` | `upload` |
+
+Local release builds read the same key from `android/key.properties` instead;
+see [app/android/key.properties.example](app/android/key.properties.example).
+
 ## Status
 
 The UI is complete and runs against an in-memory world that applies the real

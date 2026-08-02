@@ -80,16 +80,41 @@ abstract final class NpBasemapStyle {
 
       // Roads, narrowest first: a motorway drawn over a footpath is right, the
       // other way round is not.
-      _line('roads-path', 'roads', NpColors.mapPath, _widths(0.4, 2.0),
-          filter: _kindIn(['path'])),
-      _line('roads-rail', 'roads', NpColors.mapRail, _widths(0.4, 1.6),
-          filter: _kindIn(['rail'])),
-      _line('roads-minor', 'roads', NpColors.mapRoadMinor, _widths(0.5, 4.0),
-          filter: _kindIn(['minor_road'])),
-      _line('roads-major', 'roads', NpColors.mapRoadMajor, _widths(0.9, 7.0),
-          filter: _kindIn(['major_road'])),
-      _line('roads-highway', 'roads', NpColors.mapRoadHighway,
-          _widths(1.4, 10.0), filter: _kindIn(['highway'])),
+      _line(
+        'roads-path',
+        'roads',
+        NpColors.mapPath,
+        _widths(0.4, 2.0),
+        filter: _kindIn(['path']),
+      ),
+      _line(
+        'roads-rail',
+        'roads',
+        NpColors.mapRail,
+        _widths(0.4, 1.6),
+        filter: _kindIn(['rail']),
+      ),
+      _line(
+        'roads-minor',
+        'roads',
+        NpColors.mapRoadMinor,
+        _widths(0.5, 4.0),
+        filter: _kindIn(['minor_road']),
+      ),
+      _line(
+        'roads-major',
+        'roads',
+        NpColors.mapRoadMajor,
+        _widths(0.9, 7.0),
+        filter: _kindIn(['major_road']),
+      ),
+      _line(
+        'roads-highway',
+        'roads',
+        NpColors.mapRoadHighway,
+        _widths(1.4, 10.0),
+        filter: _kindIn(['highway']),
+      ),
 
       // District edges only. The city's own border is not drawn here — it is
       // drawn above the fog instead, by [buildCityBorder].
@@ -129,12 +154,7 @@ abstract final class NpBasemapStyle {
       // alley — `Thống Nhất` and `Hẻm 499/6/124 Quang Trung` are both
       // `minor_road`/`residential` — so the only lever is zoom, and one step
       // out is the difference between a readable map and a wall of numbers.
-      _roadLabel(
-        'labels-roads-minor',
-        ['minor_road'],
-        size: 11,
-        minZoom: 17,
-      ),
+      _roadLabel('labels-roads-minor', ['minor_road'], size: 11, minZoom: 17),
       _label(
         'labels-places',
         'places',

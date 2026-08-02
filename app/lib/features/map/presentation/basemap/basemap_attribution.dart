@@ -31,10 +31,7 @@ class BasemapAttribution extends StatelessWidget {
     return Align(
       alignment: Alignment.centerRight,
       child: Padding(
-        padding: const EdgeInsets.only(
-          right: NpSpace.lg,
-          top: NpSpace.xs,
-        ),
+        padding: const EdgeInsets.only(right: NpSpace.lg, top: NpSpace.xs),
         child: Text(
           text,
           style: NpTypography.caption.copyWith(color: NpColors.contentMuted),

@@ -56,19 +56,24 @@ Committed, never hand-edited:
 
 Regenerate, then commit source and output together.
 
-## CI (to configure)
+## CI
 
-The pipeline the repo is written for — worth wiring up as soon as there is more
-than one contributor:
+Wired up in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml), which
+runs on every push and pull request:
 
 ```yaml
 - flutter pub get
-- dart run tools/token_builder/bin/build_tokens.dart --check   # tokens in sync
+- dart run tools/token_builder/bin/build_tokens.dart           # tokens in sync,
+- git diff --exit-code -- .../design_tokens.g.dart             # then asserted
 - dart format --set-exit-if-changed lib test
 - flutter analyze --fatal-infos
 - flutter test --coverage
-- flutter build apk --debug        # and `flutter build ios --no-codesign`
+- flutter build apk --debug        # iOS is not built in CI yet
 ```
+
+Releases are a separate workflow — see
+[`.github/workflows/release.yml`](../.github/workflows/release.yml) and the
+README's *Releasing* section.
 
 ## Versioning and release
 

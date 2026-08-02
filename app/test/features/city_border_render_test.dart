@@ -24,56 +24,58 @@ void main() {
     databaseFactory = databaseFactoryFfi;
   });
 
-  test('the city border draws pixels over Ho Chi Minh City', () async {
-    // Absolute: sqflite resolves a relative path against its own databases
-    // directory, not the working directory.
-    final pack = await RegionPack.open(File(packPath).absolute.path);
-    addTearDown(pack.close);
+  test(
+    'the city border draws pixels over Ho Chi Minh City',
+    () async {
+      // Absolute: sqflite resolves a relative path against its own databases
+      // directory, not the working directory.
+      final pack = await RegionPack.open(File(packPath).absolute.path);
+      addTearDown(pack.close);
 
-    // z9 over the middle of the city. At this zoom one tile spans roughly
-    // 78 km, so the province edge is inside it.
-    const z = 9;
-    const x = 407;
-    const y = 240;
+      // z9 over the middle of the city. At this zoom one tile spans roughly
+      // 78 km, so the province edge is inside it.
+      const z = 9;
+      const x = 407;
+      const y = 240;
 
-    final bytes = await pack.tile(z, x, y);
-    expect(bytes, isNotNull, reason: 'the pack should hold this tile');
+      final bytes = await pack.tile(z, x, y);
+      expect(bytes, isNotNull, reason: 'the pack should hold this tile');
 
-    final theme = ThemeReader().read(NpBasemapStyle.buildCityBorder());
-    final tile = TileFactory(
-      theme,
-      const Logger.noop(),
-    ).create(VectorTileReader().read(bytes!));
+      final theme = ThemeReader().read(NpBasemapStyle.buildCityBorder());
+      final tile = TileFactory(
+        theme,
+        const Logger.noop(),
+      ).create(VectorTileReader().read(bytes!));
 
-    final image = await ImageRenderer(theme: theme, scale: 2).render(
-      TileSource(
-        tileset: Tileset({NpBasemapStyle.sourceName: tile}),
-      ),
-      zoom: z.toDouble(),
-    );
+      final image = await ImageRenderer(theme: theme, scale: 2).render(
+        TileSource(tileset: Tileset({NpBasemapStyle.sourceName: tile})),
+        zoom: z.toDouble(),
+      );
 
-    final pixels = await image.toByteData();
-    expect(pixels, isNotNull);
+      final pixels = await image.toByteData();
+      expect(pixels, isNotNull);
 
-    // Count anything that is not fully transparent. The border style paints no
-    // background, so every opaque pixel is border.
-    var drawn = 0;
-    for (var i = 3; i < pixels!.lengthInBytes; i += 4) {
-      if (pixels.getUint8(i) != 0) drawn++;
-    }
+      // Count anything that is not fully transparent. The border style paints no
+      // background, so every opaque pixel is border.
+      var drawn = 0;
+      for (var i = 3; i < pixels!.lengthInBytes; i += 4) {
+        if (pixels.getUint8(i) != 0) drawn++;
+      }
 
-    // Save it so a human can look at the line rather than trust a number.
-    final out = File(
-      '${Directory.systemTemp.path}/noplace_city_border_z$z.png',
-    );
-    await out.writeAsBytes(await image.toPng());
-    // ignore: avoid_print
-    print('city border render: $drawn opaque pixels -> ${out.path}');
+      // Save it so a human can look at the line rather than trust a number.
+      final out = File(
+        '${Directory.systemTemp.path}/noplace_city_border_z$z.png',
+      );
+      await out.writeAsBytes(await image.toPng());
+      // ignore: avoid_print
+      print('city border render: $drawn opaque pixels -> ${out.path}');
 
-    expect(
-      drawn,
-      greaterThan(100),
-      reason: 'the province boundary should cross this tile',
-    );
-  }, skip: File(packPath).existsSync() ? false : 'no cooked pack in this tree');
+      expect(
+        drawn,
+        greaterThan(100),
+        reason: 'the province boundary should cross this tile',
+      );
+    },
+    skip: File(packPath).existsSync() ? false : 'no cooked pack in this tree',
+  );
 }

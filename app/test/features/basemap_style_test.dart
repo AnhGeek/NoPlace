@@ -27,8 +27,7 @@ void main() {
             .cast<Map<String, dynamic>>()
             .where(
               (layer) =>
-                  layer['type'] == 'symbol' &&
-                  layer['source-layer'] == 'roads',
+                  layer['type'] == 'symbol' && layer['source-layer'] == 'roads',
             )
             .toList();
 

@@ -28,7 +28,11 @@ void main() {
       addTearDown(subscription.cancel);
 
       await pumpEventQueue();
-      expect(emissions.last, isNotEmpty, reason: 'starts beside the seed places');
+      expect(
+        emissions.last,
+        isNotEmpty,
+        reason: 'starts beside the seed places',
+      );
 
       // Hanoi: about 1100 km from anything the fake world knows about.
       store.moveTo(const GeoPoint(21.0285, 105.8542));
