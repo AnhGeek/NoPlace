@@ -21,6 +21,54 @@ void main() {
     expect(ThemeReader().read(style).layers, hasLength(declared));
   });
 
+  group('road labels', () {
+    List<Map<String, dynamic>> roadLabels() =>
+        (NpBasemapStyle.build()['layers']! as List)
+            .cast<Map<String, dynamic>>()
+            .where(
+              (layer) =>
+                  layer['type'] == 'symbol' &&
+                  layer['source-layer'] == 'roads',
+            )
+            .toList();
+
+    test('run along the road rather than floating beside it', () {
+      // Without `symbol-placement: line` the renderer defaults to `point`, and
+      // a name drops flat somewhere near five parallel alleys with nothing to
+      // say which one it belongs to.
+      expect(roadLabels(), isNotEmpty);
+      for (final layer in roadLabels()) {
+        expect(
+          (layer['layout']! as Map)['symbol-placement'],
+          'line',
+          reason: 'layer ${layer["id"]} should follow its road',
+        );
+      }
+    });
+
+    test('name arterials before alleys', () {
+      // In Vietnamese cities OSM names every alley after its parent street, so
+      // labelling minor roads at the same zoom as arterials buries the street
+      // under its own alley numbers.
+      final byId = {for (final layer in roadLabels()) layer['id']: layer};
+
+      expect(
+        byId['labels-roads-major']!['minzoom'] as int,
+        lessThan(byId['labels-roads-minor']!['minzoom'] as int),
+      );
+    });
+
+    test('leave runways and footpaths unnamed', () {
+      final kinds = roadLabels()
+          .expand((layer) => (layer['filter']! as List).skip(2))
+          .toSet();
+
+      expect(kinds, isNot(contains('aeroway')));
+      expect(kinds, isNot(contains('path')));
+      expect(kinds, isNot(contains('rail')));
+    });
+  });
+
   group('the city border', () {
     test('parses into exactly one layer', () {
       final theme = ThemeReader().read(NpBasemapStyle.buildCityBorder());

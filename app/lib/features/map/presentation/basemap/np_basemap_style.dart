@@ -108,12 +108,32 @@ abstract final class NpBasemapStyle {
 
       // Labels last, so nothing is drawn over a name. Haloed, because a street
       // name has to survive sitting on top of a road of nearly its own colour.
-      _label(
-        'labels-roads',
-        'roads',
-        NpColors.mapLabel,
+      //
+      // Road names run *along* the road rather than sitting beside it as loose
+      // text. That is not only cosmetic here: in Vietnamese cities OSM names
+      // every alley after its parent street — `Hẻm 499/6/124 Quang Trung` — so
+      // as free-floating labels a single street turns into a wall of numbers
+      // with the actual road name lost in it. On the line, each name belongs to
+      // something visible.
+      //
+      // Split by importance so the alleys cannot shout over the street:
+      // arterials get named from district zoom, everything smaller only once
+      // you are close enough to walk it.
+      _roadLabel(
+        'labels-roads-major',
+        ['highway', 'major_road'],
+        size: 12,
+        minZoom: 13,
+      ),
+      // z17 and not lower. Nothing in the data separates a real street from an
+      // alley — `Thống Nhất` and `Hẻm 499/6/124 Quang Trung` are both
+      // `minor_road`/`residential` — so the only lever is zoom, and one step
+      // out is the difference between a readable map and a wall of numbers.
+      _roadLabel(
+        'labels-roads-minor',
+        ['minor_road'],
         size: 11,
-        minZoom: 15,
+        minZoom: 17,
       ),
       _label(
         'labels-places',
@@ -194,6 +214,36 @@ abstract final class NpBasemapStyle {
     'source-layer': sourceLayer,
     'filter': ?filter,
     'paint': {'line-color': _c(color), 'line-width': width},
+  };
+
+  /// A road name drawn along the road it belongs to.
+  ///
+  /// `symbol-placement: line` is what makes the text follow the geometry and
+  /// rotate with it. Without it the renderer defaults to `point`, which drops
+  /// the name flat somewhere on the feature and leaves the reader guessing
+  /// which of five parallel alleys it refers to.
+  static Map<String, dynamic> _roadLabel(
+    String id,
+    List<String> kinds, {
+    required double size,
+    required int minZoom,
+  }) => {
+    'id': id,
+    'type': 'symbol',
+    'source': sourceName,
+    'source-layer': 'roads',
+    'filter': _kindIn(kinds),
+    'minzoom': minZoom,
+    'layout': {
+      'symbol-placement': 'line',
+      'text-field': '{name}',
+      'text-size': size,
+    },
+    'paint': {
+      'text-color': _c(NpColors.mapLabel),
+      'text-halo-color': _c(NpColors.mapLabelHalo),
+      'text-halo-width': 1.2,
+    },
   };
 
   static Map<String, dynamic> _label(
