@@ -1,0 +1,521 @@
+{
+  "@@locale": "en",
+
+  "appName": "NoPlace",
+  "@appName": {
+    "description": "Product name. Never translated."
+  },
+
+  "navMap": "Map",
+  "@navMap": {
+    "description": "Bottom navigation label for the map tab."
+  },
+  "navLogs": "Logs",
+  "@navLogs": {
+    "description": "Bottom navigation label for the explorer logs tab."
+  },
+  "navQuests": "Quests",
+  "@navQuests": {
+    "description": "Bottom navigation label for the quests tab."
+  },
+  "navProfile": "Profile",
+  "@navProfile": {
+    "description": "Bottom navigation label for the player profile tab."
+  },
+
+  "commonLocked": "Locked",
+  "@commonLocked": {
+    "description": "Short label on content the player has not unlocked yet."
+  },
+  "commonHidden": "???",
+  "@commonHidden": {
+    "description": "Placeholder shown instead of the name of an undiscovered place."
+  },
+  "commonNotNow": "Not now",
+  "@commonNotNow": {
+    "description": "Dismiss button on a sheet, keeping the action available later."
+  },
+  "commonSearch": "Search",
+  "@commonSearch": {
+    "description": "Generic search action label."
+  },
+  "commonXp": "+{xp} XP",
+  "@commonXp": {
+    "description": "Experience points a player earns or can earn.",
+    "placeholders": {
+      "xp": { "type": "int", "example": "50" }
+    }
+  },
+  "commonDistanceMeters": "{meters} m",
+  "@commonDistanceMeters": {
+    "description": "A distance below one kilometre.",
+    "placeholders": {
+      "meters": { "type": "int", "example": "480" }
+    }
+  },
+  "commonDistanceKilometers": "{kilometers} km",
+  "@commonDistanceKilometers": {
+    "description": "A distance of one kilometre or more, already rounded to one decimal.",
+    "placeholders": {
+      "kilometers": { "type": "String", "example": "4.2" }
+    }
+  },
+  "commonDays": "{count, plural, =1{1 day} other{{count} days}}",
+  "@commonDays": {
+    "description": "A number of days, used by the streak counter.",
+    "placeholders": {
+      "count": { "type": "int", "example": "6" }
+    }
+  },
+
+  "mapTabCity": "CITY",
+  "@mapTabCity": {
+    "description": "Map filter showing the whole city. Displayed in upper case."
+  },
+  "mapTabNearby": "NEARBY",
+  "@mapTabNearby": {
+    "description": "Map filter showing only places within walking distance. Upper case."
+  },
+  "mapSearchHint": "Search places…",
+  "@mapSearchHint": {
+    "description": "Placeholder inside the map search field."
+  },
+  "mapYouAreHere": "You are here · {place}",
+  "@mapYouAreHere": {
+    "description": "Chip above the player marker naming the current place.",
+    "placeholders": {
+      "place": { "type": "String", "example": "Bến Thành" }
+    }
+  },
+  "mapNearbyTitle": "You''re near {place}",
+  "@mapNearbyTitle": {
+    "description": "Headline of the card suggesting a check-in.",
+    "placeholders": {
+      "place": { "type": "String", "example": "Chợ Bến Thành" }
+    }
+  },
+  "mapNearbyMeta": "{distance} away · {visited, select, never{never visited} other{visited before}} · +{xp} XP",
+  "@mapNearbyMeta": {
+    "description": "Supporting line of the nearby card: distance, visit history and reward.",
+    "placeholders": {
+      "distance": { "type": "String", "example": "40 m" },
+      "visited": { "type": "String", "example": "never" },
+      "xp": { "type": "int", "example": "50" }
+    }
+  },
+  "mapNearbyWrongPlace": "Wrong place? Tap to change ›",
+  "@mapNearbyWrongPlace": {
+    "description": "Hint letting the player correct the auto-detected place."
+  },
+  "mapCheckIn": "Check in",
+  "@mapCheckIn": {
+    "description": "Primary action on the nearby card."
+  },
+
+  "logsTitle": "Explorer Logs",
+  "@logsTitle": {
+    "description": "Title of the logs screen."
+  },
+  "logsDistrictCount": "{charted} / {total} districts",
+  "@logsDistrictCount": {
+    "description": "How many districts of the current city the player has charted.",
+    "placeholders": {
+      "charted": { "type": "int", "example": "2" },
+      "total": { "type": "int", "example": "12" }
+    }
+  },
+  "logsSegmentDistricts": "Districts",
+  "@logsSegmentDistricts": {
+    "description": "Segmented control option listing district entries."
+  },
+  "logsSegmentQuests": "Quests",
+  "@logsSegmentQuests": {
+    "description": "Segmented control option listing quest entries."
+  },
+  "logsEntryDistrictCharted": "First entered {day} · {percent}% charted",
+  "@logsEntryDistrictCharted": {
+    "description": "Log row subtitle for a district the player has entered.",
+    "placeholders": {
+      "day": { "type": "String", "example": "Tue" },
+      "percent": { "type": "int", "example": "38" }
+    }
+  },
+  "logsEntryCheckedInToday": "Checked in today, {time}",
+  "@logsEntryCheckedInToday": {
+    "description": "Log row subtitle for a place visited today.",
+    "placeholders": {
+      "time": { "type": "String", "example": "9:12" }
+    }
+  },
+  "logsEntryWithinQuestRadius": "{distance} away · within quest radius",
+  "@logsEntryWithinQuestRadius": {
+    "description": "Log row subtitle for an unidentified site close enough to reveal.",
+    "placeholders": {
+      "distance": { "type": "String", "example": "480 m" }
+    }
+  },
+  "logsEntryLocked": "Locked · travel there to reveal",
+  "@logsEntryLocked": {
+    "description": "Log row subtitle for an entry that requires travelling first."
+  },
+  "logsUnknownSite": "Unknown site",
+  "@logsUnknownSite": {
+    "description": "Title of a place the player has detected but not identified."
+  },
+  "logsEmpty": "Nothing logged yet. Step outside and the map will fill in.",
+  "@logsEmpty": {
+    "description": "Empty state on the logs screen."
+  },
+
+  "questsTitle": "Quests",
+  "@questsTitle": {
+    "description": "Title of the quests screen."
+  },
+  "questsActiveCount": "{count, plural, =1{1 active} other{{count} active}}",
+  "@questsActiveCount": {
+    "description": "How many quests are currently in progress.",
+    "placeholders": {
+      "count": { "type": "int", "example": "3" }
+    }
+  },
+  "questsWeeklyChallenge": "Weekly challenge",
+  "@questsWeeklyChallenge": {
+    "description": "Title of the highlighted weekly goal."
+  },
+  "questsWeeklyChallengeGoal": "Reveal {target} unknown sites · {done}/{target} done",
+  "@questsWeeklyChallengeGoal": {
+    "description": "Progress line of the weekly challenge.",
+    "placeholders": {
+      "target": { "type": "int", "example": "3" },
+      "done": { "type": "int", "example": "2" }
+    }
+  },
+  "questsRevealSiteTitle": "Reveal the unknown site",
+  "@questsRevealSiteTitle": {
+    "description": "Quest asking the player to walk to an unidentified place."
+  },
+  "questsRevealSiteSubtitle": "{distance} away · {district}",
+  "@questsRevealSiteSubtitle": {
+    "description": "Distance and district of the quest target.",
+    "placeholders": {
+      "distance": { "type": "String", "example": "480 m" },
+      "district": { "type": "String", "example": "District 1" }
+    }
+  },
+  "questsWalkTitle": "Walk {target} km today",
+  "@questsWalkTitle": {
+    "description": "Daily walking distance quest.",
+    "placeholders": {
+      "target": { "type": "String", "example": "5" }
+    }
+  },
+  "questsWalkSubtitle": "{done} / {target} km",
+  "@questsWalkSubtitle": {
+    "description": "Progress of the walking quest.",
+    "placeholders": {
+      "done": { "type": "String", "example": "4.2" },
+      "target": { "type": "String", "example": "5.0" }
+    }
+  },
+  "questsNewDistrictTitle": "Enter a new district",
+  "@questsNewDistrictTitle": {
+    "description": "Quest asking the player to cross into an uncharted district."
+  },
+  "questsNewDistrictSubtitle": "Nearest: {district} · {distance}",
+  "@questsNewDistrictSubtitle": {
+    "description": "Closest uncharted district and how far away it is.",
+    "placeholders": {
+      "district": { "type": "String", "example": "Bình Thạnh" },
+      "distance": { "type": "String", "example": "1.8 km" }
+    }
+  },
+  "questsNightWandererTitle": "Night wanderer",
+  "@questsNightWandererTitle": {
+    "description": "Locked quest about exploring after dark."
+  },
+  "questsUnlocksAtLevel": "Unlocks at level {level}",
+  "@questsUnlocksAtLevel": {
+    "description": "Requirement line on a locked quest.",
+    "placeholders": {
+      "level": { "type": "int", "example": "5" }
+    }
+  },
+
+  "profileTitle": "Profile",
+  "@profileTitle": {
+    "description": "Title of the profile screen."
+  },
+  "profileLevelLine": "Level {level} Explorer · {xp} XP",
+  "@profileLevelLine": {
+    "description": "Player rank and total experience.",
+    "placeholders": {
+      "level": { "type": "int", "example": "4" },
+      "xp": { "type": "int", "example": "340" }
+    }
+  },
+  "profileChartedShare": "{percent}%",
+  "@profileChartedShare": {
+    "description": "Percentage of the city the player has uncovered.",
+    "placeholders": {
+      "percent": { "type": "int", "example": "38" }
+    }
+  },
+  "profileChartedCaption": "of the city charted",
+  "@profileChartedCaption": {
+    "description": "Caption under the big charted percentage."
+  },
+  "profileStatDistanceToday": "Distance today",
+  "@profileStatDistanceToday": {
+    "description": "Stat tile: how far the player walked today."
+  },
+  "profileStatCheckIns": "Check-in places",
+  "@profileStatCheckIns": {
+    "description": "Stat tile: number of distinct places checked in to."
+  },
+  "profileStatStreak": "Active streak",
+  "@profileStatStreak": {
+    "description": "Stat tile: consecutive days with activity."
+  },
+  "profileCityCurrent": "{city} · current",
+  "@profileCityCurrent": {
+    "description": "Chip marking the city the player is exploring right now.",
+    "placeholders": {
+      "city": { "type": "String", "example": "TP.HCM" }
+    }
+  },
+  "profileAddCity": "+ Add city",
+  "@profileAddCity": {
+    "description": "Chip that starts tracking another city."
+  },
+  "profileCityProgressTitle": "City progress · {city}",
+  "@profileCityProgressTitle": {
+    "description": "Header of the per-district progress card.",
+    "placeholders": {
+      "city": { "type": "String", "example": "TP.HCM" }
+    }
+  },
+  "profileRankingTitle": "City ranking",
+  "@profileRankingTitle": {
+    "description": "Header of the leaderboard card."
+  },
+  "profileRankingSubtitle": "You''re #{rank} of {total} explorers",
+  "@profileRankingSubtitle": {
+    "description": "Where the player sits on the city leaderboard.",
+    "placeholders": {
+      "rank": { "type": "int", "example": "125" },
+      "total": { "type": "int", "example": "430" }
+    }
+  },
+  "profileRankingTrend": "+{percent}%",
+  "@profileRankingTrend": {
+    "description": "How much the player climbed the leaderboard this week.",
+    "placeholders": {
+      "percent": { "type": "int", "example": "14" }
+    }
+  },
+
+  "checkInSheetMeta": "{category} · {distance} away · {visited, select, never{never visited} other{visited before}}",
+  "@checkInSheetMeta": {
+    "description": "Supporting line under the place name in the check-in sheet.",
+    "placeholders": {
+      "category": { "type": "String", "example": "Market" },
+      "distance": { "type": "String", "example": "40 m" },
+      "visited": { "type": "String", "example": "never" }
+    }
+  },
+  "checkInExplorersHere": "explorers here",
+  "@checkInExplorersHere": {
+    "description": "Caption of the tile counting other players at this place."
+  },
+  "checkInFirstVisit": "First",
+  "@checkInFirstVisit": {
+    "description": "Value of the tile announcing a first-visit bonus."
+  },
+  "checkInFirstVisitBonus": "visit bonus ×2",
+  "@checkInFirstVisitBonus": {
+    "description": "Caption explaining the doubled reward for a first visit."
+  },
+  "checkInStreakKept": "streak kept",
+  "@checkInStreakKept": {
+    "description": "Caption of the tile showing the streak this check-in preserves."
+  },
+  "checkInAction": "Check in here",
+  "@checkInAction": {
+    "description": "Primary button of the check-in sheet."
+  },
+  "checkInWrongPlaceTitle": "Not this place? Pick the right one",
+  "@checkInWrongPlaceTitle": {
+    "description": "Header above the list of alternative nearby places."
+  },
+  "checkInSuccess": "Checked in at {place}",
+  "@checkInSuccess": {
+    "description": "Confirmation shown after a successful check-in.",
+    "placeholders": {
+      "place": { "type": "String", "example": "Chợ Bến Thành" }
+    }
+  },
+
+  "checkInTooFar": "You''re too far away to check in here.",
+  "@checkInTooFar": {
+    "description": "Shown when a check-in is refused because the player moved out of range."
+  },
+  "checkInFailed": "That didn''t work. Try again in a moment.",
+  "@checkInFailed": {
+    "description": "Generic failure message for a check-in that could not be recorded."
+  },
+
+  "discoveryKicker": "NEW DISTRICT DISCOVERED",
+  "@discoveryKicker": {
+    "description": "Overline on the celebration screen. Displayed in upper case."
+  },
+  "discoveryMeta": "District {index} of {total} · {city}",
+  "@discoveryMeta": {
+    "description": "Which district this is out of the city total.",
+    "placeholders": {
+      "index": { "type": "int", "example": "3" },
+      "total": { "type": "int", "example": "12" },
+      "city": { "type": "String", "example": "TP.HCM" }
+    }
+  },
+  "discoveryAction": "Start exploring",
+  "@discoveryAction": {
+    "description": "Button that closes the celebration and returns to the map."
+  },
+
+  "settingsMapLayers": "Points on the map",
+  "@settingsMapLayers": {
+    "description": "Settings section grouping the three kinds of map point."
+  },
+  "settingsShowSuggestedPoints": "Suggested places",
+  "@settingsShowSuggestedPoints": {
+    "description": "Toggle for points that come from the places data."
+  },
+  "settingsShowSuggestedPointsDetail": "Places we found near you",
+  "@settingsShowSuggestedPointsDetail": {
+    "description": "Supporting line explaining where suggested points come from."
+  },
+  "settingsHideUserPoints": "My points",
+  "@settingsHideUserPoints": {
+    "description": "Toggle for points the player dropped themselves."
+  },
+  "settingsHideUserPointsDetail": "Pins you dropped yourself",
+  "@settingsHideUserPointsDetail": {
+    "description": "Supporting line for the player's own dropped pins."
+  },
+  "settingsHidePicturePoints": "Photo points",
+  "@settingsHidePicturePoints": {
+    "description": "Toggle for points created from a photo."
+  },
+  "settingsHidePicturePointsDetail": "Places you photographed",
+  "@settingsHidePicturePointsDetail": {
+    "description": "Supporting line for photo points."
+  },
+
+  "settingsFogTitle": "Fog",
+  "@settingsFogTitle": {
+    "description": "Title of the screen for tuning how the fog of war behaves."
+  },
+  "settingsFogSubtitle": "How much walking uncovers",
+  "@settingsFogSubtitle": {
+    "description": "Supporting line on the settings row that opens the fog screen."
+  },
+  "settingsFogClearingRadius": "Clearing size",
+  "@settingsFogClearingRadius": {
+    "description": "Setting for how much ground one position uncovers."
+  },
+  "settingsFogClearingRadiusDetail": "How far you can see from where you stand",
+  "@settingsFogClearingRadiusDetail": {
+    "description": "Explains the clearing size setting in plain terms."
+  },
+  "settingsFogPrecision": "Recording precision",
+  "@settingsFogPrecision": {
+    "description": "Setting for how finely the walked trail is recorded."
+  },
+  "settingsFogPrecisionDetail": "Finer keeps a truer trail and a bigger file",
+  "@settingsFogPrecisionDetail": {
+    "description": "Explains the trade-off behind the recording precision setting."
+  },
+
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Title of the settings screen."
+  },
+  "settingsLanguage": "Language",
+  "@settingsLanguage": {
+    "description": "Settings row that changes the app language."
+  },
+  "settingsLanguageSystem": "System default",
+  "@settingsLanguageSystem": {
+    "description": "Language option following the device setting."
+  },
+  "settingsDesignGallery": "Design system gallery",
+  "@settingsDesignGallery": {
+    "description": "Debug-only settings row opening the component catalogue."
+  },
+
+  "locationServiceOffTitle": "Location is switched off",
+  "@locationServiceOffTitle": {
+    "description": "Banner on the map when the device's location service is disabled."
+  },
+  "locationServiceOffBody": "NoPlace cannot uncover the map without it.",
+  "@locationServiceOffBody": {
+    "description": "Explains the consequence of the location service being off."
+  },
+  "locationDeniedTitle": "NoPlace needs your location",
+  "@locationDeniedTitle": {
+    "description": "Banner on the map when the location permission was refused but can be asked for again."
+  },
+  "locationDeniedBody": "Walking is what uncovers the map, so we need to know where you are.",
+  "@locationDeniedBody": {
+    "description": "Explains why the app needs location, in terms of the product rather than the permission."
+  },
+  "locationDeniedForeverTitle": "Location is blocked",
+  "@locationDeniedForeverTitle": {
+    "description": "Banner when the permission is permanently denied and only Settings can undo it."
+  },
+  "locationDeniedForeverBody": "Turn it back on in Settings to keep uncovering the map.",
+  "@locationDeniedForeverBody": {
+    "description": "Tells the player the only remaining route is the OS settings screen."
+  },
+  "locationActionTurnOn": "Turn on",
+  "@locationActionTurnOn": {
+    "description": "Button opening the device location settings."
+  },
+  "locationActionAllow": "Allow",
+  "@locationActionAllow": {
+    "description": "Button asking for the location permission again."
+  },
+  "locationActionSettings": "Open settings",
+  "@locationActionSettings": {
+    "description": "Button opening the app's settings page in the OS."
+  },
+  "locationWaiting": "Looking for you…",
+  "@locationWaiting": {
+    "description": "Shown while permission is granted but no GPS fix has arrived yet."
+  },
+
+  "mapNearestTitle": "Nearest · {place}",
+  "@mapNearestTitle": {
+    "description": "Headline of the nearby card when the closest place is too far to claim.",
+    "placeholders": {
+      "place": { "type": "String", "example": "Lotte Mart Gò Vấp" }
+    }
+  },
+  "mapNearestMeta": "{distance} away · walk closer to check in",
+  "@mapNearestMeta": {
+    "description": "Supporting line when the nearest place is out of check-in range."
+  },
+  "mapNothingNearbyTitle": "Nothing mapped here yet",
+  "@mapNothingNearbyTitle": {
+    "description": "Headline of the nearby card when no place is known at all."
+  },
+  "mapNothingNearbyBody": "Keep walking — the map still opens as you go.",
+  "@mapNothingNearbyBody": {
+    "description": "Reassures the player that walking is still worthwhile with no place in range."
+  },
+
+  "mapRecentre": "Centre on me",
+  "@mapRecentre": {
+    "description": "Accessibility label for the button that puts the map back on the player."
+  }
+}
