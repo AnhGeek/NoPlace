@@ -1,0 +1,176 @@
+{
+  "$description": "Semantic layer for the dark theme — the only theme NoPlace ships today. Feature code reads *these* names; if a screen needs a colour that is not here, add a semantic token instead of reaching into the palette.",
+  "color": {
+    "$type": "color",
+    "background": {
+      "canvas": {
+        "$value": "{palette.ink.950}",
+        "$description": "Behind everything, including the map when tiles have not loaded."
+      },
+      "surface": {
+        "$value": "{palette.ink.900}",
+        "$description": "Default screen background."
+      },
+      "panel": {
+        "$value": "{palette.ink.800}",
+        "$description": "Cards, list rows, segmented controls."
+      },
+      "panelRaised": {
+        "$value": "{palette.ink.750}",
+        "$description": "Sheets and anything floating above the map."
+      },
+      "panelSunken": { "$value": "{palette.ink.650}" },
+      "scrim": { "$value": "#0000008C" },
+      "fog": {
+        "$value": "#040406FF",
+        "$description": "Unexplored ground. Opaque: with no basemap beneath, a translucent fog would only reveal more of the same black."
+      },
+      "exploredGround": {
+        "$value": "#1C1C24",
+        "$description": "Ground the player has uncovered. Without a basemap this colour *is* the reward, so it has to read clearly against the fog."
+      }
+    },
+    "border": {
+      "subtle": { "$value": "{palette.ink.700}" },
+      "strong": { "$value": "{palette.ink.600}" },
+      "onMedia": { "$value": "{palette.ink.0}" }
+    },
+    "content": {
+      "primary": { "$value": "{palette.ink.50}" },
+      "secondary": { "$value": "{palette.ink.200}" },
+      "muted": { "$value": "{palette.ink.400}" },
+      "placeholder": { "$value": "{palette.ink.500}" },
+      "onAccent": { "$value": "{palette.ink.0}" },
+      "onStatus": { "$value": "{palette.ink.0}" }
+    },
+    "accent": {
+      "default": { "$value": "{palette.ember.500}" },
+      "hover": { "$value": "{palette.ember.300}" },
+      "subtle": {
+        "$value": "#F56B2629",
+        "$description": "16% ember — selected chips, active tab background."
+      },
+      "glow": {
+        "$value": "#F56B26B3",
+        "$description": "70% ember — the halo around the player dot."
+      }
+    },
+    "status": {
+      "success": { "$value": "{palette.moss.500}" },
+      "successMuted": { "$value": "{palette.moss.700}" },
+      "info": { "$value": "{palette.cobalt.500}" },
+      "warning": { "$value": "{palette.ember.700}" },
+      "rare": { "$value": "{palette.orchid.500}" },
+      "locked": { "$value": "{palette.ink.650}" }
+    },
+    "category": {
+      "food": { "$value": "{palette.ember.500}" },
+      "cafe": { "$value": "{palette.lagoon.500}" },
+      "landmark": { "$value": "{palette.sand.500}" },
+      "park": { "$value": "{palette.moss.500}" },
+      "market": { "$value": "{palette.ember.500}" },
+      "unknown": {
+        "$value": "{palette.ink.400}",
+        "$description": "A site the player has not identified yet."
+      }
+    },
+    "chart": {
+      "track": { "$value": "{palette.ink.700}" },
+      "series1": { "$value": "{palette.ember.500}" },
+      "series2": { "$value": "{palette.cobalt.500}" },
+      "series3": { "$value": "{palette.moss.700}" }
+    },
+    "map": {
+      "$description": "The basemap, drawn on ground the player has already uncovered. Every value here is deliberately close to background.exploredGround: the map is orientation, not decoration, and the orange pins must stay the loudest thing on screen.",
+      "earth": {
+        "$value": "{color.background.exploredGround}",
+        "$description": "Land. The same colour as uncovered ground, so the basemap appears to *be* the ground rather than sit on it."
+      },
+      "water": {
+        "$value": "#12212E",
+        "$description": "Rivers and the sea. Blue enough to read as water at a glance, dark enough not to glow."
+      },
+      "park": {
+        "$value": "#182620",
+        "$description": "Parks and greenery. A hint of moss, well below the saturation of category.park."
+      },
+      "landuse": {
+        "$value": "#1F1F28",
+        "$description": "Built-up and institutional areas — a barely-there lift off earth."
+      },
+      "building": {
+        "$value": "#24242E",
+        "$description": "Building footprints. Visible at walking zoom, invisible at city zoom."
+      },
+      "roadMinor": {
+        "$value": "#2E2E38",
+        "$description": "Residential streets and service roads — most of what a walker actually uses."
+      },
+      "roadMajor": {
+        "$value": "#3D3D49",
+        "$description": "Arterials. The lines that let you recognise a district from its shape."
+      },
+      "roadHighway": {
+        "$value": "#4A4A58",
+        "$description": "Motorways and trunk roads, the brightest geometry on the map."
+      },
+      "path": {
+        "$value": "#2A2A33",
+        "$description": "Footpaths and alleys."
+      },
+      "rail": {
+        "$value": "#33333D"
+      },
+      "boundary": {
+        "$value": "{palette.ink.600}",
+        "$description": "District edges, drawn with the rest of the map and therefore hidden by the fog."
+      },
+      "cityBorder": {
+        "$value": "#F56B2659",
+        "$description": "35% ember — the edge of the city, drawn *above* the fog. It is the one line that shows what has not been explored yet, so it has to read against unexplored black without competing with a pin."
+      },
+      "label": {
+        "$value": "{palette.ink.400}",
+        "$description": "Street and place names. Muted on purpose: legible when looked for, never competing with a pin."
+      },
+      "labelStrong": {
+        "$value": "{palette.ink.200}",
+        "$description": "Names of localities and neighbourhoods."
+      },
+      "labelHalo": {
+        "$value": "#08080ACC",
+        "$description": "80% canvas, painted behind label text so it stays readable over roads and water alike."
+      }
+    }
+  },
+  "shadow": {
+    "$type": "shadow",
+    "card": {
+      "$value": {
+        "color": "#00000080",
+        "offsetX": "0",
+        "offsetY": "6",
+        "blur": "24",
+        "spread": "0"
+      }
+    },
+    "sheet": {
+      "$value": {
+        "color": "#000000D9",
+        "offsetX": "0",
+        "offsetY": "12",
+        "blur": "50",
+        "spread": "0"
+      }
+    },
+    "marker": {
+      "$value": {
+        "color": "#00000073",
+        "offsetX": "0",
+        "offsetY": "2",
+        "blur": "8",
+        "spread": "0"
+      }
+    }
+  }
+}

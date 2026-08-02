@@ -1,0 +1,51 @@
+{
+  "$description": "Primitive palette. Raw values only — never reference these directly from feature code, always go through a semantic token in semantic.dark.json.",
+  "palette": {
+    "$type": "color",
+    "ink": {
+      "$description": "Neutral ramp, from the darkest canvas to the lightest text.",
+      "1000": { "$value": "#000000" },
+      "950": { "$value": "#08080A" },
+      "900": { "$value": "#0D0D0F" },
+      "850": { "$value": "#141417" },
+      "800": { "$value": "#161618" },
+      "750": { "$value": "#1B1B1F" },
+      "700": { "$value": "#26262A" },
+      "650": { "$value": "#2C2C31" },
+      "600": { "$value": "#3A3A40" },
+      "500": { "$value": "#5C5C64" },
+      "450": { "$value": "#66666E" },
+      "400": { "$value": "#8A8A92" },
+      "200": { "$value": "#CFCFD6" },
+      "50": { "$value": "#F2F2F4" },
+      "0": { "$value": "#FFFFFF" }
+    },
+    "ember": {
+      "$description": "Brand orange. The only hue allowed to call for action.",
+      "300": { "$value": "#FF8B4D" },
+      "500": { "$value": "#F56B26" },
+      "700": { "$value": "#CC6B2C" }
+    },
+    "moss": {
+      "$description": "Progress and streaks.",
+      "500": { "$value": "#27B263" },
+      "700": { "$value": "#347D39" }
+    },
+    "lagoon": {
+      "$description": "Cafés, water, secondary map categories.",
+      "500": { "$value": "#2FB9C4" }
+    },
+    "sand": {
+      "$description": "Landmarks and warm map categories.",
+      "500": { "$value": "#D99A2B" }
+    },
+    "cobalt": {
+      "$description": "Informational states and quest markers.",
+      "500": { "$value": "#316DCA" }
+    },
+    "orchid": {
+      "$description": "Districts, ranking, rarity.",
+      "500": { "$value": "#8256D0" }
+    }
+  }
+}

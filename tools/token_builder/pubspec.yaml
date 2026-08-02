@@ -1,0 +1,10 @@
+name: token_builder
+description: Compiles the NoPlace design tokens into per-platform source files.
+publish_to: "none"
+version: 1.0.0
+
+environment:
+  sdk: ^3.6.0
+
+# Intentionally dependency-free: this runs in CI on a bare Dart image and must
+# never be the reason a build breaks.

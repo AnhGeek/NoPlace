@@ -1,0 +1,65 @@
+{
+  "$description": "Geometry scale. Every padding, gap, radius and fixed size in the product must come from here — the mock-up's ad-hoc values (6/10/13/18px) were snapped onto this scale.",
+  "space": {
+    "$type": "dimension",
+    "$description": "4pt base grid. `none`..`huge` are layout gaps and paddings.",
+    "none": { "$value": "0" },
+    "hair": { "$value": "2" },
+    "xxs": { "$value": "4" },
+    "xs": { "$value": "8" },
+    "sm": { "$value": "10" },
+    "md": { "$value": "12" },
+    "lg": { "$value": "16" },
+    "xl": { "$value": "20" },
+    "xxl": { "$value": "24" },
+    "xxxl": { "$value": "32" },
+    "huge": { "$value": "40" }
+  },
+  "radius": {
+    "$type": "dimension",
+    "xs": { "$value": "4" },
+    "sm": { "$value": "8" },
+    "md": { "$value": "12" },
+    "lg": { "$value": "14" },
+    "xl": { "$value": "16" },
+    "xxl": { "$value": "22" },
+    "sheet": { "$value": "22" },
+    "pill": { "$value": "999" }
+  },
+  "border": {
+    "$type": "dimension",
+    "hairline": { "$value": "1" },
+    "thin": { "$value": "1.5" },
+    "thick": { "$value": "2" },
+    "heavy": { "$value": "3" }
+  },
+  "size": {
+    "$type": "dimension",
+    "$description": "Fixed component dimensions that several features share.",
+    "iconXs": { "$value": "12" },
+    "iconSm": { "$value": "14" },
+    "iconMd": { "$value": "16" },
+    "iconLg": { "$value": "20" },
+    "iconXl": { "$value": "22" },
+    "iconHero": { "$value": "34" },
+    "touchTarget": { "$value": "48" },
+    "mapPin": { "$value": "32" },
+    "mapPinSmall": { "$value": "26" },
+    "playerDot": { "$value": "26" },
+    "playerHalo": { "$value": "58" },
+    "avatar": { "$value": "78" },
+    "logMark": { "$value": "38" },
+    "discoveryBadge": { "$value": "86" },
+    "progressBar": { "$value": "6" },
+    "grabber": { "$value": "44" },
+    "tabIndicator": { "$value": "2" },
+    "navBarHeight": { "$value": "64" }
+  },
+  "opacity": {
+    "$type": "number",
+    "$description": "Only three steps — anything else reads as a bug.",
+    "locked": { "$value": 0.45 },
+    "scrim": { "$value": 0.55 },
+    "fog": { "$value": 0.96 }
+  }
+}

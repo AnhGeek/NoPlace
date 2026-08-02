@@ -1,0 +1,19 @@
+{
+  "$description": "Motion is a signal, not decoration: it either confirms an action or points at something new on the map.",
+  "duration": {
+    "$type": "duration",
+    "instant": { "$value": "90ms" },
+    "fast": { "$value": "160ms" },
+    "base": { "$value": "240ms" },
+    "slow": { "$value": "360ms" },
+    "reveal": { "$value": "700ms" },
+    "pulse": { "$value": "2400ms" }
+  },
+  "easing": {
+    "$type": "cubicBezier",
+    "standard": { "$value": [0.2, 0, 0, 1] },
+    "decelerate": { "$value": [0, 0, 0, 1] },
+    "accelerate": { "$value": [0.3, 0, 1, 1] },
+    "emphasized": { "$value": [0.2, 0, 0, 1.2] }
+  }
+}
