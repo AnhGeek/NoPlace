@@ -106,35 +106,25 @@ jobs:
           storeFile=upload-keystore.jks
           EOF
 
-      # Split per ABI: three ~40% smaller APKs instead of one fat universal
-      # binary. The universal one is built too, for anyone who does not know
-      # their device's ABI and just wants a file that installs.
-      - name: Build split APKs
+      # arm64 only, deliberately. The one device this ships to is a Samsung
+      # Galaxy A06 (Helio G85), which is arm64-v8a — so armeabi-v7a, x86_64 and
+      # the fat universal build were all weight nobody downloads. Add a target
+      # back here the day a second device needs one.
+      - name: Build APK
         working-directory: app
         run: |
-          flutter build apk --release --split-per-abi \
+          flutter build apk --release --target-platform android-arm64 \
             --build-name "${{ steps.version.outputs.name }}" \
             --build-number "${{ github.run_number }}"
 
-      - name: Build universal APK
-        working-directory: app
-        run: |
-          flutter build apk --release \
-            --build-name "${{ steps.version.outputs.name }}" \
-            --build-number "${{ github.run_number }}"
-
-      # Flutter names every build app-<abi>-release.apk, which tells a user who
+      # Flutter calls every build app-release.apk, which tells a user who
       # downloaded it nothing about which version they have.
-      - name: Name the artifacts after the release
-        id: artifacts
+      - name: Name the artifact after the release
         run: |
           mkdir -p dist
           V="${{ steps.version.outputs.name }}"
-          SRC=app/build/app/outputs/flutter-apk
-          for abi in armeabi-v7a arm64-v8a x86_64; do
-            cp "$SRC/app-$abi-release.apk" "dist/noplace-$V-$abi.apk"
-          done
-          cp "$SRC/app-release.apk" "dist/noplace-$V-universal.apk"
+          cp app/build/app/outputs/flutter-apk/app-release.apk \
+             "dist/noplace-$V-arm64-v8a.apk"
           ls -lh dist
 
       # Checksums, so a download can be verified without trusting the CDN.
@@ -144,11 +134,42 @@ jobs:
           sha256sum *.apk > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
+      # GitHub's own asset list sits below the fold and names a file, not a
+      # link you can hand to somebody. The notes lead with the download.
+      - name: Compose the download section
+        run: |
+          V="${{ steps.version.outputs.name }}"
+          BASE="${{ github.server_url }}/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}"
+          APK="noplace-$V-arm64-v8a.apk"
+          SIZE=$(numfmt --to=iec --format='%.0f' "$(stat -c %s "dist/$APK")")
+
+          {
+            echo "## Download"
+            echo
+            echo "### ⬇️ [$APK]($BASE/$APK) — $SIZE"
+            echo
+            echo "Built for **arm64-v8a** only, which is what the Samsung Galaxy A06 and every other 64-bit ARM phone runs. It will not install on a 32-bit device or an x86 emulator."
+            echo
+            echo "Sideloading: open the file on the phone and allow installs from your browser when Android asks."
+            echo
+            echo "Verify it against [SHA256SUMS.txt]($BASE/SHA256SUMS.txt):"
+            echo
+            echo '```bash'
+            echo "sha256sum -c SHA256SUMS.txt --ignore-missing"
+            echo '```'
+            echo
+            echo "> **No basemap.** Region packs are not committed, so these builds draw no streets. See the README for how to cook one."
+          } > RELEASE_BODY.md
+
+          cat RELEASE_BODY.md
+
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: NoPlace ${{ steps.version.outputs.name }}
+          # Prepended to the auto-generated commit/contributor notes.
+          body_path: RELEASE_BODY.md
           generate_release_notes: true
           # A tag ending in -beta/-rc marks the release as a pre-release.
           prerelease: ${{ contains(steps.version.outputs.tag, '-') }}

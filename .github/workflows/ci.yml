@@ -100,7 +100,8 @@ jobs:
 
       # Debug, not release: this job proves the Android build still assembles.
       # Signing belongs to release.yml, which is the only place the upload key
-      # is ever decrypted.
+      # is ever decrypted. arm64 only, matching what release.yml ships — there
+      # is no point gating merges on an ABI nobody receives.
       - name: Build
         working-directory: app
-        run: flutter build apk --debug
+        run: flutter build apk --debug --target-platform android-arm64

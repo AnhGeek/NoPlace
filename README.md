@@ -76,9 +76,14 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-[`.github/workflows/release.yml`](.github/workflows/release.yml) then builds
-three per-ABI APKs plus a universal one, signs them, and attaches them with a
-`SHA256SUMS.txt` to a GitHub Release named after the tag. The marketing version
+[`.github/workflows/release.yml`](.github/workflows/release.yml) then builds a
+signed **arm64-v8a** APK and attaches it, with a `SHA256SUMS.txt` and a download
+section in the notes, to a GitHub Release named after the tag.
+
+arm64 is the only target on purpose — it covers the Samsung Galaxy A06 this
+ships to, and every other 64-bit ARM phone. It will not install on a 32-bit
+device or an x86 emulator; add a target back to the build step when one is
+needed. The marketing version
 comes from the tag (`v0.1.0` → `0.1.0`) and the build number from the workflow
 run number, so neither is edited in `pubspec.yaml` by hand. A tag containing a
 hyphen (`v0.2.0-rc1`) is published as a pre-release.
