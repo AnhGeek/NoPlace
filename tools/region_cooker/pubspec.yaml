@@ -1,0 +1,13 @@
+name: region_cooker
+description: Cooks a NoPlace region pack from OpenStreetMap data.
+publish_to: "none"
+version: 1.0.0
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  # The pack is a SQLite file, and the last step is writing our metadata into
+  # it. Same engine the app reads it with.
+  sqflite_common_ffi: ^2.4.2
+  path: ^1.9.1

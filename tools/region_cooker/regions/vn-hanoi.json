@@ -1,0 +1,22 @@
+{
+  "id": "vn-hanoi",
+  "name": "Hà Nội",
+  "name_en": "Hanoi",
+  "country": "VN",
+  "//bbox": "minLon, minLat, maxLon, maxLat — the MBTiles order.",
+  "bbox": [
+    105.29,
+    20.56,
+    106.02,
+    21.39
+  ],
+  "//zoom": "z14 is a district, z16 is a street corner. Below 12 the player is looking at a shape, not a city, and the fog covers it anyway.",
+  "minzoom": 8,
+  "maxzoom": 15,
+  "//build": "Pinned, never 'latest': two cooks of the same input must produce the same pack. Bump it on purpose.",
+  "build": "20260731",
+  "attribution": "© OpenStreetMap contributors",
+  "tile_source": "protomaps-v4",
+  "//budget": "Refuse to publish a pack larger than this. Catches a bbox typo before it becomes a 400 MB APK.",
+  "max_size_mb": 120
+}
