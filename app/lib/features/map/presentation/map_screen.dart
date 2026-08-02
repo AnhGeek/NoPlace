@@ -208,10 +208,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  RecentreButton(
-                    following: _following,
-                    onPressed: _recentre,
-                  ),
+                  RecentreButton(following: _following, onPressed: _recentre),
                   const SizedBox(height: NpSpace.sm),
                   switch (nearest) {
                     null => const NearbyCard.empty(),

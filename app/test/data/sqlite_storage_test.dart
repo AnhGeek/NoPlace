@@ -141,25 +141,24 @@ void main() {
 
       final db = await database.open();
       final rows = await db.query('trail_points', columns: ['region_id']);
-      expect(
-        rows.map((r) => r['region_id']).toSet(),
-        {'vn-hcmc', 'vn-hanoi'},
-      );
+      expect(rows.map((r) => r['region_id']).toSet(), {'vn-hcmc', 'vn-hanoi'});
     });
 
-    test('switching flushes, so the last metres land in the right city',
-        () async {
-      final trail = SqliteTrailRepository(database, regionId: 'vn-hcmc');
-      await trail.load();
-      // Recorded but *not* flushed — this is the walk-to-the-border case.
-      await trail.record(benThanh);
+    test(
+      'switching flushes, so the last metres land in the right city',
+      () async {
+        final trail = SqliteTrailRepository(database, regionId: 'vn-hcmc');
+        await trail.load();
+        // Recorded but *not* flushed — this is the walk-to-the-border case.
+        await trail.record(benThanh);
 
-      await trail.switchTo('vn-hanoi');
+        await trail.switchTo('vn-hanoi');
 
-      final db = await database.open();
-      final row = (await db.query('trail_points')).single;
-      expect(row['region_id'], 'vn-hcmc');
-    });
+        final db = await database.open();
+        final row = (await db.query('trail_points')).single;
+        expect(row['region_id'], 'vn-hcmc');
+      },
+    );
 
     test('clearing one city leaves the others alone', () async {
       final trail = SqliteTrailRepository(database, regionId: 'vn-hcmc');
