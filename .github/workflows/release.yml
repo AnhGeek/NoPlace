@@ -124,19 +124,20 @@ jobs:
           rm -f pmtiles pmtiles.tar.gz
           pmtiles version
 
-      # sqflite_common_ffi opens the *unversioned* `libsqlite3.so` on Linux, and
-      # only -dev ships that symlink. The runtime package (libsqlite3-0, already
-      # on the image) gives libsqlite3.so.0, which the lookup does not find: it
-      # falls back to searching the dart binary itself and dies on `undefined
-      # symbol: sqlite3_initialize`. -dev is the fix, not belt and braces.
+      # Run from inside the cooker, exactly as its README says, not by path from
+      # the repo root. sqflite_common_ffi pulls in sqlite3, which binds its
+      # native library through a Dart build hook; hooks are built for the
+      # package `dart run` is invoked in. From the root the hook never runs and
+      # the cooker dies on `undefined symbol: sqlite3_initialize` the moment it
+      # opens the MBTiles file. (The token builder next door gets away with a
+      # path invocation because it has no dependencies at all.)
       - name: Cook the region pack
+        working-directory: tools/region_cooker
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libsqlite3-dev
-          dart pub get --directory tools/region_cooker
-          dart run tools/region_cooker/bin/cook.dart vn-hcmc
-          cp tools/region_cooker/dist/vn-hcmc.mbtiles app/assets/maps/vn-hcmc.mbtiles
-          ls -lh app/assets/maps
+          dart pub get
+          dart run bin/cook.dart vn-hcmc
+          cp dist/vn-hcmc.mbtiles ../../app/assets/maps/vn-hcmc.mbtiles
+          ls -lh ../../app/assets/maps
 
       # arm64 only, deliberately. The one device this ships to is a Samsung
       # Galaxy A06 (Helio G85), which is arm64-v8a — so armeabi-v7a, x86_64 and
