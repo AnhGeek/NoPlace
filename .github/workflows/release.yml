@@ -106,6 +106,36 @@ jobs:
           storeFile=upload-keystore.jks
           EOF
 
+      # The basemap. Region packs are gitignored — tens of megabytes,
+      # reproducible from a pinned build date — so a fresh checkout has an empty
+      # assets/maps/ and the APK would ship with no streets at all. Cook it here
+      # instead of committing it: same input, same pack, no binary in git.
+      #
+      # A single Go binary, pinned. `latest` would let an upstream release
+      # change the extract format under a tag we are trying to reproduce.
+      - name: Install the pmtiles CLI
+        env:
+          PMTILES_VERSION: "1.31.2"
+        run: |
+          curl -sSfL -o pmtiles.tar.gz \
+            "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz"
+          tar -xzf pmtiles.tar.gz pmtiles
+          sudo install -m 0755 pmtiles /usr/local/bin/pmtiles
+          rm -f pmtiles pmtiles.tar.gz
+          pmtiles version
+
+      # sqflite_common_ffi loads the system libsqlite3 on Linux. Present on
+      # ubuntu-latest today; asking for it explicitly means a runner image that
+      # drops it fails here, with a clear message, instead of inside the cooker.
+      - name: Cook the region pack
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libsqlite3-0
+          dart pub get --directory tools/region_cooker
+          dart run tools/region_cooker/bin/cook.dart vn-hcmc
+          cp tools/region_cooker/dist/vn-hcmc.mbtiles app/assets/maps/vn-hcmc.mbtiles
+          ls -lh app/assets/maps
+
       # arm64 only, deliberately. The one device this ships to is a Samsung
       # Galaxy A06 (Helio G85), which is arm64-v8a — so armeabi-v7a, x86_64 and
       # the fat universal build were all weight nobody downloads. Add a target
@@ -158,7 +188,7 @@ jobs:
             echo "sha256sum -c SHA256SUMS.txt --ignore-missing"
             echo '```'
             echo
-            echo "> **No basemap.** Region packs are not committed, so these builds draw no streets. See the README for how to cook one."
+            echo "**Basemap included.** Ho Chi Minh City ships inside the APK, so the map draws streets on first launch with no network. Map data © OpenStreetMap contributors, ODbL."
           } > RELEASE_BODY.md
 
           cat RELEASE_BODY.md
