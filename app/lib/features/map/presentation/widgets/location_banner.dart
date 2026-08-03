@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -90,5 +92,101 @@ class LocationBanner extends ConsumerWidget {
     }
 
     await location.openSettingsFor(problem);
+  }
+}
+
+/// Dismissed for this session only.
+///
+/// Deliberately not persisted. The cost of getting this wrong is asymmetric: a
+/// player who dismisses it and later wonders why their walks have gaps is worse
+/// off than one who sees the card again next launch, and the card disappears
+/// for good the moment they say yes.
+class _SleepBannerDismissed extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void dismiss() => state = true;
+}
+
+final _sleepBannerDismissedProvider =
+    NotifierProvider<_SleepBannerDismissed, bool>(_SleepBannerDismissed.new);
+
+/// Warns that the phone is still allowed to freeze NoPlace in a pocket.
+///
+/// A different problem from [LocationBanner]'s, with a different remedy, which
+/// is why it is a second card rather than another case in that switch: the
+/// permission can be granted and the foreground service running, and the walk
+/// still comes back in pieces because battery saving put the process to sleep.
+///
+/// Android-only in practice — the repository reports `false` everywhere else,
+/// so this builds to nothing on iOS.
+class BackgroundSleepBanner extends ConsumerWidget {
+  const BackgroundSleepBanner({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final optimised = ref.watch(batteryOptimisedProvider).value ?? false;
+    final dismissed = ref.watch(_sleepBannerDismissedProvider);
+    // Nothing to say until location is actually working: one problem at a time,
+    // and the OS setting is moot while no fixes are arriving anyway.
+    final ready =
+        ref.watch(locationAvailabilityProvider).value ==
+        LocationAvailability.ready;
+
+    if (!optimised || dismissed || !ready) return const SizedBox.shrink();
+
+    final l10n = context.l10n;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(NpSpace.lg, NpSpace.md, NpSpace.lg, 0),
+      child: NpCard(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.backgroundSleepTitle, style: NpTypography.bodyStrong),
+                  const SizedBox(height: NpSpace.xxs),
+                  Text(
+                    l10n.backgroundSleepBody,
+                    style: NpTypography.footnote.copyWith(
+                      color: NpColors.contentMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: NpSpace.md),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                NpPrimaryButton(
+                  label: l10n.backgroundSleepAction,
+                  expand: false,
+                  compact: true,
+                  onPressed: () => unawaited(
+                    ref
+                        .read(locationRepositoryProvider)
+                        .requestBatteryExemption(),
+                  ),
+                ),
+                TextButton(
+                  onPressed: ref
+                      .read(_sleepBannerDismissedProvider.notifier)
+                      .dismiss,
+                  child: Text(
+                    l10n.commonNotNow,
+                    style: NpTypography.footnote.copyWith(
+                      color: NpColors.contentMuted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

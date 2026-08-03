@@ -391,6 +391,30 @@ class AppL10nVi extends AppL10n {
   String get locationWaiting => 'Đang tìm bạn…';
 
   @override
+  String get backgroundAskTitle => 'Ghi lại đường đi khi bạn đang bước';
+
+  @override
+  String get backgroundAskBody =>
+      'NoPlace mở bản đồ theo nơi bạn thật sự đi qua, nghĩa là phải ghi cả khi tắt màn hình và điện thoại nằm trong túi. Chế độ tiết kiệm pin sẽ chặn việc đó, và đường đi sẽ bị đứt quãng.';
+
+  @override
+  String get backgroundAskNote =>
+      'Luôn có thông báo hiện lên suốt lúc ghi. Đóng NoPlace là dừng hẳn.';
+
+  @override
+  String get backgroundAskAction => 'Cho phép';
+
+  @override
+  String get backgroundSleepTitle => 'Điện thoại có thể tạm dừng NoPlace';
+
+  @override
+  String get backgroundSleepBody =>
+      'Chế độ tiết kiệm pin được phép cho ứng dụng ngủ khi trong túi, làm đường đi bị đứt quãng.';
+
+  @override
+  String get backgroundSleepAction => 'Giữ chạy nền';
+
+  @override
   String mapNearestTitle(String place) {
     return 'Gần nhất · $place';
   }

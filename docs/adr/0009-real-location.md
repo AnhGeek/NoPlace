@@ -33,6 +33,35 @@ start tracking from the background, which is the only thing that permission buys
 On iOS the equivalent is `UIBackgroundModes: location` plus
 `allowBackgroundLocationUpdates`, again on while-in-use rather than "Always".
 
+### The service is necessary, not sufficient
+
+Shipping it showed that the service starting is only the first of three things
+that have to hold for a walk with the screen off to be recorded whole. The other
+two are outside `geolocator` and are handled in `MainActivity` behind one method
+channel, rather than by adding a permissions plugin for three calls:
+
+1. **The notification has to be postable.** From Android 13 that is a runtime
+   permission. A foreground service whose notification is suppressed still runs,
+   but it runs unannounced — and unannounced is the state in which the system is
+   most willing to reclaim it. Asked for at the same moment as location, before
+   the stream is subscribed, because the notification is posted the instant it
+   is.
+2. **The process must not be dozed.** Doze and the OEM battery managers —
+   Samsung's "sleeping apps", MIUI's battery saver — freeze an unexempted app
+   minutes after the screen goes off. This is not a dropped fix; it is a stopped
+   isolate, and it is the exact shape of "the fog stopped recording in my
+   pocket". The app asks for the exemption from a dismissible card on the map,
+   and works without it.
+
+And one rule follows from the service rather than being another prerequisite:
+**a stream error while the app is hidden must not be answered by
+re-subscribing.** Cancelling the position stream stops the foreground service,
+and from Android 12 a backgrounded app is not allowed to start one again — so
+the obvious repair is what would end the walk for good. `cancelOnError` is
+already false, so the stream may recover on its own; if it does not, the restart
+is held until the next resume. `test/data/location_background_test.dart` pins
+all four cases.
+
 Availability is modelled as states — `ready`, `serviceDisabled`, `denied`,
 `deniedForever` — not as an error, because each one has a different remedy and
 the player can act on all of them. `LocationBanner` shows the matching sentence
@@ -59,6 +88,10 @@ resume so returning from Settings does not land on the same banner.
   of watching the position, and the camera used `initialCenter` only, so the
   marker walked off a stationary map. All three are fixed and the first has a
   regression test.
+- **Two permissions the player can refuse without breaking anything.** Refusing
+  the notification leaves the service running unannounced; refusing the battery
+  exemption leaves the walk at the mercy of the OEM. Both are worth having and
+  neither is a gate.
 - Verified on a Galaxy S8+ (Android 9): permission prompt, foreground service
   running (`isForeground=true`) with its notification, a real fix in Gò Vấp, the
   camera following it, and the fog opening over real streets.

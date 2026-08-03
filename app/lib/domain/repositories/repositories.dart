@@ -147,6 +147,17 @@ abstract interface class PreferencesRepository {
   Stream<double> watchNearbyRadiusMeters();
 
   Future<void> setNearbyRadiusMeters(double meters);
+
+  /// Whether the player has already been asked to let NoPlace keep running in
+  /// the background.
+  ///
+  /// Persisted rather than session-scoped because the alternative is a dialog
+  /// on every launch, and an app that asks the same question every morning
+  /// teaches people to dismiss it without reading. Asked once; after that the
+  /// map carries a card they can act on whenever they like.
+  Stream<bool> watchBackgroundPromptSeen();
+
+  Future<void> markBackgroundPromptSeen();
 }
 
 /// The player's own progression.

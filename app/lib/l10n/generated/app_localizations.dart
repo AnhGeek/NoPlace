@@ -697,6 +697,48 @@ abstract class AppL10n {
   /// **'Looking for you…'**
   String get locationWaiting;
 
+  /// Headline of the one-time sheet asking to let the app run in the background.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep recording while you walk'**
+  String get backgroundAskTitle;
+
+  /// Explains the request in terms of the walk rather than the OS setting.
+  ///
+  /// In en, this message translates to:
+  /// **'NoPlace uncovers the map from where you actually go — which means recording with the screen off and the phone in your pocket. Battery saving stops that unless you allow it, and the walk comes back with gaps.'**
+  String get backgroundAskBody;
+
+  /// The reassurance half of the ask: what the player gets in return for saying yes.
+  ///
+  /// In en, this message translates to:
+  /// **'A notification is showing the whole time it records. Nothing happens while NoPlace is closed.'**
+  String get backgroundAskNote;
+
+  /// Button opening the system's background/battery exemption prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get backgroundAskAction;
+
+  /// Banner on the map when Android battery optimisation may freeze the app mid-walk.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone can pause NoPlace'**
+  String get backgroundSleepTitle;
+
+  /// Explains the consequence in terms of the trail rather than the OS setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery saving is allowed to put the app to sleep in your pocket, which leaves gaps in the walk.'**
+  String get backgroundSleepBody;
+
+  /// Button opening the battery optimisation exemption prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep awake'**
+  String get backgroundSleepAction;
+
   /// Headline of the nearby card when the closest place is too far to claim.
   ///
   /// In en, this message translates to:

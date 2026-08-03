@@ -17,6 +17,7 @@ import '../../../domain/entities/geo_point.dart';
 import '../../../domain/entities/map_layer_visibility.dart';
 import '../../../domain/entities/map_point.dart';
 import '../../../domain/entities/place.dart';
+import '../../../domain/repositories/repositories.dart';
 import '../../../l10n/l10n.dart';
 import '../../check_in/presentation/check_in_sheet.dart';
 import 'basemap/basemap.dart';
@@ -24,6 +25,7 @@ import 'basemap/basemap_attribution.dart';
 import 'map_controller.dart';
 import 'picture_point_thumbnails.dart';
 import 'place_visuals.dart';
+import 'widgets/background_permission_sheet.dart';
 import 'widgets/location_banner.dart';
 import 'widgets/map_canvas.dart';
 import 'widgets/nearby_card.dart';
@@ -53,11 +55,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// as the map fighting you, because it is.
   bool _following = true;
 
-  /// Re-reads the permission and location-service state when the app comes
-  /// back to the foreground.
+  /// Re-reads everything that can change while we are not looking, when the app
+  /// comes back to the foreground.
   ///
   /// Without this, a player who taps "Open settings", grants the permission and
   /// returns lands on the same banner telling them to do what they just did.
+  ///
+  /// It is also where a walk repairs itself: a position stream that failed in a
+  /// pocket cannot be restarted from the background — that would mean starting
+  /// a foreground service from the background, which Android 12 forbids — so
+  /// [GeolocatorLocationRepository.refresh] holds the restart until here.
   late final AppLifecycleListener _lifecycle;
 
   @override
@@ -101,6 +108,26 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       // Starts the GPS and the foreground service, and feeds every fix into
       // the world. Alive for as long as the map is.
       ..watch(locationSyncProvider);
+
+    // The one-time background question. Deliberately not on first launch: it
+    // waits until location is actually working, so the player has already said
+    // yes to the permission this one builds on and has the map in front of them
+    // to make sense of the ask.
+    ref
+      ..listen<AsyncValue<bool>>(batteryOptimisedProvider, (previous, next) {
+        _maybeAskAboutBackground();
+      })
+      ..listen<AsyncValue<LocationAvailability>>(
+        locationAvailabilityProvider,
+        (previous, next) => _maybeAskAboutBackground(),
+      )
+      // All three arrive asynchronously and in no fixed order, so every one of
+      // them has to re-ask the question. Reading a provider nobody listens to
+      // would answer "still loading" forever.
+      ..listen<AsyncValue<bool>>(
+        backgroundPromptSeenProvider,
+        (previous, next) => _maybeAskAboutBackground(),
+      );
 
     // Keep the camera on the player, but only while they want it there.
     //
@@ -198,6 +225,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   // map does.
                   const LocationBanner(),
 
+                  // The second way a walk goes missing: everything is granted
+                  // and the phone still puts the app to sleep in a pocket.
+                  const BackgroundSleepBanner(),
+
                   if (!showMap)
                     Expanded(
                       child: Padding(
@@ -255,6 +286,30 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         );
       },
     );
+  }
+
+  /// Whether the background sheet is already up or has been this session.
+  ///
+  /// Three streams can land within a frame of each other and all three would
+  /// otherwise open it; the persisted flag is only written once the player has
+  /// answered, which is too late to stop the second sheet.
+  bool _asking = false;
+
+  /// Puts the background question when, and only when, all of it is true: the
+  /// GPS is working, the phone can still freeze us, and we have not asked
+  /// before.
+  void _maybeAskAboutBackground() {
+    if (_asking || !mounted) return;
+
+    final ready =
+        ref.read(locationAvailabilityProvider).value ==
+        LocationAvailability.ready;
+    final optimised = ref.read(batteryOptimisedProvider).value ?? false;
+    final seen = ref.read(backgroundPromptSeenProvider).value ?? true;
+    if (!ready || !optimised || seen) return;
+
+    _asking = true;
+    unawaited(showBackgroundPermissionSheet(context: context, ref: ref));
   }
 
   /// The player took hold of the map. Stop pulling it back.

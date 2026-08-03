@@ -342,6 +342,23 @@ void main() {
       expect(reopened.currentNearbyRadiusMeters, 5000);
     });
 
+    test('the background question is asked once, not once a launch', () async {
+      final preferences = SqlitePreferencesRepository(database);
+      await preferences.load();
+
+      // Never asked yet is the only state that shows the sheet.
+      expect(preferences.currentBackgroundPromptSeen, isFalse);
+
+      await preferences.markBackgroundPromptSeen();
+
+      final reopened = SqlitePreferencesRepository(
+        AppDatabase(directory: directory),
+      );
+      await reopened.load();
+
+      expect(reopened.currentBackgroundPromptSeen, isTrue);
+    });
+
     test('the stream reports the change', () async {
       final preferences = SqlitePreferencesRepository(database);
       await preferences.load();

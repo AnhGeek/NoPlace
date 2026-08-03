@@ -392,6 +392,30 @@ class AppL10nEn extends AppL10n {
   String get locationWaiting => 'Looking for you…';
 
   @override
+  String get backgroundAskTitle => 'Keep recording while you walk';
+
+  @override
+  String get backgroundAskBody =>
+      'NoPlace uncovers the map from where you actually go — which means recording with the screen off and the phone in your pocket. Battery saving stops that unless you allow it, and the walk comes back with gaps.';
+
+  @override
+  String get backgroundAskNote =>
+      'A notification is showing the whole time it records. Nothing happens while NoPlace is closed.';
+
+  @override
+  String get backgroundAskAction => 'Allow';
+
+  @override
+  String get backgroundSleepTitle => 'Your phone can pause NoPlace';
+
+  @override
+  String get backgroundSleepBody =>
+      'Battery saving is allowed to put the app to sleep in your pocket, which leaves gaps in the walk.';
+
+  @override
+  String get backgroundSleepAction => 'Keep awake';
+
+  @override
   String mapNearestTitle(String place) {
     return 'Nearest · $place';
   }

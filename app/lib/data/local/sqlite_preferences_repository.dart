@@ -37,6 +37,10 @@ class SqlitePreferencesRepository implements PreferencesRepository {
   static const String _clearingRadiusKey = 'fog.clearing_radius_meters';
   static const String _precisionKey = 'fog.recording_precision_meters';
   static const String _nearbyRadiusKey = 'nearby.radius_meters';
+  static const String _backgroundPromptKey = 'background.prompt_seen';
+
+  /// Asked once, then never again — see [PreferencesRepository].
+  final ReplaySubject<bool> _backgroundPromptSeen = ReplaySubject(false);
 
   @override
   Stream<MapLayerVisibility> watchMapLayerVisibility() => _visibility.stream;
@@ -47,11 +51,16 @@ class SqlitePreferencesRepository implements PreferencesRepository {
   @override
   Stream<double> watchNearbyRadiusMeters() => _nearbyRadius.stream;
 
+  @override
+  Stream<bool> watchBackgroundPromptSeen() => _backgroundPromptSeen.stream;
+
   MapLayerVisibility get currentVisibility => _visibility.value;
 
   FogSettings get currentFogSettings => _fog.value;
 
   double get currentNearbyRadiusMeters => _nearbyRadius.value;
+
+  bool get currentBackgroundPromptSeen => _backgroundPromptSeen.value;
 
   Future<void> load() async {
     if (_loaded) return;
@@ -85,6 +94,10 @@ class SqlitePreferencesRepository implements PreferencesRepository {
       _nearbyRadius.value =
           double.tryParse(values[_nearbyRadiusKey] ?? '') ??
           ExplorationRules.defaultNearbyRadiusMeters;
+
+      // Absent means "not asked yet", which is the one case that shows the
+      // dialog — so this cannot use `read()`, whose default is true.
+      _backgroundPromptSeen.value = values[_backgroundPromptKey] == 'true';
     } on Object catch (error) {
       // Falling back to "show everything" is the safe default: a preference we
       // cannot read must never hide the player's own points.
@@ -103,6 +116,13 @@ class SqlitePreferencesRepository implements PreferencesRepository {
   Future<void> setNearbyRadiusMeters(double meters) async {
     _nearbyRadius.value = meters;
     await _write(_nearbyRadiusKey, '$meters');
+  }
+
+  @override
+  Future<void> markBackgroundPromptSeen() async {
+    if (_backgroundPromptSeen.value) return;
+    _backgroundPromptSeen.value = true;
+    await _write(_backgroundPromptKey, 'true');
   }
 
   Future<void> _write(String key, String value) async {

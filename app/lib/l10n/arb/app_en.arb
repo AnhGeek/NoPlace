@@ -513,6 +513,34 @@
   "@locationWaiting": {
     "description": "Shown while permission is granted but no GPS fix has arrived yet."
   },
+  "backgroundAskTitle": "Keep recording while you walk",
+  "@backgroundAskTitle": {
+    "description": "Headline of the one-time sheet asking to let the app run in the background."
+  },
+  "backgroundAskBody": "NoPlace uncovers the map from where you actually go — which means recording with the screen off and the phone in your pocket. Battery saving stops that unless you allow it, and the walk comes back with gaps.",
+  "@backgroundAskBody": {
+    "description": "Explains the request in terms of the walk rather than the OS setting."
+  },
+  "backgroundAskNote": "A notification is showing the whole time it records. Nothing happens while NoPlace is closed.",
+  "@backgroundAskNote": {
+    "description": "The reassurance half of the ask: what the player gets in return for saying yes."
+  },
+  "backgroundAskAction": "Allow",
+  "@backgroundAskAction": {
+    "description": "Button opening the system's background/battery exemption prompt."
+  },
+  "backgroundSleepTitle": "Your phone can pause NoPlace",
+  "@backgroundSleepTitle": {
+    "description": "Banner on the map when Android battery optimisation may freeze the app mid-walk."
+  },
+  "backgroundSleepBody": "Battery saving is allowed to put the app to sleep in your pocket, which leaves gaps in the walk.",
+  "@backgroundSleepBody": {
+    "description": "Explains the consequence in terms of the trail rather than the OS setting."
+  },
+  "backgroundSleepAction": "Keep awake",
+  "@backgroundSleepAction": {
+    "description": "Button opening the battery optimisation exemption prompt."
+  },
 
   "mapNearestTitle": "Nearest · {place}",
   "@mapNearestTitle": {

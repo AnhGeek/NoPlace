@@ -138,6 +138,21 @@ final locationAvailabilityProvider = StreamProvider<LocationAvailability>((
   return ref.watch(locationRepositoryProvider).watchAvailability();
 });
 
+/// Whether the OS is still allowed to freeze this process mid-walk.
+///
+/// A separate state from [locationAvailabilityProvider] because it is a
+/// separate problem with a separate remedy: the permission can be perfect and
+/// the service running, and the walk still comes back with a hole in it because
+/// the phone put the app to sleep in a pocket.
+final batteryOptimisedProvider = StreamProvider<bool>((ref) {
+  return ref.watch(locationRepositoryProvider).watchBatteryOptimised();
+});
+
+/// Whether we have already put the background question to the player.
+final backgroundPromptSeenProvider = StreamProvider<bool>((ref) {
+  return ref.watch(preferencesRepositoryProvider).watchBackgroundPromptSeen();
+});
+
 /// Starts tracking and feeds every fix into the world.
 ///
 /// Kept alive by the map. Everything downstream — the marker, the nearby list,

@@ -115,6 +115,13 @@
   "locationActionAllow": "Cho phép",
   "locationActionSettings": "Mở cài đặt",
   "locationWaiting": "Đang tìm bạn…",
+  "backgroundAskTitle": "Ghi lại đường đi khi bạn đang bước",
+  "backgroundAskBody": "NoPlace mở bản đồ theo nơi bạn thật sự đi qua, nghĩa là phải ghi cả khi tắt màn hình và điện thoại nằm trong túi. Chế độ tiết kiệm pin sẽ chặn việc đó, và đường đi sẽ bị đứt quãng.",
+  "backgroundAskNote": "Luôn có thông báo hiện lên suốt lúc ghi. Đóng NoPlace là dừng hẳn.",
+  "backgroundAskAction": "Cho phép",
+  "backgroundSleepTitle": "Điện thoại có thể tạm dừng NoPlace",
+  "backgroundSleepBody": "Chế độ tiết kiệm pin được phép cho ứng dụng ngủ khi trong túi, làm đường đi bị đứt quãng.",
+  "backgroundSleepAction": "Giữ chạy nền",
 
   "mapNearestTitle": "Gần nhất · {place}",
   "mapNearestMeta": "Cách {distance} · đi gần hơn để điểm danh",
