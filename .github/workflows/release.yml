@@ -124,13 +124,15 @@ jobs:
           rm -f pmtiles pmtiles.tar.gz
           pmtiles version
 
-      # sqflite_common_ffi loads the system libsqlite3 on Linux. Present on
-      # ubuntu-latest today; asking for it explicitly means a runner image that
-      # drops it fails here, with a clear message, instead of inside the cooker.
+      # sqflite_common_ffi opens the *unversioned* `libsqlite3.so` on Linux, and
+      # only -dev ships that symlink. The runtime package (libsqlite3-0, already
+      # on the image) gives libsqlite3.so.0, which the lookup does not find: it
+      # falls back to searching the dart binary itself and dies on `undefined
+      # symbol: sqlite3_initialize`. -dev is the fix, not belt and braces.
       - name: Cook the region pack
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libsqlite3-0
+          sudo apt-get install -y --no-install-recommends libsqlite3-dev
           dart pub get --directory tools/region_cooker
           dart run tools/region_cooker/bin/cook.dart vn-hcmc
           cp tools/region_cooker/dist/vn-hcmc.mbtiles app/assets/maps/vn-hcmc.mbtiles
