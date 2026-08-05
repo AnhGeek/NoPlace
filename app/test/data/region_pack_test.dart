@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:noplace/data/local/region_catalogue.dart';
 import 'package:noplace/data/local/region_pack.dart';
 import 'package:noplace/data/local/region_pack_store.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -215,6 +216,20 @@ void main() {
 
       expect(pack, isNotNull);
       expect(pack!.info.regionName, 'downloaded');
+    });
+
+    test('the bundled regions are the ones the release cooks', () {
+      // The workflow cooks exactly the packs that claim a bundled asset. If a
+      // region gains one here and .github/workflows/release.yml is not updated
+      // with it, the APK ships a catalogue pointing at an asset that is not in
+      // it — and the map silently falls back to no basemap on that ground.
+      expect(
+        [
+          for (final region in RegionCatalogue.all)
+            if (region.bundledAsset != null) region.regionId,
+        ],
+        ['vn-hcmc', 'vn-dongnai'],
+      );
     });
 
     test('a corrupt pack costs the basemap, not the app', () async {

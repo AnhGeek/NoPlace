@@ -6,7 +6,42 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../../domain/entities/geo_point.dart';
 import 'region_pack.dart';
+
+/// The ground a region claims, as a rectangle in degrees.
+///
+/// **Not the same thing as the tiles the pack holds.** A pack is cooked from a
+/// generous bounding box that spills over the border, so its neighbour's
+/// streets keep drawing while the player walks towards them. This is the
+/// narrower question of *whose map to open when somebody is standing here*, and
+/// the answer has to be exactly one region — so these rectangles are trimmed
+/// not to overlap where the cooked boxes do.
+@immutable
+class RegionBounds {
+  const RegionBounds({
+    required this.minLatitude,
+    required this.minLongitude,
+    required this.maxLatitude,
+    required this.maxLongitude,
+  });
+
+  final double minLatitude;
+  final double minLongitude;
+  final double maxLatitude;
+  final double maxLongitude;
+
+  bool contains(GeoPoint point) =>
+      point.latitude >= minLatitude &&
+      point.latitude <= maxLatitude &&
+      point.longitude >= minLongitude &&
+      point.longitude <= maxLongitude;
+
+  GeoPoint get centre => GeoPoint(
+    (minLatitude + maxLatitude) / 2,
+    (minLongitude + maxLongitude) / 2,
+  );
+}
 
 /// Where a region's map may be found, in the order the store will try.
 ///
@@ -18,6 +53,7 @@ import 'region_pack.dart';
 class RegionPackSource {
   const RegionPackSource({
     required this.regionId,
+    this.bounds,
     this.bundledAsset,
     this.remoteUrl,
   }) : assert(
@@ -26,6 +62,10 @@ class RegionPackSource {
        );
 
   final String regionId;
+
+  /// The ground this region answers for, or null when it is not a candidate
+  /// for position-based resolution.
+  final RegionBounds? bounds;
 
   /// A pack shipped inside the app, e.g. `assets/maps/vn-hcmc.mbtiles`.
   /// Always available, never stale-proof — it is whatever was current when the

@@ -106,7 +106,7 @@ jobs:
           storeFile=upload-keystore.jks
           EOF
 
-      # The basemap. Region packs are gitignored — tens of megabytes,
+      # The basemaps. Region packs are gitignored — tens of megabytes,
       # reproducible from a pinned build date — so a fresh checkout has an empty
       # assets/maps/ and the APK would ship with no streets at all. Cook it here
       # instead of committing it: same input, same pack, no binary in git.
@@ -131,12 +131,14 @@ jobs:
       # the cooker dies on `undefined symbol: sqlite3_initialize` the moment it
       # opens the MBTiles file. (The token builder next door gets away with a
       # path invocation because it has no dependencies at all.)
-      - name: Cook the region pack
+      - name: Cook the region packs
         working-directory: tools/region_cooker
         run: |
           dart pub get
-          dart run bin/cook.dart vn-hcmc
-          cp dist/vn-hcmc.mbtiles ../../app/assets/maps/vn-hcmc.mbtiles
+          for region in vn-hcmc vn-dongnai; do
+            dart run bin/cook.dart "$region"
+            cp "dist/$region.mbtiles" "../../app/assets/maps/$region.mbtiles"
+          done
           ls -lh ../../app/assets/maps
 
       # arm64 only, deliberately. The one device this ships to is a Samsung
@@ -191,7 +193,7 @@ jobs:
             echo "sha256sum -c SHA256SUMS.txt --ignore-missing"
             echo '```'
             echo
-            echo "**Basemap included.** Ho Chi Minh City ships inside the APK, so the map draws streets on first launch with no network. Map data © OpenStreetMap contributors, ODbL."
+            echo "**Basemaps included.** Ho Chi Minh City and Đồng Nai both ship inside the APK, so the map draws streets on first launch with no network, and the app opens whichever of the two you are standing in. Map data © OpenStreetMap contributors, ODbL."
           } > RELEASE_BODY.md
 
           cat RELEASE_BODY.md

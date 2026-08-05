@@ -52,9 +52,10 @@ Future<void> bootstrap() async {
   // the city appearing as the player left it and the fog visibly snapping open
   // a moment after launch.
   final database = AppDatabase();
-  // The starting region. Resolving it from the player's position is NP-1; until
-  // then this is the one city the app has a bundled map for, and it is also
-  // where a trail written before the schema was region-scoped ends up.
+  // The starting region: the fallback, because the GPS has not answered yet.
+  // The map resolves the real one from the first fix and calls `switchTo` —
+  // see `regionPackSourceProvider`. It is also where a trail written before the
+  // schema was region-scoped ends up.
   final fogTrail = SqliteTrailRepository(
     database,
     regionId: RegionCatalogue.fallback.regionId,

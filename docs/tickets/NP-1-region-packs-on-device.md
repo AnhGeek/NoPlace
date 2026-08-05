@@ -132,15 +132,29 @@ what stops them being re-argued.
    with z15 first and change it if it reads badly — the zoom range is one field
    in a region config and a recook, so this is deliberately cheap to revisit.
 
+   **Revised 2026-08-05:** Đồng Nai is bundled too. It is the province this app
+   is actually walked in, and an offline map that has to be downloaded first is
+   not one. Hà Nội stays download-only — 700 km away, and weight in the APK of
+   every player who never leaves the south.
+
 3. **Crossing a region border is a moment, not a silent swap.** Show
    "You've reached Đồng Nai" when the resolved region changes mid-session.
 
-   Not buildable yet: the region is currently pinned to `RegionCatalogue.fallback`
-   (HCMC), so there is no border to cross until position-based resolution lands
-   in this ticket. When it does, reuse the pattern already carrying the
-   district-discovered celebration — a result recorded in a provider and
-   consumed once, so a rebuild cannot replay it. **The swap still happens
-   between sessions or at a quiet moment, never under a live map.**
+   **Buildable now.** Position-based resolution landed 2026-08-05:
+   `RegionCatalogue.forPosition` answers point-in-claim and
+   `regionPackSourceProvider` holds the answer as state, so the pack and the
+   fog follow the player across a border. What is still missing is the *moment*
+   — reuse the pattern already carrying the district-discovered celebration, a
+   result recorded in a provider and consumed once, so a rebuild cannot replay
+   it. Today the swap is silent. **It still happens on a border crossing, never
+   under a live map mid-frame.**
+
+   The claims are rectangles trimmed not to overlap, which is a lie the ground
+   does not tell: HCMC and Đồng Nai interlock along the river and no pair of
+   boxes divides them exactly. 106.80°E is the split. It is wrong by a few
+   streets either side and that costs nothing visible — both packs are cooked
+   wide enough to hold the overlap, so the map draws either way. Province
+   polygons are the real fix and are not worth their weight yet.
 
 ## Still open
 

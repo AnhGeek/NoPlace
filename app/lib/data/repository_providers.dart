@@ -196,11 +196,46 @@ final regionPackStoreProvider = Provider<RegionPackStore>((ref) {
   return store;
 });
 
-/// Which city's map to open. Position-based resolution is NP-1; today this is
-/// the bundled region, and it is a provider so that ticket overrides it here.
-final regionPackSourceProvider = Provider<RegionPackSource>((ref) {
-  return RegionCatalogue.fallback;
-});
+/// Which city's map to open, decided by where the player is standing.
+///
+/// Three rules, and each of them is a bug that was worth not having:
+///
+///  * only a **real** fix moves the region. The world opens on a seeded
+///    coordinate in District 1, and resolving from that would open a city the
+///    player may never have been to;
+///  * a fix outside every region we have a map for **keeps the current one**
+///    rather than snapping back to the fallback. Walking off the eastern edge
+///    of Đồng Nai must not quietly move the player's fog to Ho Chi Minh City;
+///  * the region is state, not a computation over the latest fix, so the pack
+///    and the trail change once per border crossing instead of once per fix.
+class RegionPackSourceNotifier extends Notifier<RegionPackSource> {
+  @override
+  RegionPackSource build() {
+    ref.listen<AsyncValue<GeoPoint>>(playerPositionProvider, (_, next) {
+      final resolved = _resolve(next.value);
+      if (resolved != null && resolved.regionId != state.regionId) {
+        state = resolved;
+      }
+    });
+
+    // The OS's last known position is pushed into the stream before the first
+    // real fix, so by the time the map builds this is usually already answerable
+    // — which is what stops the first frame drawing the wrong city.
+    final world = ref.read(fakeWorldStoreProvider);
+    return _resolve(world.currentPosition) ?? RegionCatalogue.fallback;
+  }
+
+  RegionPackSource? _resolve(GeoPoint? position) {
+    if (position == null) return null;
+    if (!ref.read(fakeWorldStoreProvider).hasRealPosition) return null;
+    return RegionCatalogue.forPosition(position);
+  }
+}
+
+final regionPackSourceProvider =
+    NotifierProvider<RegionPackSourceNotifier, RegionPackSource>(
+      RegionPackSourceNotifier.new,
+    );
 
 /// The open pack, or null when there is none to open.
 ///

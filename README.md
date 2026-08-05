@@ -57,9 +57,15 @@ To get the map:
 ```bash
 cd tools/region_cooker
 dart pub get
-dart run bin/cook.dart vn-hcmc                  # needs the `pmtiles` CLI
-cp dist/vn-hcmc.mbtiles ../../app/assets/maps/
+for region in vn-hcmc vn-dongnai; do            # needs the `pmtiles` CLI
+  dart run bin/cook.dart "$region"
+  cp "dist/$region.mbtiles" ../../app/assets/maps/
+done
 ```
+
+Those two are the packs the release bundles, and the app opens whichever of them
+the player is standing in — see `RegionCatalogue`. Cooking only one is fine for
+development: a region with no pack draws no streets and nothing else breaks.
 
 See [tools/region_cooker/README.md](tools/region_cooker/README.md).
 
