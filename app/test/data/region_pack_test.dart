@@ -1,11 +1,16 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noplace/data/local/region_catalogue.dart';
 import 'package:noplace/data/local/region_pack.dart';
 import 'package:noplace/data/local/region_pack_store.dart';
+import 'package:noplace/data/repository_providers.dart';
+import 'package:noplace/features/map/presentation/basemap/basemap.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -246,12 +251,58 @@ void main() {
         await store.open(
           const RegionPackSource(
             regionId: 'vn-test',
-          name: 'Test',
+            name: 'Test',
             remoteUrl: 'https://example.invalid/vn-test.mbtiles',
           ),
         ),
         isNull,
       );
+    });
+  });
+
+  group('the basemap while a region is switching', () {
+    // The regression this exists for: crossing into Đồng Nai left the map
+    // blank for the rest of the session. `regionPackProvider` closes the old
+    // pack on the way out, but an `AsyncValue` being refreshed still carries
+    // the old value — so the basemap was rebuilt around a closed database and
+    // every tile the new viewport asked for threw `database_closed`, which is
+    // deliberately not retryable.
+    test('is null rather than a pack that has already been closed', () async {
+      final path = await writePack(
+        tiles: [
+          (12, 1, 1, [1, 2, 3]),
+        ],
+      );
+      final pack = await RegionPack.open(path);
+      addTearDown(pack.close);
+
+      final switching = StateProvider<bool>((ref) => false);
+      final container = ProviderContainer(
+        overrides: [
+          regionPackProvider.overrideWith((ref) async {
+            // The second region's pack, still opening. Riverpod hands the
+            // previous one out underneath it.
+            if (ref.watch(switching)) return Completer<RegionPack?>().future;
+            return pack;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final subscription = container.listen(basemapProvider, (_, _) {});
+      addTearDown(subscription.close);
+
+      await container.read(regionPackProvider.future);
+      expect(container.read(basemapProvider), isNotNull);
+
+      container.read(switching.notifier).state = true;
+
+      expect(
+        container.read(regionPackProvider).value,
+        isNotNull,
+        reason: 'the stale pack is still in the AsyncValue — that is the trap',
+      );
+      expect(container.read(basemapProvider), isNull);
     });
   });
 }

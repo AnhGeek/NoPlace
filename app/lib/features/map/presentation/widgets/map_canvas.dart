@@ -158,6 +158,11 @@ class MapCanvas extends StatelessWidget {
         // and the map cannot drift from the app it sits under.
         if (basemap != null)
           VectorTileLayer(
+            // Keyed on the region, so crossing a border builds a new layer
+            // instead of handing the old one a different pack. The renderer
+            // keeps caches and in-flight tile futures of its own, and those
+            // belong to the pack they were started against.
+            key: ValueKey('basemap-${basemap!.info.regionId}'),
             theme: basemap!.theme,
             tileProviders: basemap!.tileProviders,
             // The tiles are already on the device. A second, redundant copy in
@@ -185,6 +190,7 @@ class MapCanvas extends StatelessWidget {
         // no sense of how much is left.
         if (basemap != null)
           VectorTileLayer(
+            key: ValueKey('city-border-${basemap!.info.regionId}'),
             theme: basemap!.cityBorderTheme,
             tileProviders: basemap!.tileProviders,
             fileCacheTtl: Duration.zero,

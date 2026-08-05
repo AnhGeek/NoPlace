@@ -35,7 +35,18 @@ class Basemap {
 /// Built once per pack, not per frame: reading the style JSON into a theme
 /// walks every layer, and the map rebuilds on every position fix.
 final basemapProvider = Provider<Basemap?>((ref) {
-  final pack = ref.watch(regionPackProvider).value;
+  final packs = ref.watch(regionPackProvider);
+
+  // While the next region's pack is opening, the value still carried here is
+  // the *previous* region's — and that one has already been closed, because
+  // closing it is what `regionPackProvider` does on the way out. Drawing with
+  // it throws `database_closed` on every tile the new viewport asks for, and
+  // those failures are deliberately not retryable, so the map stays blank for
+  // the rest of the session. No basemap for the moment it takes to open the
+  // new pack is the honest state, and it is the one the map already handles.
+  if (packs.isLoading) return null;
+
+  final pack = packs.value;
   if (pack == null) return null;
 
   // One provider, shared by both layers: the same pack, read twice per tile.
