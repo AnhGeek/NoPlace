@@ -1,7 +1,9 @@
 # 0012 — A visit history for every place, and an hour the player picks
 
 **Status:** Accepted · 2026-08-06 · extends
-[0011](0011-places-the-player-saves.md)
+[0011](0011-places-the-player-saves.md) · the decision "the world's places count
+deliberate check-ins, and nothing else" is superseded by
+[0013](0013-auto-check-in-for-the-worlds-places.md)
 
 ## Context
 

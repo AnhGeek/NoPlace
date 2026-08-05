@@ -295,6 +295,11 @@ class FakeWorldStore {
 
   GeoPoint get currentPosition => _position.value;
 
+  /// The world's places as they stand. Read synchronously by the presence
+  /// loop, which runs on a timer as well as on the position stream and must not
+  /// wait a microtask to find out what is nearby.
+  List<Place> get currentPlaces => _places.value;
+
   bool get hasRealPosition => _positionIsReal;
 
   /// Moves the player to a real GPS fix.

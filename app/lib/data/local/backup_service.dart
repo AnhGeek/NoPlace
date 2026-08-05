@@ -390,6 +390,16 @@ class BackupService {
         'last_check_in_at': entry['last_check_in_at'] is int
             ? entry['last_check_in_at']
             : null,
+        // Whether the first-visit bonus was already spent travels with the
+        // player — it is a fact about them, not about the phone. A file written
+        // before schema v5 has no such key, and falls back to the last visit
+        // for the same reason the migration does: until v5 the only way to
+        // collect one was to tap.
+        'claimed_at': switch (entry) {
+          {'claimed_at': final int claimed} => claimed,
+          {'last_check_in_at': final int last} => last,
+          _ => null,
+        },
         // Dropped for the same reason as a map point's, and it matters more
         // here: these places sit in a city the restoring phone may be nowhere
         // near.

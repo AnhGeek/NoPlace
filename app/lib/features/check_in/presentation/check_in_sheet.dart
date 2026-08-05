@@ -67,6 +67,7 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
               place: _place,
               format: format,
               distanceMeters: ref.watch(distanceToPlaceProvider(_place)),
+              hasVisited: visit.hasVisited,
             ),
             const SizedBox(height: NpSpace.md),
             _RewardTiles(place: _place),
@@ -162,11 +163,20 @@ class _Header extends StatelessWidget {
     required this.place,
     required this.format,
     required this.distanceMeters,
+    required this.hasVisited,
   });
 
   final Place place;
   final UnitFormatter format;
   final double distanceMeters;
+
+  /// Whether the player has been here at all, from their own visit record.
+  ///
+  /// Not `place.visited`, which since schema v5 means "the first-visit bonus
+  /// has been spent". An hour spent nearby counts as having been somewhere but
+  /// does not claim, so the two genuinely differ — and "never visited" above a
+  /// card reading "checked in once" is the sheet contradicting itself.
+  final bool hasVisited;
 
   @override
   Widget build(BuildContext context) {
@@ -191,7 +201,7 @@ class _Header extends StatelessWidget {
                 l10n.checkInSheetMeta(
                   _categoryLabel(place, l10n),
                   format.distance(distanceMeters),
-                  place.visited ? 'before' : 'never',
+                  hasVisited ? 'before' : 'never',
                 ),
                 style: NpTypography.footnote,
                 maxLines: 2,

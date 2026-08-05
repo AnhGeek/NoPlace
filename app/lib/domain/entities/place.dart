@@ -17,6 +17,7 @@ class Place extends Equatable {
     this.xpReward = 50,
     this.visited = false,
     this.explorersHere = 0,
+    this.autoCheckIn = true,
   });
 
   final String id;
@@ -35,18 +36,35 @@ class Place extends Equatable {
   /// check-in sheet; zero means we simply hide the tile.
   final int explorersHere;
 
+  /// Whether an hour spent near here counts as a visit without the player
+  /// tapping anything.
+  ///
+  /// On by default, and **not** the player's to change — unlike a place they
+  /// saved themselves, which carries its own interval. This is a property of
+  /// the place as the world describes it, so it arrives with the places data
+  /// and is switched off for the ones where an unattended hour would be
+  /// meaningless: a whole district, a transport interchange, anywhere somebody
+  /// waits rather than visits.
+  ///
+  /// The interval is fixed at [AutoCheckIn.hourly]. A per-place duration is a
+  /// setting, and a setting nobody can reach is just a constant with extra
+  /// steps.
+  final bool autoCheckIn;
+
   bool get isIdentified => category != PlaceCategory.unknown;
 
-  Place copyWith({bool? visited, int? explorersHere}) => Place(
-    id: id,
-    name: name,
-    category: category,
-    location: location,
-    districtId: districtId,
-    xpReward: xpReward,
-    visited: visited ?? this.visited,
-    explorersHere: explorersHere ?? this.explorersHere,
-  );
+  Place copyWith({bool? visited, int? explorersHere, bool? autoCheckIn}) =>
+      Place(
+        id: id,
+        name: name,
+        category: category,
+        location: location,
+        districtId: districtId,
+        xpReward: xpReward,
+        visited: visited ?? this.visited,
+        explorersHere: explorersHere ?? this.explorersHere,
+        autoCheckIn: autoCheckIn ?? this.autoCheckIn,
+      );
 
   @override
   List<Object?> get props => [
@@ -58,5 +76,6 @@ class Place extends Equatable {
     xpReward,
     visited,
     explorersHere,
+    autoCheckIn,
   ];
 }

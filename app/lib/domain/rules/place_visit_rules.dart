@@ -128,10 +128,14 @@ abstract final class PlaceVisitRules {
   /// Restarts the stay: an hour that began before they tapped has been claimed,
   /// and paying it out again a minute later would look like double counting
   /// because it would be.
+  ///
+  /// This is the only path that sets [PlaceVisit.claimedAt] — see there for why
+  /// an hour spent nearby deliberately does not.
   static PlaceVisit visited(PlaceVisit visit, {required DateTime now}) =>
       visit.copyWith(
         checkInCount: visit.checkInCount + 1,
         lastCheckInAt: now,
+        claimedAt: visit.claimedAt ?? now,
         stayStartedAt: now,
         stayLastSeenAt: now,
       );

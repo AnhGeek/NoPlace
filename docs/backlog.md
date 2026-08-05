@@ -23,8 +23,11 @@ today, so nobody has to reverse-engineer the gap.
   Remaining: the foreground notification's text is English only, and the camera
   follows the player unconditionally rather than offering a follow/free toggle.
   The trail is region-scoped, so each city keeps its own fog.
-- **A places API.** The seven seeded places are hard-coded. `WorldRepository`
-  is the seam; nothing above it changes.
+- **A places API.** The eleven seeded places are hard-coded, including their
+  `autoCheckIn` flag ([adr/0013](adr/0013-auto-check-in-for-the-worlds-places.md)).
+  A JSON file is the next step and `WorldRepository` is the seam; nothing above
+  it changes. Note that no decoder exists yet — the flag has a default but
+  nothing reads one off disk.
 - **Persistence.** The walked fog trail *is* stored on the device
   ([adr/0005](adr/0005-tile-caching-and-fog-persistence.md)), and so is the
   visit history of every place — the player's own and the world's alike

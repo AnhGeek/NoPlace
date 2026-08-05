@@ -377,7 +377,79 @@ void main() {
 
       expect(fresh.checkInCount, 0);
       expect(fresh.hasVisited, isFalse);
+      expect(fresh.isClaimed, isFalse);
       expect(fresh.lastCheckInAt, isNull);
+    });
+  });
+
+  // The whole reason `claimedAt` exists. The first deliberate check-in at a
+  // world place pays double, and turning `Place.autoCheckIn` on must not be a
+  // way to lose that without noticing.
+  group('the first-visit bonus', () {
+    const benThanh = PlaceVisit.none('place-ben-thanh');
+    final noon = DateTime(2026, 8, 5, 12);
+
+    test('an hour spent nearby counts as a visit but does not claim it', () {
+      // An hour of sitting still, as the app actually sees it: the arrival, the
+      // heartbeat keeping the stay vouched for, and the fix that tips it over.
+      var visit = PlaceVisitRules.advance(
+        benThanh,
+        distanceMeters: 40,
+        every: AutoCheckIn.hourly,
+        now: noon,
+      )!;
+      for (var minute = 5; minute <= 60; minute += 5) {
+        visit =
+            PlaceVisitRules.advance(
+              visit,
+              distanceMeters: 40,
+              every: AutoCheckIn.hourly,
+              now: noon.add(Duration(minutes: minute)),
+            ) ??
+            visit;
+      }
+
+      expect(visit.checkInCount, 1, reason: 'the history counts it');
+      expect(visit.hasVisited, isTrue);
+      // …and the reward is still there to be collected.
+      expect(visit.isClaimed, isFalse);
+      expect(visit.claimedAt, isNull);
+    });
+
+    test('tapping after an hour nearby still claims it', () {
+      final dwelled = benThanh.copyWith(checkInCount: 2, lastCheckInAt: noon);
+
+      final claimed = PlaceVisitRules.visited(
+        dwelled,
+        now: noon.add(const Duration(hours: 1)),
+      );
+
+      expect(claimed.checkInCount, 3);
+      expect(claimed.isClaimed, isTrue);
+      expect(claimed.claimedAt, noon.add(const Duration(hours: 1)));
+    });
+
+    test('a second check-in does not move the claim', () {
+      final first = PlaceVisitRules.visited(benThanh, now: noon);
+      final second = PlaceVisitRules.visited(
+        first,
+        now: noon.add(const Duration(days: 3)),
+      );
+
+      // `claimedAt` is when the bonus was spent, not when the player was last
+      // here — `lastCheckInAt` already answers that.
+      expect(second.claimedAt, noon);
+      expect(second.lastCheckInAt, noon.add(const Duration(days: 3)));
+      expect(second.checkInCount, 2);
+    });
+
+    test('survives the trip to another phone', () {
+      final claimed = PlaceVisitRules.visited(benThanh, now: noon);
+
+      // The stay is a fact about the device and is dropped; whether the bonus
+      // was spent is a fact about the player and travels.
+      expect(claimed.withoutStay().claimedAt, noon);
+      expect(claimed.withoutStay().stayStartedAt, isNull);
     });
   });
 }

@@ -81,6 +81,7 @@ class SqlitePlaceVisitRepository implements PlaceVisitRepository {
     'place_id': visit.placeId,
     'check_in_count': visit.checkInCount,
     'last_check_in_at': visit.lastCheckInAt?.millisecondsSinceEpoch,
+    'claimed_at': visit.claimedAt?.millisecondsSinceEpoch,
     'stay_started_at': visit.stayStartedAt?.millisecondsSinceEpoch,
     'stay_last_seen_at': visit.stayLastSeenAt?.millisecondsSinceEpoch,
   };
@@ -92,6 +93,7 @@ class SqlitePlaceVisitRepository implements PlaceVisitRepository {
     // "checked in -3 times".
     checkInCount: ((row['check_in_count'] as int?) ?? 0).clamp(0, 1 << 31),
     lastCheckInAt: _time(row['last_check_in_at']),
+    claimedAt: _time(row['claimed_at']),
     stayStartedAt: _time(row['stay_started_at']),
     stayLastSeenAt: _time(row['stay_last_seen_at']),
   );

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../domain/entities/auto_check_in.dart';
 import '../domain/entities/check_in.dart';
 import '../domain/entities/district.dart';
 import '../domain/entities/explored_area.dart';
@@ -451,9 +452,12 @@ final placeVisitSyncProvider = Provider<void>((ref) {
     final visits = next.value;
     if (visits == null) return;
 
+    // Keyed on the *claim*, not on having been here. An hour spent nearby
+    // counts towards the history but must not spend the first-visit bonus —
+    // see [PlaceVisit.claimedAt].
     ref.read(fakeWorldStoreProvider).restoreVisited({
       for (final entry in visits.entries)
-        if (entry.value.hasVisited) entry.key,
+        if (entry.value.isClaimed) entry.key,
     });
   }, fireImmediately: true);
 });
@@ -471,20 +475,26 @@ final placeVisitSyncProvider = Provider<void>((ref) {
 /// [MapPoint.autoCheckInEvery], so a place switched to "Off" costs nothing here
 /// beyond the comparison that skips it.
 ///
-/// Only points the player saved accrue this way. The world's own places count a
-/// visit when somebody deliberately checks in, and nothing else: an hour spent
-/// near Chợ Bến Thành without tapping would otherwise quietly consume the
-/// first-visit bonus that check-in was going to pay.
+/// Both kinds of place accrue, from opposite ends of the same rule. A point the
+/// player saved carries the interval they chose. One the world came with is
+/// fixed at [AutoCheckIn.hourly] and carries only [Place.autoCheckIn] — a flag
+/// the places data sets rather than the player, so somewhere an unattended hour
+/// would be meaningless can opt out.
+///
+/// Collecting an hour never spends the first-visit bonus: only a deliberate
+/// check-in claims it. See [PlaceVisit.claimedAt].
 final placePresenceProvider = Provider<void>((ref) {
   void evaluate(GeoPoint? position) {
     // Same guard as the trail: the world opens on a seeded coordinate, and
     // awarding visits from it would credit somebody an hour in a district they
     // have never stood in.
     if (position == null) return;
-    if (!ref.read(fakeWorldStoreProvider).hasRealPosition) return;
+    final world = ref.read(fakeWorldStoreProvider);
+    if (!world.hasRealPosition) return;
+
+    final now = DateTime.now();
 
     final store = ref.read(mapPointStoreProvider);
-    final now = DateTime.now();
     for (final place in store.current) {
       final updated = PlaceVisitRules.applyFix(
         place,
@@ -492,6 +502,18 @@ final placePresenceProvider = Provider<void>((ref) {
         now: now,
       );
       if (updated != null) unawaited(store.update(updated));
+    }
+
+    final visits = ref.read(placeVisitRepositoryProvider);
+    for (final place in world.currentPlaces) {
+      if (!place.autoCheckIn) continue;
+      final updated = PlaceVisitRules.advance(
+        visits.of(place.id),
+        distanceMeters: position.distanceTo(place.location),
+        every: AutoCheckIn.hourly,
+        now: now,
+      );
+      if (updated != null) unawaited(visits.save(updated));
     }
   }
 

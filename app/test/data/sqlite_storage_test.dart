@@ -379,6 +379,56 @@ void main() {
       await visits.load();
       expect(visits.current, isEmpty);
     });
+
+    test('a v4 visit is treated as one the player already claimed', () async {
+      // The dangerous half of v5. Until v5 the only way to collect a visit to a
+      // world place was to tap the button, so every count already on disk was a
+      // claim. Backfilling null would hand a returning player a second
+      // first-visit bonus for every place they have ever been to.
+      final path = '${directory.path}/${AppDatabase.fileName}';
+      final v4 = await databaseFactory.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 4,
+          onCreate: (db, _) async {
+            await db.execute('''
+              CREATE TABLE place_visits (
+                place_id          TEXT    PRIMARY KEY,
+                check_in_count    INTEGER NOT NULL DEFAULT 0,
+                last_check_in_at  INTEGER,
+                stay_started_at   INTEGER,
+                stay_last_seen_at INTEGER
+              )
+            ''');
+          },
+        ),
+      );
+      final lastVisit = DateTime(2026, 8, 4, 14, 20);
+      await v4.insert('place_visits', {
+        'place_id': 'place-ben-thanh',
+        'check_in_count': 7,
+        'last_check_in_at': lastVisit.millisecondsSinceEpoch,
+      });
+      // A row nobody ever collected anything at stays unclaimed.
+      await v4.insert('place_visits', {
+        'place_id': 'place-tao-dan',
+        'check_in_count': 0,
+      });
+      await v4.close();
+
+      final upgraded = AppDatabase(directory: directory);
+      addTearDown(upgraded.close);
+
+      final visits = SqlitePlaceVisitRepository(upgraded);
+      await visits.load();
+
+      final benThanh = visits.of('place-ben-thanh');
+      expect(benThanh.checkInCount, 7);
+      expect(benThanh.isClaimed, isTrue);
+      expect(benThanh.claimedAt, lastVisit);
+
+      expect(visits.of('place-tao-dan').isClaimed, isFalse);
+    });
   });
 
   group('place visits', () {

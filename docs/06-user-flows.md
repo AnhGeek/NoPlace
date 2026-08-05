@@ -113,10 +113,18 @@ error.
 The history is kept **on the device**, keyed by place id, and so survives a
 relaunch even though the world itself is seeded fresh each time — which is also
 what stops a place you checked into last week offering its first-visit bonus
-again this morning. Unlike a place you saved yourself, one the world came with
-counts a visit **only when you check in**: see
-[adr/0012](adr/0012-visit-history-for-every-place.md) for why an hour spent
-standing near it deliberately earns nothing.
+again this morning.
+
+An hour spent near one of the world's places counts as a visit too, with nothing
+tapped — the same rule as a place you saved, but at a **fixed hourly interval
+you cannot change**, and only where the places data says so. That flag is on by
+default and off for the places an unattended hour would be meaningless at: a
+whole district, a transport interchange, anywhere people wait rather than visit.
+
+Collecting an hour this way **never spends the first-visit ×2**. Sit outside a
+place all afternoon and then walk in and check in, and the bonus is still
+yours — the sheet counts the hours in your history and keeps the reward
+separate. See [adr/0013](adr/0013-auto-check-in-for-the-worlds-places.md).
 
 ## 2b · Place sheet — the player's own
 

@@ -15,7 +15,7 @@ import 'package:sqflite/sqflite.dart';
 ///     cat databases/noplace.db > noplace.db
 /// ```
 ///
-/// Schema, version 4:
+/// Schema, version 5:
 ///
 /// * `trail_points` — every metre of ground walked, scoped to a region. Primary
 ///   key is the metre-quantised cell, so re-walking a street is an ignored
@@ -36,7 +36,7 @@ class AppDatabase {
   Database? _database;
 
   static const String fileName = 'noplace.db';
-  static const int schemaVersion = 4;
+  static const int schemaVersion = 5;
 
   /// Where a trail written before the schema was region-scoped is filed.
   ///
@@ -121,6 +121,7 @@ class AppDatabase {
         place_id          TEXT    PRIMARY KEY,
         check_in_count    INTEGER NOT NULL DEFAULT 0,
         last_check_in_at  INTEGER,
+        claimed_at        INTEGER,
         stay_started_at   INTEGER,
         stay_last_seen_at INTEGER
       )
@@ -232,6 +233,25 @@ class AppDatabase {
           stay_last_seen_at INTEGER
         )
       ''');
+    }
+
+    // v4 → v5: the world's places can now earn a visit from an hour spent near
+    // them, so "has been here" and "has spent the first-visit bonus" stop being
+    // the same fact and need two columns.
+    //
+    // Backfilled from `last_check_in_at`, which is the honest reading of a v4
+    // row: until this version the only way to collect a visit to a world place
+    // was to tap the button, so every count already on disk *was* claimed. A
+    // null backfill would hand every returning player a second first-visit
+    // bonus for every place they have ever been to.
+    if (oldVersion < 5) {
+      await db.execute(
+        'ALTER TABLE place_visits ADD COLUMN claimed_at INTEGER',
+      );
+      await db.execute(
+        'UPDATE place_visits SET claimed_at = last_check_in_at '
+        'WHERE check_in_count > 0',
+      );
     }
   }
 
