@@ -655,5 +655,33 @@
   "mapShowFog": "Show the fog",
   "@mapShowFog": {
     "description": "Label for the map button that puts the fog back, shown while the fog is hidden."
+  },
+
+  "regionArrivedTitle": "You''ve reached {region}",
+  "@regionArrivedTitle": {
+    "description": "Headline of the sheet shown when the player walks into a region we have a different map for.",
+    "placeholders": {
+      "region": { "type": "String", "example": "Đồng Nai" }
+    }
+  },
+  "regionArrivedBody": "The map has switched to this region''s streets, and to the fog you''ve lifted here. Every city keeps its own walk.",
+  "@regionArrivedBody": {
+    "description": "Explains what changed when the region did: the basemap and the fog, which is stored per region."
+  },
+  "regionPickerLabel": "Which map to walk with",
+  "@regionPickerLabel": {
+    "description": "Label above the list of regions in the arrival sheet."
+  },
+  "regionPackOnDevice": "On this phone · works offline",
+  "@regionPackOnDevice": {
+    "description": "Subtitle of a region whose map is bundled in the app."
+  },
+  "regionPackNotDownloaded": "Not on this phone yet",
+  "@regionPackNotDownloaded": {
+    "description": "Subtitle of a region whose map has not been downloaded, so it cannot be chosen."
+  },
+  "regionArrivedAction": "Walk here",
+  "@regionArrivedAction": {
+    "description": "Button that closes the arrival sheet and applies the chosen region."
   }
 }

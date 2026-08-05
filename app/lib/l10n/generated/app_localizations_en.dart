@@ -524,4 +524,25 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get mapShowFog => 'Show the fog';
+
+  @override
+  String regionArrivedTitle(String region) {
+    return 'You\'ve reached $region';
+  }
+
+  @override
+  String get regionArrivedBody =>
+      'The map has switched to this region\'s streets, and to the fog you\'ve lifted here. Every city keeps its own walk.';
+
+  @override
+  String get regionPickerLabel => 'Which map to walk with';
+
+  @override
+  String get regionPackOnDevice => 'On this phone · works offline';
+
+  @override
+  String get regionPackNotDownloaded => 'Not on this phone yet';
+
+  @override
+  String get regionArrivedAction => 'Walk here';
 }

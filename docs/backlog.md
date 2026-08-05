@@ -5,12 +5,15 @@ today, so nobody has to reverse-engineer the gap.
 
 ## Data
 
-- **Basemap: one city, bundled.** Streets are back
+- **Basemap: two cities, bundled.** Streets are back
   ([adr/0008](adr/0008-openstreetmap-basemap.md)): OpenStreetMap vector tiles in
   a region pack, cooked by [tools/region_cooker](../tools/region_cooker/).
-  Only `vn-hcmc` is bundled, and the region is fixed rather than resolved from
-  the player's position — that is [NP-1](tickets/NP-1-region-packs-on-device.md).
-  Đồng Nai and Hà Nội have configs but no cooked pack and no download flow.
+  `vn-hcmc` and `vn-dongnai` are bundled and the region follows the player's
+  position, announced by the arrival sheet when it changes. Hà Nội has a config
+  and a remote URL but no cooked pack and **no download flow** —
+  `RegionPackStore.download` exists and nothing calls it, so the picker shows it
+  as not on the phone and refuses to select it. That is the rest of
+  [NP-1](tickets/NP-1-region-packs-on-device.md).
 - **Places still come from the fake world.** The packs carry an OSM `pois`
   layer the app ignores; `FakeWorldStore` is still what supplies places.
 - **Location is real.** The GPS drives the player position, the fog and the

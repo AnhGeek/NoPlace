@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/routes.dart';
 import '../../../app/shell/home_shell.dart';
 import '../../../core/ui/np_async_view.dart';
+import '../../../data/local/region_pack_store.dart';
 import '../../../data/repository_providers.dart';
 import '../../../design_system/components/components.dart';
 import '../../../design_system/tokens/design_tokens.g.dart';
@@ -32,6 +33,7 @@ import 'widgets/map_canvas.dart';
 import 'widgets/nearby_card.dart';
 import 'widgets/nearby_list.dart';
 import 'widgets/recentre_button.dart';
+import 'widgets/region_arrival_sheet.dart';
 
 /// The home screen: the city, the fog, and the one thing worth doing next.
 class MapScreen extends ConsumerStatefulWidget {
@@ -146,6 +148,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ..listen<AsyncValue<bool>>(
         backgroundPromptSeenProvider,
         (previous, next) => _maybeAskAboutBackground(),
+      )
+      // Walking into a new region is a moment, not a silent swap: the streets
+      // change and so does the fog. Say so, and let the player choose which
+      // map they want while the answer is in front of them.
+      ..listen<RegionPackSource?>(
+        regionArrivalProvider,
+        (previous, next) => _maybeAnnounceRegion(),
       );
 
     // Keep the camera on the player, but only while they want it there.
@@ -347,6 +356,40 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     _asking = true;
     unawaited(showBackgroundPermissionSheet(context: context, ref: ref));
+  }
+
+  /// Whether an arrival sheet is on screen.
+  ///
+  /// A crossing can be recorded while the check-in or background sheet is up,
+  /// and two modal sheets stacked on one screen is how a player ends up
+  /// dismissing one they never saw the top of.
+  bool _announcing = false;
+
+  /// Announces the region the player has just walked into, once.
+  ///
+  /// [RegionArrival.take] clears the arrival as it reads it, so a rebuild — a
+  /// fix every few metres, a tab change — cannot replay the sheet for a border
+  /// that was crossed a kilometre ago.
+  Future<void> _maybeAnnounceRegion() async {
+    if (_announcing || !mounted) return;
+
+    final arrived = ref.read(regionArrivalProvider.notifier).take();
+    if (arrived == null) return;
+
+    _announcing = true;
+    try {
+      await showRegionArrivalSheet(context: context, arrived: arrived);
+    } finally {
+      _announcing = false;
+    }
+
+    // A border crossed while the sheet was open was recorded and not shown —
+    // the listener fired into the guard above. Somebody who walks out of one
+    // region and into another without closing the sheet must still be told
+    // where they ended up.
+    if (mounted && ref.read(regionArrivalProvider) != null) {
+      unawaited(_maybeAnnounceRegion());
+    }
   }
 
   /// The player took hold of the map. Stop pulling it back.

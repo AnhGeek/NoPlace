@@ -26,6 +26,7 @@ abstract final class RegionCatalogue {
   /// tiles for the overlap, so the map draws either way.
   static const RegionPackSource hcmc = RegionPackSource(
     regionId: 'vn-hcmc',
+    name: 'TP. Hồ Chí Minh',
     bounds: RegionBounds(
       minLongitude: 106.36,
       minLatitude: 10.34,
@@ -41,6 +42,7 @@ abstract final class RegionCatalogue {
   /// has a signal to fetch it with.
   static const RegionPackSource dongNai = RegionPackSource(
     regionId: 'vn-dongnai',
+    name: 'Đồng Nai',
     bounds: RegionBounds(
       minLongitude: 106.80,
       minLatitude: 10.50,
@@ -55,6 +57,7 @@ abstract final class RegionCatalogue {
   /// every player who never leaves the south.
   static const RegionPackSource hanoi = RegionPackSource(
     regionId: 'vn-hanoi',
+    name: 'Hà Nội',
     bounds: RegionBounds(
       minLongitude: 105.29,
       minLatitude: 20.56,

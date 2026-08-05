@@ -882,6 +882,42 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Show the fog'**
   String get mapShowFog;
+
+  /// Headline of the sheet shown when the player walks into a region we have a different map for.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'\'ve reached {region}'**
+  String regionArrivedTitle(String region);
+
+  /// Explains what changed when the region did: the basemap and the fog, which is stored per region.
+  ///
+  /// In en, this message translates to:
+  /// **'The map has switched to this region\'\'s streets, and to the fog you\'\'ve lifted here. Every city keeps its own walk.'**
+  String get regionArrivedBody;
+
+  /// Label above the list of regions in the arrival sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Which map to walk with'**
+  String get regionPickerLabel;
+
+  /// Subtitle of a region whose map is bundled in the app.
+  ///
+  /// In en, this message translates to:
+  /// **'On this phone · works offline'**
+  String get regionPackOnDevice;
+
+  /// Subtitle of a region whose map has not been downloaded, so it cannot be chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Not on this phone yet'**
+  String get regionPackNotDownloaded;
+
+  /// Button that closes the arrival sheet and applies the chosen region.
+  ///
+  /// In en, this message translates to:
+  /// **'Walk here'**
+  String get regionArrivedAction;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

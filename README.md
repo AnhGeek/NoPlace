@@ -94,12 +94,12 @@ comes from the tag (`v0.1.0` → `0.1.0`) and the build number from the workflow
 run number, so neither is edited in `pubspec.yaml` by hand. A tag containing a
 hyphen (`v0.2.0-rc1`) is published as a pre-release.
 
-The release job **cooks the Ho Chi Minh City pack itself** and bundles it, so a
-downloaded APK draws streets on first launch with no network. Region packs stay
-gitignored — the job installs the pinned `pmtiles` CLI and runs the same cooker
-you run locally, which is why the pack's `build` date is pinned rather than
-`latest`: the release has to be reproducible. It adds roughly 33 MB to the APK
-and about a minute to the job.
+The release job **cooks the Ho Chi Minh City and Đồng Nai packs itself** and
+bundles them, so a downloaded APK draws streets on first launch with no network
+in either province. Region packs stay gitignored — the job installs the pinned
+`pmtiles` CLI and runs the same cooker you run locally, which is why each pack's
+`build` date is pinned rather than `latest`: the release has to be reproducible.
+The two add roughly 73 MB to the APK and a couple of minutes to the job.
 
 CI does not cook. Its Android job is a debug build that proves the project still
 assembles, and paying the download on every pull request buys nothing.

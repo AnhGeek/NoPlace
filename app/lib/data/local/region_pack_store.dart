@@ -53,6 +53,7 @@ class RegionBounds {
 class RegionPackSource {
   const RegionPackSource({
     required this.regionId,
+    required this.name,
     this.bounds,
     this.bundledAsset,
     this.remoteUrl,
@@ -62,6 +63,14 @@ class RegionPackSource {
        );
 
   final String regionId;
+
+  /// What to call this region on screen, before its pack is open.
+  ///
+  /// The pack carries `np:region_name` and that is the better source once there
+  /// is one — but the picker lists regions whose packs are not open, and one of
+  /// them may have no pack on the device at all. Untranslated on purpose: these
+  /// are place names, and "Đồng Nai" is Đồng Nai in every locale we ship.
+  final String name;
 
   /// The ground this region answers for, or null when it is not a candidate
   /// for position-based resolution.

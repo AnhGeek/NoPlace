@@ -147,5 +147,12 @@
   "mapNothingNearbyBody": "Cứ đi tiếp — bản đồ vẫn mở ra theo bước chân bạn.",
   "mapRecentre": "Về vị trí của tôi",
   "mapHideFog": "Ẩn sương mù",
-  "mapShowFog": "Hiện sương mù"
+  "mapShowFog": "Hiện sương mù",
+
+  "regionArrivedTitle": "Bạn đã tới {region}",
+  "regionArrivedBody": "Bản đồ đã chuyển sang đường phố của vùng này, cùng phần sương mù bạn đã mở ở đây. Mỗi nơi giữ đường đi riêng của nó.",
+  "regionPickerLabel": "Đi với bản đồ nào",
+  "regionPackOnDevice": "Có sẵn trong máy · dùng được ngoại tuyến",
+  "regionPackNotDownloaded": "Chưa có trong máy",
+  "regionArrivedAction": "Đi ở đây"
 }

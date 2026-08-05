@@ -209,20 +209,47 @@ final regionPackStoreProvider = Provider<RegionPackStore>((ref) {
 ///  * the region is state, not a computation over the latest fix, so the pack
 ///    and the trail change once per border crossing instead of once per fix.
 class RegionPackSourceNotifier extends Notifier<RegionPackSource> {
+  /// The region the *ground* last resolved to, which is not always the region
+  /// being shown: [select] lets the player override the map without moving.
+  ///
+  /// Held separately so a crossing is detected against where the player was
+  /// standing, not against what they chose to look at. Without it, picking Ho
+  /// Chi Minh City while standing in Biên Hòa would be undone by the very next
+  /// fix, which still resolves to Đồng Nai.
+  String? _lastResolvedId;
+
   @override
   RegionPackSource build() {
     ref.listen<AsyncValue<GeoPoint>>(playerPositionProvider, (_, next) {
       final resolved = _resolve(next.value);
-      if (resolved != null && resolved.regionId != state.regionId) {
-        state = resolved;
-      }
+      if (resolved == null || resolved.regionId == _lastResolvedId) return;
+      _lastResolvedId = resolved.regionId;
+
+      if (resolved.regionId != state.regionId) state = resolved;
+
+      // The crossing itself, for the map to announce. Recorded even when the
+      // map was already on this region — the player has still just arrived
+      // somewhere, and that is the moment the sheet is about.
+      ref.read(regionArrivalProvider.notifier).record(resolved);
     });
 
     // The OS's last known position is pushed into the stream before the first
     // real fix, so by the time the map builds this is usually already answerable
     // — which is what stops the first frame drawing the wrong city.
     final world = ref.read(fakeWorldStoreProvider);
-    return _resolve(world.currentPosition) ?? RegionCatalogue.fallback;
+    final opening = _resolve(world.currentPosition);
+    _lastResolvedId = opening?.regionId;
+    return opening ?? RegionCatalogue.fallback;
+  }
+
+  /// The player's own choice of map, from the arrival sheet.
+  ///
+  /// Survives the following fixes: only *crossing into a different region* than
+  /// the one the ground last resolved to moves the map again. Somebody standing
+  /// on the border who wants the other side's streets gets to keep them.
+  void select(RegionPackSource source) {
+    if (source.regionId == state.regionId) return;
+    state = source;
   }
 
   RegionPackSource? _resolve(GeoPoint? position) {
@@ -231,6 +258,28 @@ class RegionPackSourceNotifier extends Notifier<RegionPackSource> {
     return RegionCatalogue.forPosition(position);
   }
 }
+
+/// The region the player has just walked into, until somebody says it.
+///
+/// Same shape as [LastCheckInResult] and for the same reason: the map consumes
+/// it with [take], so a rebuild — a position fix, a tab change, the keyboard —
+/// cannot replay the sheet. Null the rest of the time.
+class RegionArrival extends Notifier<RegionPackSource?> {
+  @override
+  RegionPackSource? build() => null;
+
+  // ignore: use_setters_to_change_properties
+  void record(RegionPackSource region) => state = region;
+
+  RegionPackSource? take() {
+    final arrival = state;
+    state = null;
+    return arrival;
+  }
+}
+
+final regionArrivalProvider =
+    NotifierProvider<RegionArrival, RegionPackSource?>(RegionArrival.new);
 
 final regionPackSourceProvider =
     NotifierProvider<RegionPackSourceNotifier, RegionPackSource>(

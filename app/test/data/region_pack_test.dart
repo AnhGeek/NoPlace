@@ -209,6 +209,7 @@ void main() {
         // behaviour a phone needs anyway.
         const RegionPackSource(
           regionId: 'vn-test',
+          name: 'Test',
           bundledAsset: 'assets/maps/vn-test.mbtiles',
         ),
       );
@@ -245,6 +246,7 @@ void main() {
         await store.open(
           const RegionPackSource(
             regionId: 'vn-test',
+          name: 'Test',
             remoteUrl: 'https://example.invalid/vn-test.mbtiles',
           ),
         ),

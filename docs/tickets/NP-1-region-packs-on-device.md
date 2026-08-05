@@ -140,7 +140,16 @@ what stops them being re-argued.
 3. **Crossing a region border is a moment, not a silent swap.** Show
    "You've reached Đồng Nai" when the resolved region changes mid-session.
 
-   **Buildable now.** Position-based resolution landed 2026-08-05:
+   **Built 2026-08-05.** `regionArrivalProvider` records the crossing and
+   `RegionArrivalSheet` says it — "You've reached Đồng Nai" — and offers the
+   picker, because the claims are rectangles and the ground is not: somebody on
+   the river is inside one box and looking at the other, and both packs hold
+   the tiles either way. A pick goes through
+   `RegionPackSourceNotifier.select` and survives the following fixes; only
+   crossing into a *different* region than the ground last resolved to moves
+   the map again.
+
+   Position-based resolution landed the same day:
    `RegionCatalogue.forPosition` answers point-in-claim and
    `regionPackSourceProvider` holds the answer as state, so the pack and the
    fog follow the player across a border. What is still missing is the *moment*

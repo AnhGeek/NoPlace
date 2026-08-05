@@ -95,6 +95,68 @@ void main() {
       expect(container.read(regionPackSourceProvider), RegionCatalogue.dongNai);
     });
 
+    test('a crossing is announced once, and only once', () async {
+      final store = FakeWorldStore();
+      final container = containerWith(store);
+      final subscription = container.listen(
+        regionPackSourceProvider,
+        (_, _) {},
+      );
+      addTearDown(subscription.close);
+
+      expect(container.read(regionArrivalProvider), isNull);
+
+      store.moveTo(bienHoa);
+      await pumpEventQueue();
+
+      final arrival = container.read(regionArrivalProvider.notifier).take();
+      expect(arrival, RegionCatalogue.dongNai);
+
+      // Walking on inside the same region is not a new arrival. Without this
+      // the sheet would reopen on every fix for as long as the player stayed
+      // in Đồng Nai.
+      store.moveTo(longKhanh);
+      await pumpEventQueue();
+      expect(container.read(regionArrivalProvider), isNull);
+    });
+
+    test('the player can pick another map and keep it', () async {
+      final store = FakeWorldStore();
+      final container = containerWith(store);
+      final subscription = container.listen(
+        regionPackSourceProvider,
+        (_, _) {},
+      );
+      addTearDown(subscription.close);
+
+      store.moveTo(bienHoa);
+      await pumpEventQueue();
+
+      container
+          .read(regionPackSourceProvider.notifier)
+          .select(RegionCatalogue.hcmc);
+      expect(container.read(regionPackSourceProvider), RegionCatalogue.hcmc);
+
+      // Still standing in Đồng Nai. The next fix must not undo the choice —
+      // the ground has not changed region, so nothing has.
+      store.moveTo(bienHoa);
+      await pumpEventQueue();
+
+      expect(
+        container.read(regionPackSourceProvider),
+        RegionCatalogue.hcmc,
+        reason: 'a fix in the region already resolved must not override a pick',
+      );
+
+      // Actually crossing back does move the map again.
+      store.moveTo(benThanh);
+      await pumpEventQueue();
+      store.moveTo(bienHoa);
+      await pumpEventQueue();
+
+      expect(container.read(regionPackSourceProvider), RegionCatalogue.dongNai);
+    });
+
     test('a fix outside every region keeps the one we are on', () async {
       final store = FakeWorldStore();
       final container = containerWith(store);

@@ -522,4 +522,25 @@ class AppL10nVi extends AppL10n {
 
   @override
   String get mapShowFog => 'Hiện sương mù';
+
+  @override
+  String regionArrivedTitle(String region) {
+    return 'Bạn đã tới $region';
+  }
+
+  @override
+  String get regionArrivedBody =>
+      'Bản đồ đã chuyển sang đường phố của vùng này, cùng phần sương mù bạn đã mở ở đây. Mỗi nơi giữ đường đi riêng của nó.';
+
+  @override
+  String get regionPickerLabel => 'Đi với bản đồ nào';
+
+  @override
+  String get regionPackOnDevice => 'Có sẵn trong máy · dùng được ngoại tuyến';
+
+  @override
+  String get regionPackNotDownloaded => 'Chưa có trong máy';
+
+  @override
+  String get regionArrivedAction => 'Đi ở đây';
 }
