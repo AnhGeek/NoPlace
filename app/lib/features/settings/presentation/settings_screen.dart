@@ -189,6 +189,36 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: NpSpace.md),
+          NpCard(
+            onTap: () => context.pushNamed(AppRoute.backupName),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.backup_outlined,
+                  size: NpSize.iconXl,
+                  color: NpColors.contentMuted,
+                ),
+                const SizedBox(width: NpSpace.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.settingsBackupTitle, style: NpTypography.label),
+                      Text(
+                        l10n.settingsBackupSubtitle,
+                        style: NpTypography.caption,
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: NpColors.contentMuted,
+                ),
+              ],
+            ),
+          ),
           if (kDebugMode) ...[
             const SizedBox(height: NpSpace.xl),
             _DebugRow(

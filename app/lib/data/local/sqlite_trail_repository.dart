@@ -69,6 +69,17 @@ class SqliteTrailRepository implements ExplorationTrailRepository {
     await _read();
   }
 
+  /// Reads this region's trail again, for when the database has changed
+  /// underneath us — which today means a restored backup.
+  ///
+  /// The caller is responsible for flushing first: this replaces what is in
+  /// memory with what is on disk, so anything still buffered would be lost.
+  Future<void> reload() async {
+    _loaded = true;
+    _lastRecorded = null;
+    await _read();
+  }
+
   /// Moves to another region: flushes what is pending, then loads that
   /// region's trail. A region never walked before starts empty.
   ///

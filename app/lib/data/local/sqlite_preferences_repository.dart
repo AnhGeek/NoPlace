@@ -65,7 +65,17 @@ class SqlitePreferencesRepository implements PreferencesRepository {
   Future<void> load() async {
     if (_loaded) return;
     _loaded = true;
+    await _read();
+  }
 
+  /// Reads the table again, for when something outside this store has written
+  /// to it — which today means a restored backup.
+  Future<void> reload() async {
+    _loaded = true;
+    await _read();
+  }
+
+  Future<void> _read() async {
     try {
       final db = await _database.open();
       final rows = await db.query('preferences');

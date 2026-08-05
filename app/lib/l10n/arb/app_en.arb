@@ -456,6 +456,88 @@
     "description": "Explains the trade-off behind the recording precision setting."
   },
 
+  "settingsBackupTitle": "Backup",
+  "@settingsBackupTitle": {
+    "description": "Title of the screen for saving and restoring the walk, and of the settings row that opens it."
+  },
+  "settingsBackupSubtitle": "Save your fog and places to a file",
+  "@settingsBackupSubtitle": {
+    "description": "Supporting line on the settings row that opens the backup screen."
+  },
+  "backupIntro": "Everywhere you have walked lives on this phone only. A backup is one file you can keep anywhere and put back on any phone.",
+  "@backupIntro": {
+    "description": "Opening line of the backup screen: why the feature exists."
+  },
+  "backupHolds": "In the backup",
+  "@backupHolds": {
+    "description": "Heading of the card listing what the backup file will contain."
+  },
+  "backupFogCells": "{count, plural, =0{No fog uncovered yet} =1{1 m² of fog uncovered} other{{count} m² of fog uncovered}}",
+  "@backupFogCells": {
+    "description": "How much ground the player has uncovered, one metre cell per unit.",
+    "placeholders": {
+      "count": { "type": "int", "example": "48210" }
+    }
+  },
+  "backupPoints": "{count, plural, =0{No points of your own} =1{1 point of your own} other{{count} points of your own}}",
+  "@backupPoints": {
+    "description": "How many pins and photo points the player has authored.",
+    "placeholders": {
+      "count": { "type": "int", "example": "12" }
+    }
+  },
+  "backupRegions": "{count, plural, =0{No city walked yet} =1{1 city} other{{count} cities}}",
+  "@backupRegions": {
+    "description": "How many cities the trail covers.",
+    "placeholders": {
+      "count": { "type": "int", "example": "2" }
+    }
+  },
+  "backupPhotosNote": "Photos stay on this phone. A restored photo point keeps its place and name, and draws as a plain pin.",
+  "@backupPhotosNote": {
+    "description": "Honest note about the one thing a backup does not carry."
+  },
+  "backupSaveAction": "Save a backup",
+  "@backupSaveAction": {
+    "description": "Button that writes the backup file through the system save dialog."
+  },
+  "backupRestoreAction": "Restore from a backup",
+  "@backupRestoreAction": {
+    "description": "Button that opens the system file picker to restore a backup."
+  },
+  "backupRestoreNote": "Restoring adds to what is already here. Nothing you have walked since is lost.",
+  "@backupRestoreNote": {
+    "description": "Explains that a restore merges rather than replaces."
+  },
+  "backupSaved": "Backup saved",
+  "@backupSaved": {
+    "description": "Confirmation after the backup file has been written."
+  },
+  "backupRestored": "Restored {fog} m² of fog and {points} points",
+  "@backupRestored": {
+    "description": "Confirmation after a backup has been read back in.",
+    "placeholders": {
+      "fog": { "type": "int", "example": "48210" },
+      "points": { "type": "int", "example": "12" }
+    }
+  },
+  "backupFailedSave": "The backup could not be saved.",
+  "@backupFailedSave": {
+    "description": "Shown when writing the backup file failed."
+  },
+  "backupFailedNotABackup": "That file is not a NoPlace backup.",
+  "@backupFailedNotABackup": {
+    "description": "Shown when the picked file is not one of ours."
+  },
+  "backupFailedTooNew": "That backup was made by a newer version of NoPlace.",
+  "@backupFailedTooNew": {
+    "description": "Shown when the backup's format version is ahead of this build."
+  },
+  "backupFailedRestore": "The backup could not be restored.",
+  "@backupFailedRestore": {
+    "description": "Shown when reading the file back in failed for any other reason."
+  },
+
   "settingsTitle": "Settings",
   "@settingsTitle": {
     "description": "Title of the settings screen."

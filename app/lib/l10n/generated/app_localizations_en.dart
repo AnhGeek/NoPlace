@@ -347,6 +347,90 @@ class AppL10nEn extends AppL10n {
       'Finer keeps a truer trail and a bigger file';
 
   @override
+  String get settingsBackupTitle => 'Backup';
+
+  @override
+  String get settingsBackupSubtitle => 'Save your fog and places to a file';
+
+  @override
+  String get backupIntro =>
+      'Everywhere you have walked lives on this phone only. A backup is one file you can keep anywhere and put back on any phone.';
+
+  @override
+  String get backupHolds => 'In the backup';
+
+  @override
+  String backupFogCells(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count m² of fog uncovered',
+      one: '1 m² of fog uncovered',
+      zero: 'No fog uncovered yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupPoints(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count points of your own',
+      one: '1 point of your own',
+      zero: 'No points of your own',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupRegions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cities',
+      one: '1 city',
+      zero: 'No city walked yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupPhotosNote =>
+      'Photos stay on this phone. A restored photo point keeps its place and name, and draws as a plain pin.';
+
+  @override
+  String get backupSaveAction => 'Save a backup';
+
+  @override
+  String get backupRestoreAction => 'Restore from a backup';
+
+  @override
+  String get backupRestoreNote =>
+      'Restoring adds to what is already here. Nothing you have walked since is lost.';
+
+  @override
+  String get backupSaved => 'Backup saved';
+
+  @override
+  String backupRestored(int fog, int points) {
+    return 'Restored $fog m² of fog and $points points';
+  }
+
+  @override
+  String get backupFailedSave => 'The backup could not be saved.';
+
+  @override
+  String get backupFailedNotABackup => 'That file is not a NoPlace backup.';
+
+  @override
+  String get backupFailedTooNew =>
+      'That backup was made by a newer version of NoPlace.';
+
+  @override
+  String get backupFailedRestore => 'The backup could not be restored.';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

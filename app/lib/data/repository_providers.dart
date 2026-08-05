@@ -18,6 +18,7 @@ import '../domain/rules/exploration_rules.dart';
 import 'fake/fake_repositories.dart';
 import 'fake/fake_world_store.dart';
 import 'local/app_database.dart';
+import 'local/backup_service.dart';
 import 'local/geolocator_location_repository.dart';
 import 'local/region_catalogue.dart';
 import 'local/region_pack.dart';
@@ -114,6 +115,20 @@ final preferencesStoreProvider = Provider<SqlitePreferencesRepository>((ref) {
 final preferencesRepositoryProvider = Provider<PreferencesRepository>(
   (ref) => ref.watch(preferencesStoreProvider),
 );
+
+/// Copies the walk off the device and back on.
+///
+/// Depends on the stores rather than the repository interfaces because a backup
+/// is a fact about *storage*: it flushes the trail's write buffer before it
+/// reads, and reloads all three afterwards so the map agrees with the file.
+final backupServiceProvider = Provider<BackupService>((ref) {
+  return BackupService(
+    database: ref.watch(appDatabaseProvider),
+    trail: ref.watch(trailStoreProvider),
+    mapPoints: ref.watch(mapPointStoreProvider),
+    preferences: ref.watch(preferencesStoreProvider),
+  );
+});
 
 // ---------------------------------------------------------------------------
 // Where the player actually is
@@ -230,6 +245,21 @@ final playerPositionProvider = StreamProvider<GeoPoint>((ref) {
   return ref.watch(worldRepositoryProvider).watchPlayerPosition();
 });
 
+/// Whether [playerPositionProvider] is the device's position yet, or still the
+/// seeded starting point.
+///
+/// A getter on the store rather than a `StreamProvider` over
+/// [FakeWorldStore.positionIsReal], deliberately: the answer is needed *inside*
+/// the listener that handles a fix, in the same microtask that set it, and an
+/// `AsyncValue` read there would still be carrying the previous frame's answer.
+///
+/// It reads the store rather than the repository because "have we heard from
+/// the GPS" is a fact about this fake, which must always hand out *some*
+/// coordinate. A real backend would make the position nullable and this would
+/// go away.
+bool hasRealPosition(WidgetRef ref) =>
+    ref.read(fakeWorldStoreProvider).hasRealPosition;
+
 /// Everywhere the player has already uncovered, loaded from the device.
 final exploredAreaProvider = StreamProvider<ExploredArea>((ref) {
   return ref.watch(explorationTrailRepositoryProvider).watch();
@@ -273,6 +303,13 @@ final mapLayerVisibilityProvider = StreamProvider<MapLayerVisibility>((ref) {
 final trailRecorderProvider = Provider<void>((ref) {
   final trail = ref.watch(explorationTrailRepositoryProvider);
   ref.listen<AsyncValue<GeoPoint>>(playerPositionProvider, (previous, next) {
+    // Only real fixes uncover ground. The world opens on a seeded coordinate in
+    // District 1, and recording that would hand every new player a patch of
+    // cleared fog in a city centre they have never stood in — and would write
+    // it to disk, where it outlives the misunderstanding.
+    final store = ref.read(fakeWorldStoreProvider);
+    if (!store.hasRealPosition) return;
+
     final position = next.value;
     if (position != null) unawaited(trail.record(position));
   }, fireImmediately: true);

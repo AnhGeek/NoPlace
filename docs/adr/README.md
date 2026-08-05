@@ -20,3 +20,4 @@ old one superseded.
 | [0007](0007-no-basemap.md) | No third-party basemap | Superseded by 0008 |
 | [0008](0008-openstreetmap-basemap.md) | Our own OpenStreetMap basemap, shipped as vector region packs | Accepted |
 | [0009](0009-real-location.md) | Real location via a foreground service, not background permission | Accepted |
+| [0010](0010-backup-and-restore.md) | Backup as one plain file, restored by merging | Accepted |

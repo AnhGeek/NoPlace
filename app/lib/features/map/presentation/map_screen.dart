@@ -55,6 +55,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// as the map fighting you, because it is.
   bool _following = true;
 
+  /// Whether the camera has already been put on a real fix.
+  ///
+  /// Until it has, the map is showing the seeded start point, and the first fix
+  /// takes the camera whatever the player has done with it — that is the app
+  /// correcting a guess, not the map fighting them for control. After it has,
+  /// [_following] decides, as it should.
+  bool _openedOnPlayer = false;
+
+  /// A move that arrived before the camera existed.
+  ///
+  /// [MapController.move] throws until flutter_map's first frame, and the fix
+  /// the app opens with is very often earlier than that — it comes from the
+  /// OS's last known position, read during start-up. Dropping it would leave
+  /// the map on the seed point until the player walked far enough to trigger a
+  /// second fix, which with a 25 m filter can be a long wait for somebody
+  /// sitting down.
+  ({GeoPoint position, double zoom})? _pendingMove;
+
   /// Re-reads everything that can change while we are not looking, when the app
   /// comes back to the foreground.
   ///
@@ -136,9 +154,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // one, dragging is impossible. `_following` is the difference, and
     // [RecentreButton] is how it comes back.
     ref.listen<AsyncValue<GeoPoint>>(playerPositionProvider, (previous, next) {
-      if (!_following) return;
       final position = next.value;
       if (position == null) return;
+
+      // The first real fix is not a follow, it is the answer to "where am I" —
+      // so it lands at the opening zoom and ignores the follow flag. Until the
+      // GPS has said anything the position is a seeded placeholder, and moving
+      // the camera onto it would only make the wrong city look deliberate.
+      if (!_openedOnPlayer) {
+        if (!hasRealPosition(ref)) return;
+        _openedOnPlayer = true;
+        _moveTo(position, mapDefaultZoom);
+        return;
+      }
+
+      if (!_following) return;
       _moveTo(position, _mapController.camera.zoom);
     });
 
@@ -176,6 +206,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   onPlaceTap: _openCheckInSheet,
                   onMapPointTap: _showMapPoint,
                   onUserMovedMap: _stopFollowing,
+                  onMapReady: _onMapReady,
                   playerLabel: candidate == null
                       ? null
                       : YouAreHereChip(
@@ -335,10 +366,33 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _moveTo(GeoPoint position, double zoom) {
     try {
       _mapController.move(position.toLatLng(), zoom);
+      _pendingMove = null;
     } on Object {
       // The controller is not attached until the map's first frame; a fix that
-      // arrives before it is simply early, not an error.
+      // arrives before it is simply early, not an error. Held rather than
+      // dropped — see [_pendingMove].
+      _pendingMove = (position: position, zoom: zoom);
     }
+  }
+
+  /// The camera exists now. Anything that arrived before it can be applied.
+  void _onMapReady() {
+    // A fix that landed before this build is already in `initialCenter`, so the
+    // map was born on the player and there is nothing to correct. Saying so
+    // here is what stops the *next* fix yanking the camera back from somebody
+    // who has since panned away.
+    if (hasRealPosition(ref)) _openedOnPlayer = true;
+
+    final pending = _pendingMove;
+    if (pending == null) return;
+    _pendingMove = null;
+
+    // Next frame, not this one: `onMapReady` fires while flutter_map is still
+    // building, and moving the camera from inside its own build is how you get
+    // a "setState during build" out of it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _moveTo(pending.position, pending.zoom);
+    });
   }
 
   /// Switching scopes tears the map down and builds it again, so there is no

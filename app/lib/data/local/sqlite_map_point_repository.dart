@@ -28,6 +28,13 @@ class SqliteMapPointRepository implements MapPointRepository {
     await _reload();
   }
 
+  /// Reads the table again, for when something outside this store has written
+  /// to it — which today means a restored backup.
+  Future<void> reload() async {
+    _loaded = true;
+    await _reload();
+  }
+
   Future<void> _reload() async {
     try {
       final db = await _database.open();

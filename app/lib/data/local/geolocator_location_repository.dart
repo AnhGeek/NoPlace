@@ -109,6 +109,10 @@ class GeolocatorLocationRepository implements LocationRepository {
     await _platform.ensureNotificationPermission();
     unawaited(refreshBatteryOptimised());
 
+    // Also before subscribing, and for the same reason in reverse: whatever the
+    // stream produces must be free to land on top of this and correct it.
+    await _emitLastKnown();
+
     _subscription = Geolocator.getPositionStream(locationSettings: _settings())
         .listen(
           (position) =>
@@ -119,6 +123,30 @@ class GeolocatorLocationRepository implements LocationRepository {
     _restartWhenVisible = false;
 
     return state;
+  }
+
+  /// Pushes out the fix the OS already had, if it kept one.
+  ///
+  /// A cold GPS start is tens of seconds, and until the first fix lands the app
+  /// has nothing to show but the seeded city centre — so it opens claiming the
+  /// player is somewhere they have never been. The last known position is
+  /// usually seconds old and always the right neighbourhood, which is the whole
+  /// question the first screen has to answer.
+  ///
+  /// Stale by definition, and that is fine: everything downstream treats it as
+  /// an ordinary fix, and the first real one replaces it. What it must not do is
+  /// arrive *after* a real fix, which is why [start] awaits it before
+  /// subscribing.
+  Future<void> _emitLastKnown() async {
+    try {
+      final position = await Geolocator.getLastKnownPosition();
+      if (position == null || _positions.isClosed) return;
+      _positions.add(GeoPoint(position.latitude, position.longitude));
+    } on Object catch (error) {
+      // Never kept one, or the platform refused to say. Either way the stream
+      // is still coming, so this is a missed shortcut and not a failure.
+      debugPrint('Location: no last known position ($error)');
+    }
   }
 
   /// A stream that dies mid-walk must leave the app in a state the player can

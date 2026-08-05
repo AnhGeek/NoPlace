@@ -29,6 +29,9 @@ abstract final class AppRoute {
   static const String fogSettingsPath = '/settings/fog';
   static const String fogSettingsName = 'fog-settings';
 
+  static const String backupPath = '/settings/backup';
+  static const String backupName = 'backup';
+
   /// Full-screen celebration. Takes the discovered district as `extra`.
   static const String discoveryPath = '/discovery';
   static const String discoveryName = 'discovery';

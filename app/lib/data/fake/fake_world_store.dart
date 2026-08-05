@@ -274,6 +274,16 @@ class FakeWorldStore {
   late final ReplaySubject<List<Quest>> _quests;
   late final ReplaySubject<WeeklyChallenge> _weeklyChallenge;
 
+  /// Whether [position] has ever carried a real GPS fix.
+  ///
+  /// The seeded position is a placeholder that has to be a real coordinate —
+  /// distances and the nearby list need *some* origin before the GPS answers —
+  /// and that makes it indistinguishable from a fix by looking at it. This is
+  /// how the rest of the app tells them apart, and it matters twice over: the
+  /// map must not open on a city the player is not in, and the fog must not
+  /// record ground they have not walked.
+  bool _positionIsReal = false;
+
   Stream<City> get city => _city.stream;
   Stream<GeoPoint> get position => _position.stream;
   Stream<List<Place>> get places => _places.stream;
@@ -285,6 +295,8 @@ class FakeWorldStore {
 
   GeoPoint get currentPosition => _position.value;
 
+  bool get hasRealPosition => _positionIsReal;
+
   /// Moves the player to a real GPS fix.
   ///
   /// The world is still fake — the places and districts are seeded — but *where
@@ -293,6 +305,10 @@ class FakeWorldStore {
   /// GPS would move the marker and nothing else, which is worse than no GPS at
   /// all because it looks like it works.
   void moveTo(GeoPoint position) {
+    // Marked real before the early return, not after: a player standing still
+    // on the seeded coordinate would otherwise keep the world reporting that it
+    // has never heard from the GPS, and the map would never centre on them.
+    _positionIsReal = true;
     if (_position.value == position) return;
     _position.value = position;
   }

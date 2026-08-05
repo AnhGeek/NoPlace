@@ -346,6 +346,89 @@ class AppL10nVi extends AppL10n {
       'Càng chi tiết thì đường đi càng thật và tệp càng lớn';
 
   @override
+  String get settingsBackupTitle => 'Sao lưu';
+
+  @override
+  String get settingsBackupSubtitle =>
+      'Lưu sương mù và địa điểm của bạn ra tệp';
+
+  @override
+  String get backupIntro =>
+      'Mọi nơi bạn đã đi qua chỉ nằm trong điện thoại này. Bản sao lưu là một tệp duy nhất, cất ở đâu cũng được và mở lại được trên bất kỳ máy nào.';
+
+  @override
+  String get backupHolds => 'Trong bản sao lưu';
+
+  @override
+  String backupFogCells(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Đã mở ra $count m² sương mù',
+      zero: 'Chưa mở ra vùng nào',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupPoints(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count điểm của bạn',
+      zero: 'Chưa có điểm nào của bạn',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupRegions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count thành phố',
+      zero: 'Chưa đi thành phố nào',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupPhotosNote =>
+      'Ảnh vẫn ở lại điện thoại này. Điểm ảnh khi phục hồi vẫn giữ vị trí và tên, và hiện ra như một ghim thường.';
+
+  @override
+  String get backupSaveAction => 'Lưu bản sao lưu';
+
+  @override
+  String get backupRestoreAction => 'Phục hồi từ bản sao lưu';
+
+  @override
+  String get backupRestoreNote =>
+      'Phục hồi là cộng thêm vào những gì đang có. Những gì bạn đi được từ đó tới nay không mất.';
+
+  @override
+  String get backupSaved => 'Đã lưu bản sao lưu';
+
+  @override
+  String backupRestored(int fog, int points) {
+    return 'Đã phục hồi $fog m² sương mù và $points điểm';
+  }
+
+  @override
+  String get backupFailedSave => 'Không lưu được bản sao lưu.';
+
+  @override
+  String get backupFailedNotABackup =>
+      'Tệp đó không phải bản sao lưu của NoPlace.';
+
+  @override
+  String get backupFailedTooNew =>
+      'Bản sao lưu đó được tạo bởi phiên bản NoPlace mới hơn.';
+
+  @override
+  String get backupFailedRestore => 'Không phục hồi được bản sao lưu.';
+
+  @override
   String get settingsTitle => 'Cài đặt';
 
   @override

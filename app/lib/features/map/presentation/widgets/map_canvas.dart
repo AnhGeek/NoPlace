@@ -39,8 +39,16 @@ class MapCanvas extends StatelessWidget {
     this.playerLabel,
     this.mapController,
     this.onUserMovedMap,
+    this.onMapReady,
     super.key,
   });
+
+  /// Called once the camera exists and will accept a move.
+  ///
+  /// [MapController] throws until flutter_map's first frame, so a position that
+  /// arrives before it — which the last known fix usually does — has nowhere to
+  /// go. This is the screen's cue to apply it.
+  final VoidCallback? onMapReady;
 
   /// Called when the *player* moves the camera — a drag or a pinch — and never
   /// when we move it ourselves.
@@ -138,6 +146,8 @@ class MapCanvas extends StatelessWidget {
         onPositionChanged: (camera, hasGesture) {
           if (hasGesture) onUserMovedMap?.call();
         },
+
+        onMapReady: onMapReady,
       ),
       children: [
         // The streets, drawn first and therefore underneath everything. The

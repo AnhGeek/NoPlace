@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:noplace/data/local/background_tracking_channel.dart';
 import 'package:noplace/data/local/geolocator_location_repository.dart';
+import 'package:noplace/domain/entities/geo_point.dart';
 import 'package:noplace/domain/repositories/repositories.dart';
 
 /// A walk happens in a pocket, so the interesting cases are all the ones nobody
@@ -36,6 +37,34 @@ void main() {
     geolocator.emit(10.7725, 106.6980);
 
     expect((await fix).latitude, closeTo(10.7725, 1e-9));
+  });
+
+  // A cold GPS start is tens of seconds, and the map has to open *somewhere*.
+  // Without this the app opens on the seeded city centre and stays there until
+  // the first real fix, which reads as the app being confident about a place
+  // the player has never been.
+  test('the OS\'s last known position arrives before the first fix', () async {
+    geolocator.lastKnown = _position(21.0285, 105.8542);
+
+    final fixes = <GeoPoint>[];
+    final subscription = repository.watchPosition().listen(fixes.add);
+    addTearDown(subscription.cancel);
+
+    await repository.start();
+    await pumpEventQueue();
+
+    expect(fixes.single.latitude, closeTo(21.0285, 1e-9));
+
+    // And the real fix lands on top of it rather than being pre-empted by it.
+    geolocator.emit(10.7725, 106.6980);
+    await pumpEventQueue();
+    expect(fixes.last.latitude, closeTo(10.7725, 1e-9));
+  });
+
+  test('never having kept one is not a failure', () async {
+    geolocator.lastKnown = null;
+
+    expect(await repository.start(), LocationAvailability.ready);
   });
 
   test('a stream error in the background keeps the service running', () async {
@@ -83,6 +112,20 @@ void main() {
   });
 }
 
+/// A fix, with the fields nothing here reads set to something valid.
+Position _position(double latitude, double longitude) => Position(
+  latitude: latitude,
+  longitude: longitude,
+  timestamp: DateTime.now(),
+  accuracy: 5,
+  altitude: 0,
+  altitudeAccuracy: 0,
+  heading: 0,
+  headingAccuracy: 0,
+  speed: 0,
+  speedAccuracy: 0,
+);
+
 /// Just enough of the plugin to drive the cases above: permission granted,
 /// service on, and a position stream we can fail on demand.
 class _FakeGeolocator extends GeolocatorPlatform {
@@ -90,24 +133,19 @@ class _FakeGeolocator extends GeolocatorPlatform {
 
   int streamCount = 0;
   bool cancelled = false;
+
+  /// What the OS had cached before the app started, or null if it kept none.
+  Position? lastKnown;
+
   StreamController<Position>? _controller;
 
-  void emit(double latitude, double longitude) {
-    _controller?.add(
-      Position(
-        latitude: latitude,
-        longitude: longitude,
-        timestamp: DateTime.now(),
-        accuracy: 5,
-        altitude: 0,
-        altitudeAccuracy: 0,
-        heading: 0,
-        headingAccuracy: 0,
-        speed: 0,
-        speedAccuracy: 0,
-      ),
-    );
-  }
+  void emit(double latitude, double longitude) =>
+      _controller?.add(_position(latitude, longitude));
+
+  @override
+  Future<Position?> getLastKnownPosition({
+    bool forceLocationManager = false,
+  }) async => lastKnown;
 
   void fail(String message) => _controller?.addError(message);
 

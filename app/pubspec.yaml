@@ -66,6 +66,14 @@ dependencies:
   # the app is publishable.
   geolocator: ^14.0.3
 
+  # Backup and restore need the system's save and open dialogs, and they are
+  # *not* here as a dependency: they are two calls on the same Android channel
+  # `MainActivity.kt` already runs. `file_picker` is the obvious package and it
+  # does not fit — every stable line of it pins win32 5 while geolocator pulls
+  # in win32 6, and its only resolvable build is a beta whose Kotlin sources do
+  # not compile under this project's AGP 9. Two Intents were the smaller thing
+  # to own. See docs/adr/0010-backup-and-restore.md.
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -613,6 +613,108 @@ abstract class AppL10n {
   /// **'Finer keeps a truer trail and a bigger file'**
   String get settingsFogPrecisionDetail;
 
+  /// Title of the screen for saving and restoring the walk, and of the settings row that opens it.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get settingsBackupTitle;
+
+  /// Supporting line on the settings row that opens the backup screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your fog and places to a file'**
+  String get settingsBackupSubtitle;
+
+  /// Opening line of the backup screen: why the feature exists.
+  ///
+  /// In en, this message translates to:
+  /// **'Everywhere you have walked lives on this phone only. A backup is one file you can keep anywhere and put back on any phone.'**
+  String get backupIntro;
+
+  /// Heading of the card listing what the backup file will contain.
+  ///
+  /// In en, this message translates to:
+  /// **'In the backup'**
+  String get backupHolds;
+
+  /// How much ground the player has uncovered, one metre cell per unit.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No fog uncovered yet} =1{1 m² of fog uncovered} other{{count} m² of fog uncovered}}'**
+  String backupFogCells(int count);
+
+  /// How many pins and photo points the player has authored.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No points of your own} =1{1 point of your own} other{{count} points of your own}}'**
+  String backupPoints(int count);
+
+  /// How many cities the trail covers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No city walked yet} =1{1 city} other{{count} cities}}'**
+  String backupRegions(int count);
+
+  /// Honest note about the one thing a backup does not carry.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos stay on this phone. A restored photo point keeps its place and name, and draws as a plain pin.'**
+  String get backupPhotosNote;
+
+  /// Button that writes the backup file through the system save dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a backup'**
+  String get backupSaveAction;
+
+  /// Button that opens the system file picker to restore a backup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from a backup'**
+  String get backupRestoreAction;
+
+  /// Explains that a restore merges rather than replaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring adds to what is already here. Nothing you have walked since is lost.'**
+  String get backupRestoreNote;
+
+  /// Confirmation after the backup file has been written.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saved'**
+  String get backupSaved;
+
+  /// Confirmation after a backup has been read back in.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored {fog} m² of fog and {points} points'**
+  String backupRestored(int fog, int points);
+
+  /// Shown when writing the backup file failed.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup could not be saved.'**
+  String get backupFailedSave;
+
+  /// Shown when the picked file is not one of ours.
+  ///
+  /// In en, this message translates to:
+  /// **'That file is not a NoPlace backup.'**
+  String get backupFailedNotABackup;
+
+  /// Shown when the backup's format version is ahead of this build.
+  ///
+  /// In en, this message translates to:
+  /// **'That backup was made by a newer version of NoPlace.'**
+  String get backupFailedTooNew;
+
+  /// Shown when reading the file back in failed for any other reason.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup could not be restored.'**
+  String get backupFailedRestore;
+
   /// Title of the settings screen.
   ///
   /// In en, this message translates to:

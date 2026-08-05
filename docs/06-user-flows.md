@@ -11,6 +11,8 @@ HomeShell (bottom navigation, each tab keeps its own stack)
 ├── /quests     QuestsScreen
 └── /profile    ProfileScreen
         └── /profile/settings                 SettingsScreen
+                ├── …/fog                     FogSettingsScreen
+                ├── …/backup                  BackupScreen
                 └── …/design-gallery          DesignGalleryScreen (debug only)
 
 Pushed on the root navigator, above everything:
@@ -124,8 +126,20 @@ Avatar, name, level line, then the headline number — **38% of the city charted
 (distance today, check-in places, streak), the city switcher, per-district
 progress bars, and the city ranking card.
 
-The gear in the corner leads to Settings (language, and in debug builds the
-design gallery and a discovery preview).
+The gear in the corner leads to Settings: language, map layers, the nearby
+radius, Fog, Backup, and in debug builds the design gallery and a discovery
+preview.
+
+### Backup
+
+Everything the player has walked lives on one phone, and the fog is the only
+thing in the app that cannot be earned twice. The screen says that first, then
+counts what is at stake — fog, points, cities — and offers two buttons: **Save a
+backup**, which hands one `.noplace` file to the system save dialog, and
+**Restore from a backup**, which reads one back.
+
+Restoring adds; it never wipes. See
+[ADR 0010](adr/0010-backup-and-restore.md).
 
 ## The one flow that matters end to end
 

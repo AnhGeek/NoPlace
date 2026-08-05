@@ -49,6 +49,26 @@ void main() {
       expect(store.currentPosition, somewhereElse);
     });
 
+    // The seeded position is a real coordinate in District 1, which makes it
+    // indistinguishable from a fix by looking at it. Everything that must not
+    // act on a guess — opening the map on a city, writing fog to disk — asks
+    // this instead.
+    test('the seeded position is not mistaken for a fix', () {
+      expect(store.hasRealPosition, isFalse);
+
+      store.moveTo(const GeoPoint(21.0285, 105.8542));
+
+      expect(store.hasRealPosition, isTrue);
+    });
+
+    test('a fix on the seeded coordinate still counts as a fix', () {
+      // Standing still on the seed point must not leave the world reporting
+      // that it has never heard from the GPS: the map would never centre.
+      store.moveTo(store.currentPosition);
+
+      expect(store.hasRealPosition, isTrue);
+    });
+
     test('distance to a place follows the player', () async {
       final place = (await store.places.first).first;
       final before = store.distanceToPlayer(place);

@@ -9,6 +9,7 @@ import '../../features/logs/presentation/logs_screen.dart';
 import '../../features/map/presentation/map_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/quests/presentation/quests_screen.dart';
+import '../../features/settings/presentation/backup_screen.dart';
 import '../../features/settings/presentation/fog_settings_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../shell/home_shell.dart';
@@ -73,6 +74,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         path: 'fog',
                         name: AppRoute.fogSettingsName,
                         builder: (context, state) => const FogSettingsScreen(),
+                      ),
+                      GoRoute(
+                        path: 'backup',
+                        name: AppRoute.backupName,
+                        builder: (context, state) => const BackupScreen(),
                       ),
                       GoRoute(
                         path: 'design-gallery',
