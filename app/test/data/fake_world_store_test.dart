@@ -145,6 +145,48 @@ void main() {
     });
   });
 
+  group('visits the device remembers', () {
+    // The world is rebuilt from the seed on every launch; the visits are not.
+    // Without this the check-in sheet would call a place the player knows well
+    // "never visited", and would offer the first-visit bonus for it again.
+    test('a place visited on a previous launch is not offered as new', () {
+      store.restoreVisited({'place-ben-thanh'});
+
+      final result = store.checkIn('place-ben-thanh');
+
+      expect(result.isFirstVisit, isFalse);
+      expect(result.xpAwarded, 50, reason: 'the bonus was spent last week');
+    });
+
+    test('an id nobody has visited leaves the world alone', () async {
+      store.restoreVisited({'place-tao-dan'});
+
+      final places = await store.places.first;
+      expect(
+        places.firstWhere((place) => place.id == 'place-tao-dan').visited,
+        isTrue,
+      );
+      expect(
+        places.firstWhere((place) => place.id == 'place-ben-thanh').visited,
+        isFalse,
+      );
+    });
+
+    test('never un-visits a place', () async {
+      store.checkIn('place-ben-thanh');
+
+      // An empty record is not evidence that nobody has been anywhere — it is
+      // the absence of evidence, and it must not undo what just happened.
+      store.restoreVisited(const {});
+
+      final places = await store.places.first;
+      expect(
+        places.firstWhere((place) => place.id == 'place-ben-thanh').visited,
+        isTrue,
+      );
+    });
+  });
+
   test('nearby places come back nearest first', () {
     final nearby = store.nearbyPlaces(500);
 

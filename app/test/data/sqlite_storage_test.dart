@@ -3,10 +3,13 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noplace/data/local/app_database.dart';
 import 'package:noplace/data/local/sqlite_map_point_repository.dart';
+import 'package:noplace/data/local/sqlite_place_visit_repository.dart';
 import 'package:noplace/data/local/sqlite_preferences_repository.dart';
 import 'package:noplace/data/local/sqlite_trail_repository.dart';
+import 'package:noplace/domain/entities/auto_check_in.dart';
 import 'package:noplace/domain/entities/geo_point.dart';
 import 'package:noplace/domain/entities/map_point.dart';
+import 'package:noplace/domain/entities/place_visit.dart';
 import 'package:noplace/domain/rules/exploration_rules.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -235,6 +238,200 @@ void main() {
       expect(row['region_id'], AppDatabase.legacyRegionId);
       expect(row['latitude'], closeTo(benThanh.latitude, 0.000001));
     });
+
+    test('a v2 pin keeps its name and arrives unrated', () async {
+      // A v2 database by hand: the shipped schema before places could be rated.
+      final path = '${directory.path}/${AppDatabase.fileName}';
+      final v2 = await databaseFactory.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 2,
+          onCreate: (db, _) async {
+            await db.execute('''
+              CREATE TABLE trail_points (
+                region_id   TEXT    NOT NULL,
+                lat_cell    INTEGER NOT NULL,
+                lng_cell    INTEGER NOT NULL,
+                latitude    REAL    NOT NULL,
+                longitude   REAL    NOT NULL,
+                recorded_at INTEGER NOT NULL,
+                PRIMARY KEY (region_id, lat_cell, lng_cell)
+              )
+            ''');
+            await db.execute(
+              'CREATE TABLE map_points (id TEXT PRIMARY KEY, kind TEXT NOT '
+              'NULL, latitude REAL NOT NULL, longitude REAL NOT NULL, label '
+              "TEXT NOT NULL DEFAULT '', icon_id TEXT NOT NULL DEFAULT 'pin', "
+              'image_path TEXT, created_at INTEGER NOT NULL)',
+            );
+            await db.execute(
+              'CREATE TABLE preferences (key TEXT PRIMARY KEY, value TEXT '
+              'NOT NULL)',
+            );
+          },
+        ),
+      );
+      await v2.insert('map_points', {
+        'id': 'old-pin',
+        'kind': 'user',
+        'latitude': benThanh.latitude,
+        'longitude': benThanh.longitude,
+        'label': 'Good bench',
+        'icon_id': 'star',
+        'created_at': 1,
+      });
+      await v2.close();
+
+      final upgraded = AppDatabase(directory: directory);
+      addTearDown(upgraded.close);
+
+      final points = SqliteMapPointRepository(upgraded);
+      await points.load();
+      final restored = points.current.single;
+
+      expect(restored.label, 'Good bench');
+      expect(restored.iconId, 'star');
+      // Unrated, with nothing counted: the state a pin dropped today starts in,
+      // which is exactly what this pin's history amounts to.
+      expect(restored.stars, 0);
+      expect(restored.moodId, PlaceMood.none);
+      expect(restored.checkInCount, 0);
+      expect(restored.lastCheckInAt, isNull);
+      expect(restored.stayStartedAt, isNull);
+    });
+
+    test('a v3 pin keeps its history and its hour', () async {
+      // A v3 database by hand: the shipped schema before the world's own places
+      // kept a history and before the hour was the player's to choose.
+      final path = '${directory.path}/${AppDatabase.fileName}';
+      final v3 = await databaseFactory.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 3,
+          onCreate: (db, _) async {
+            await db.execute('''
+              CREATE TABLE trail_points (
+                region_id   TEXT    NOT NULL,
+                lat_cell    INTEGER NOT NULL,
+                lng_cell    INTEGER NOT NULL,
+                latitude    REAL    NOT NULL,
+                longitude   REAL    NOT NULL,
+                recorded_at INTEGER NOT NULL,
+                PRIMARY KEY (region_id, lat_cell, lng_cell)
+              )
+            ''');
+            await db.execute('''
+              CREATE TABLE map_points (
+                id                TEXT    PRIMARY KEY,
+                kind              TEXT    NOT NULL,
+                latitude          REAL    NOT NULL,
+                longitude         REAL    NOT NULL,
+                label             TEXT    NOT NULL DEFAULT '',
+                icon_id           TEXT    NOT NULL DEFAULT 'pin',
+                image_path        TEXT,
+                created_at        INTEGER NOT NULL,
+                stars             INTEGER NOT NULL DEFAULT 0,
+                mood              TEXT    NOT NULL DEFAULT '',
+                check_in_count    INTEGER NOT NULL DEFAULT 0,
+                last_check_in_at  INTEGER,
+                stay_started_at   INTEGER,
+                stay_last_seen_at INTEGER
+              )
+            ''');
+            await db.execute(
+              'CREATE TABLE preferences (key TEXT PRIMARY KEY, value TEXT '
+              'NOT NULL)',
+            );
+          },
+        ),
+      );
+      await v3.insert('map_points', {
+        'id': 'the-cafe',
+        'kind': 'user',
+        'latitude': benThanh.latitude,
+        'longitude': benThanh.longitude,
+        'label': 'The café',
+        'icon_id': 'coffee',
+        'created_at': 1,
+        'stars': 4,
+        'mood': PlaceMood.calm,
+        'check_in_count': 6,
+        'last_check_in_at': DateTime(2026, 8, 4, 18).millisecondsSinceEpoch,
+      });
+      await v3.close();
+
+      final upgraded = AppDatabase(directory: directory);
+      addTearDown(upgraded.close);
+
+      final points = SqliteMapPointRepository(upgraded);
+      await points.load();
+      final restored = points.current.single;
+
+      expect(restored.stars, 4);
+      expect(restored.checkInCount, 6);
+      // The hour it was already keeping, now written down. Anything else here
+      // would change what this pin does on the morning after an update.
+      expect(restored.autoCheckInEvery, AutoCheckIn.hourly);
+
+      // And the new table exists, empty: the counts it would hold could only
+      // have been earned by a build that had it.
+      final visits = SqlitePlaceVisitRepository(upgraded);
+      await visits.load();
+      expect(visits.current, isEmpty);
+    });
+  });
+
+  group('place visits', () {
+    test('round-trip and overwrite the same place', () async {
+      final visits = SqlitePlaceVisitRepository(database);
+      await visits.load();
+
+      expect(visits.of('place-ben-thanh').checkInCount, 0);
+      expect(visits.of('place-ben-thanh').hasVisited, isFalse);
+
+      await visits.save(
+        PlaceVisit(
+          placeId: 'place-ben-thanh',
+          checkInCount: 1,
+          lastCheckInAt: DateTime(2026, 8, 4, 14, 20),
+        ),
+      );
+      await visits.save(
+        PlaceVisit(
+          placeId: 'place-ben-thanh',
+          checkInCount: 2,
+          lastCheckInAt: DateTime(2026, 8, 5, 9),
+        ),
+      );
+
+      // Read back off disk rather than out of memory: the point of the table is
+      // that the count is still there next launch.
+      final reopened = SqlitePlaceVisitRepository(database);
+      await reopened.load();
+
+      expect(reopened.current, hasLength(1));
+      expect(reopened.of('place-ben-thanh').checkInCount, 2);
+      expect(
+        reopened.of('place-ben-thanh').lastCheckInAt,
+        DateTime(2026, 8, 5, 9),
+      );
+    });
+
+    test('keeps the world places apart from each other', () async {
+      final visits = SqlitePlaceVisitRepository(database);
+      await visits.load();
+
+      await visits.save(
+        const PlaceVisit(placeId: 'place-ben-thanh', checkInCount: 3),
+      );
+      await visits.save(
+        const PlaceVisit(placeId: 'place-tao-dan', checkInCount: 1),
+      );
+
+      expect(visits.of('place-ben-thanh').checkInCount, 3);
+      expect(visits.of('place-tao-dan').checkInCount, 1);
+      expect(visits.of('place-notre-dame').checkInCount, 0);
+    });
   });
 
   group('map points', () {
@@ -282,6 +479,54 @@ void main() {
       final db = await database.open();
       expect(await db.query('map_points'), isEmpty);
       expect(repository.current, isEmpty);
+    });
+
+    test('a rating, a feeling and a visit count round-trip', () async {
+      final repository = SqliteMapPointRepository(database);
+      await repository.load();
+      await repository.add(
+        point('p1', MapPointKind.user).copyWith(
+          stars: 4,
+          moodId: PlaceMood.calm,
+          checkInCount: 3,
+          lastCheckInAt: DateTime(2026, 8, 5, 18, 30),
+          stayStartedAt: DateTime(2026, 8, 5, 18),
+          stayLastSeenAt: DateTime(2026, 8, 5, 18, 25),
+        ),
+      );
+
+      final reopened = SqliteMapPointRepository(
+        AppDatabase(directory: directory),
+      );
+      await reopened.load();
+      final restored = reopened.current.single;
+
+      expect(restored.stars, 4);
+      expect(restored.moodId, PlaceMood.calm);
+      expect(restored.checkInCount, 3);
+      expect(restored.lastCheckInAt, DateTime(2026, 8, 5, 18, 30));
+      // The stay survives a restart, which is the only reason an hour at a café
+      // can span one.
+      expect(restored.stayStartedAt, DateTime(2026, 8, 5, 18));
+      expect(restored.stayLastSeenAt, DateTime(2026, 8, 5, 18, 25));
+    });
+
+    test('a hand-edited star count cannot get past the entity', () async {
+      final repository = SqliteMapPointRepository(database);
+      await repository.load();
+      await repository.add(point('p1', MapPointKind.user));
+
+      // The database file is meant to be opened and poked at; the app still has
+      // to survive what comes back out of it.
+      final db = await database.open();
+      await db.update('map_points', {'stars': 99});
+
+      final reopened = SqliteMapPointRepository(
+        AppDatabase(directory: directory),
+      );
+      await reopened.load();
+
+      expect(reopened.current.single.stars, MapPoint.maxStars);
     });
 
     test('seeding never touches a table the player has written to', () async {

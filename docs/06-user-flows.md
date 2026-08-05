@@ -39,6 +39,7 @@ map below; **NEARBY** is a list.
 │    📍 pins for places       │  colour = category
 │                        (☁)  │  fog toggle — lit while the fog is off
 │                        (◎)  │  recentre — lit while following the GPS
+│                        (✚)  │  save a place, here
 │  ┌───────────────────────┐  │
 │  │ You're near X         │  │  nearby card — only for places
 │  │ 40 m · never · +100XP │  │  inside the check-in radius
@@ -96,15 +97,61 @@ Opened by the card's button, by tapping a pin, or by "Wrong place?".
 
 1. **Header** — pin, name, `category · distance · never visited`, reward.
 2. **Three tiles** — explorers here, first-visit ×2, streak kept.
-3. **Check in here** — the only orange thing on the sheet.
-4. **"Not this place?"** — up to three alternatives, all of them within the
+3. **Your history here**, but only once there is one: `Checked in 7 times` and
+   when the last one was. A card reading "no check-ins yet" above a button
+   offering to make one is noise, and it would sit there for most of the map.
+4. **Check in here** — the only orange thing on the sheet.
+5. **"Not this place?"** — up to three alternatives, all of them within the
    check-in radius so the app can never offer something the rules would refuse.
    Tapping one re-targets the sheet in place.
-5. **Not now** — dismiss.
+6. **Not now** — dismiss.
 
 While the request is in flight the button is disabled. On failure the sheet
 stays open and says why ("You're too far away…"); it never closes on a silent
 error.
+
+The history is kept **on the device**, keyed by place id, and so survives a
+relaunch even though the world itself is seeded fresh each time — which is also
+what stops a place you checked into last week offering its first-visit bonus
+again this morning. Unlike a place you saved yourself, one the world came with
+counts a visit **only when you check in**: see
+[adr/0012](adr/0012-visit-history-for-every-place.md) for why an hour spent
+standing near it deliberately earns nothing.
+
+## 2b · Place sheet — the player's own
+
+Opened by the ✚ button (at the player), by a long press on the map (at that
+spot), or by tapping one of your own pins. One sheet for both, because saving a
+place and coming back to it are the same form:
+
+1. **Pin preview and name** — the preview redraws as the icon is picked, so the
+   choice is made against the thing that will be on the map. The name may stay
+   empty; a pin you drop to remember a corner does not owe anybody a label.
+2. **Icon** — twenty to choose from.
+3. **Feeling** — five faces, best to worst. Tap the chosen one again to clear it:
+   "meh" and "I have not said" are different answers.
+4. **Rating** — five stars, and tapping the star you are on clears it, which is
+   the only way back to unrated.
+5. **Auto check-in** — Off · 30 min · 1 hour · 2 hours, defaulting to the hour.
+   How long you have to stay before it counts as a visit without you tapping
+   anything. The **?** beside the heading opens the explanation: the 150 m
+   radius, the interval, and the twenty minutes of quiet that end a stay. It is
+   a button rather than a tooltip because this is the one control on the sheet
+   that keeps acting after the phone is back in a pocket. Off is the right
+   answer for somewhere you are always at, like home.
+6. **The buttons** — a new place can only be saved. An existing one leads with
+   **"I'm here now"** (which saves the edits *and* counts a visit), then "Save
+   changes", then delete.
+
+An existing place also carries its count: `Checked in 7 times`, when the last one
+was, and a line describing what the interval above will do — which follows the
+picker as you change it, before anything is saved, because "what will this do"
+is the question you are asking at that moment. See
+[adr/0011](adr/0011-places-the-player-saves.md) for what counts as a stay and
+[adr/0012](adr/0012-visit-history-for-every-place.md) for the interval.
+
+Deleting is immediate, and the map offers **Undo** in a snackbar — the place goes
+back with its id and its count, so undo is an undo and not a second attempt.
 
 ## 3 · District discovered
 

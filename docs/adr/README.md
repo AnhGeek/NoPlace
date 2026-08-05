@@ -21,3 +21,5 @@ old one superseded.
 | [0008](0008-openstreetmap-basemap.md) | Our own OpenStreetMap basemap, shipped as vector region packs | Accepted |
 | [0009](0009-real-location.md) | Real location via a foreground service, not background permission | Accepted |
 | [0010](0010-backup-and-restore.md) | Backup as one plain file, restored by merging | Accepted |
+| [0011](0011-places-the-player-saves.md) | Places the player saves, and the hour that checks them in | Extended by 0012 |
+| [0012](0012-visit-history-for-every-place.md) | A visit history for every place, and an hour the player picks | Accepted |

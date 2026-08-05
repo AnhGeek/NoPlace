@@ -35,6 +35,7 @@ class MapCanvas extends StatelessWidget {
     required this.thumbnails,
     required this.onPlaceTap,
     required this.onMapPointTap,
+    this.onLongPress,
     this.basemap,
     this.playerLabel,
     this.mapController,
@@ -88,6 +89,11 @@ class MapCanvas extends StatelessWidget {
 
   final ValueChanged<Place> onPlaceTap;
   final ValueChanged<MapPoint> onMapPointTap;
+
+  /// Press and hold anywhere on the map. Saves a place at that coordinate
+  /// rather than at the player — for the bar you walked past and did not stop
+  /// at, and for the one you are looking at across the river.
+  final ValueChanged<GeoPoint>? onLongPress;
 
   /// Floats above the player marker. Anchored to the coordinate, so panning the
   /// map moves the label with the street it describes.
@@ -146,6 +152,14 @@ class MapCanvas extends StatelessWidget {
         onPositionChanged: (camera, hasGesture) {
           if (hasGesture) onUserMovedMap?.call();
         },
+
+        // A long press, not a tap: a tap on the map is how you miss a pin, and
+        // turning every near-miss into a new place would fill the city with
+        // accidents.
+        onLongPress: onLongPress == null
+            ? null
+            : (_, point) =>
+                  onLongPress!(GeoPoint(point.latitude, point.longitude)),
 
         onMapReady: onMapReady,
       ),

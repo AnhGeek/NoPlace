@@ -6,6 +6,7 @@ import 'package:sqflite/sqflite.dart';
 
 import 'app_database.dart';
 import 'sqlite_map_point_repository.dart';
+import 'sqlite_place_visit_repository.dart';
 import 'sqlite_preferences_repository.dart';
 import 'sqlite_trail_repository.dart';
 
@@ -30,6 +31,7 @@ import 'sqlite_trail_repository.dart';
 ///   "createdAt": "2026-08-05T09:12:00.000",
 ///   "trail": [["vn-hcmc", 1198572, 11855364, 10.7725, 106.698, 1754...]],
 ///   "mapPoints": [{"id": "...", "kind": "user", ...}],
+///   "placeVisits": [{"place_id": "place-ben-thanh", "check_in_count": 7, ...}],
 ///   "preferences": {"fog.clearing_radius_meters": "180.0"}
 /// }
 /// ```
@@ -37,6 +39,13 @@ import 'sqlite_trail_repository.dart';
 /// Trail rows are positional rather than named objects because there are a
 /// great many of them — a metre-resolution city walk is six figures of rows,
 /// and repeating six key names on each one triples the file for nothing.
+///
+/// Keys are added without bumping [formatVersion] — `placeVisits` arrived after
+/// `mapPoints` did, and the point columns grew twice before that. A build that
+/// has never heard of a key ignores it; one that expects a key an older file
+/// does not carry treats it as empty. Reserving the version bump for a change
+/// that genuinely breaks reading is what keeps backups restorable across the
+/// gap between the phone somebody lost and the build on the one they bought.
 ///
 /// ## What it does not carry
 ///
@@ -53,6 +62,7 @@ class BackupService {
     required AppDatabase database,
     required SqliteTrailRepository trail,
     required SqliteMapPointRepository mapPoints,
+    required SqlitePlaceVisitRepository placeVisits,
     required SqlitePreferencesRepository preferences,
     // ignore: prefer_initializing_formals
   }) : _database = database,
@@ -61,11 +71,14 @@ class BackupService {
        // ignore: prefer_initializing_formals
        _mapPoints = mapPoints,
        // ignore: prefer_initializing_formals
+       _placeVisits = placeVisits,
+       // ignore: prefer_initializing_formals
        _preferences = preferences;
 
   final AppDatabase _database;
   final SqliteTrailRepository _trail;
   final SqliteMapPointRepository _mapPoints;
+  final SqlitePlaceVisitRepository _placeVisits;
   final SqlitePreferencesRepository _preferences;
 
   /// Stamped into every file and checked on the way back in, so a JSON file
@@ -99,6 +112,7 @@ class BackupService {
     final db = await _database.open();
     final trail = await db.query('trail_points');
     final mapPoints = await db.query('map_points', orderBy: 'created_at');
+    final placeVisits = await db.query('place_visits');
     final preferences = await db.query('preferences');
 
     final document = <String, Object?>{
@@ -120,6 +134,7 @@ class BackupService {
           ],
       ],
       'mapPoints': mapPoints,
+      'placeVisits': placeVisits,
       'preferences': {
         for (final row in preferences) row['key'] as String: row['value'],
       },
@@ -148,6 +163,7 @@ class BackupService {
     final document = _decode(bytes);
     final trail = _trailRows(document['trail']);
     final mapPoints = _mapPointRows(document['mapPoints']);
+    final placeVisits = _placeVisitRows(document['placeVisits']);
     final preferences = _preferenceRows(document['preferences']);
 
     final db = await _database.open();
@@ -170,6 +186,13 @@ class BackupService {
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
+      for (final row in placeVisits) {
+        batch.insert(
+          'place_visits',
+          row,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
       for (final row in preferences) {
         batch.insert(
           'preferences',
@@ -186,6 +209,7 @@ class BackupService {
     // disagrees with the file they just fed it.
     await _trail.reload();
     await _mapPoints.reload();
+    await _placeVisits.reload();
     await _preferences.reload();
 
     return BackupContents(
@@ -320,6 +344,57 @@ class BackupService {
         'created_at': createdAt is int
             ? createdAt
             : DateTime.now().millisecondsSinceEpoch,
+        // Everything below arrived with schema v3. A backup written before it
+        // simply has none of these keys, and a point restored from one starts
+        // unrated with nothing counted — which is what it was.
+        'stars': entry['stars'] is int ? entry['stars'] : 0,
+        'mood': entry['mood'] is String ? entry['mood'] : '',
+        'check_in_count': entry['check_in_count'] is int
+            ? entry['check_in_count']
+            : 0,
+        'last_check_in_at': entry['last_check_in_at'] is int
+            ? entry['last_check_in_at']
+            : null,
+        // The stay in progress is deliberately *not* carried across. It is a
+        // fact about the phone that was standing there, and restoring it onto
+        // another one would hand out an hour nobody spent.
+        'stay_started_at': null,
+        'stay_last_seen_at': null,
+        // Arrived with schema v4. A point from an older backup takes the
+        // default, which is what it was already doing.
+        'auto_check_in_minutes': entry['auto_check_in_minutes'] is int
+            ? entry['auto_check_in_minutes']
+            : 60,
+      });
+    }
+    return rows;
+  }
+
+  /// Visits to the world's own places. Absent from any backup written before
+  /// schema v4, and an empty list is the right reading of that: the counts it
+  /// would hold could only have been earned by a build that had the table.
+  static List<Map<String, Object?>> _placeVisitRows(Object? value) {
+    if (value is! List) return const [];
+
+    final rows = <Map<String, Object?>>[];
+    for (final entry in value) {
+      if (entry is! Map) continue;
+      final placeId = entry['place_id'];
+      if (placeId is! String) continue;
+
+      rows.add({
+        'place_id': placeId,
+        'check_in_count': entry['check_in_count'] is int
+            ? entry['check_in_count']
+            : 0,
+        'last_check_in_at': entry['last_check_in_at'] is int
+            ? entry['last_check_in_at']
+            : null,
+        // Dropped for the same reason as a map point's, and it matters more
+        // here: these places sit in a city the restoring phone may be nowhere
+        // near.
+        'stay_started_at': null,
+        'stay_last_seen_at': null,
       });
     }
     return rows;

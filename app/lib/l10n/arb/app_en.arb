@@ -39,6 +39,10 @@
   "@commonSearch": {
     "description": "Generic search action label."
   },
+  "commonGotIt": "Got it",
+  "@commonGotIt": {
+    "description": "Dismiss button on an explanation the player has finished reading."
+  },
   "commonXp": "+{xp} XP",
   "@commonXp": {
     "description": "Experience points a player earns or can earn.",
@@ -683,5 +687,165 @@
   "regionArrivedAction": "Walk here",
   "@regionArrivedAction": {
     "description": "Button that closes the arrival sheet and applies the chosen region."
+  },
+
+  "placeUnnamed": "Unnamed place",
+  "@placeUnnamed": {
+    "description": "Stands in for the name of a place the player saved without naming."
+  },
+  "placeAddTitle": "New place",
+  "@placeAddTitle": {
+    "description": "Title of the sheet for saving a place the player is standing at."
+  },
+  "placeAddAction": "Save this place",
+  "@placeAddAction": {
+    "description": "Label of the map button that opens the new-place sheet, and of its confirm button."
+  },
+  "placeAddHere": "Save a place here",
+  "@placeAddHere": {
+    "description": "Confirmation shown after a long press on the map, which saves a place at that spot rather than at the player."
+  },
+  "placeNameHint": "What do you call it?",
+  "@placeNameHint": {
+    "description": "Placeholder in the name field of the place sheet."
+  },
+  "placeSectionIcon": "PICK AN ICON",
+  "@placeSectionIcon": {
+    "description": "Heading above the icon picker. Displayed in upper case."
+  },
+  "placeSectionMood": "HOW DID IT FEEL?",
+  "@placeSectionMood": {
+    "description": "Heading above the row of feelings. Displayed in upper case."
+  },
+  "placeSectionRating": "YOUR RATING",
+  "@placeSectionRating": {
+    "description": "Heading above the star rating. Displayed in upper case."
+  },
+  "placeMoodLove": "Love it",
+  "@placeMoodLove": {
+    "description": "The best of the five feelings a player can record about a place."
+  },
+  "placeMoodHappy": "Happy",
+  "@placeMoodHappy": {
+    "description": "Second of the five feelings a player can record about a place."
+  },
+  "placeMoodCalm": "Calm",
+  "@placeMoodCalm": {
+    "description": "Middle of the five feelings: peaceful, restful."
+  },
+  "placeMoodMeh": "Meh",
+  "@placeMoodMeh": {
+    "description": "Fourth of the five feelings: indifferent, nothing special."
+  },
+  "placeMoodBad": "Not for me",
+  "@placeMoodBad": {
+    "description": "The worst of the five feelings a player can record about a place."
+  },
+  "placeStars": "{count, plural, =0{Not rated yet} =1{1 star} other{{count} stars}}",
+  "@placeStars": {
+    "description": "The chosen star rating, read out beside the stars.",
+    "placeholders": {
+      "count": { "type": "int", "example": "4" }
+    }
+  },
+  "placeSave": "Save changes",
+  "@placeSave": {
+    "description": "Confirm button when editing a place that already exists."
+  },
+  "placeCheckInAction": "I''m here now",
+  "@placeCheckInAction": {
+    "description": "Button that records a visit to a place the player saved."
+  },
+  "placeCheckInCount": "{count, plural, =0{No check-ins yet} =1{Checked in once} other{Checked in {count} times}}",
+  "@placeCheckInCount": {
+    "description": "How many times the player has been at their own place, counting both taps and hours spent there.",
+    "placeholders": {
+      "count": { "type": "int", "example": "7" }
+    }
+  },
+  "placeLastCheckIn": "Last time {weekday} at {time}",
+  "@placeLastCheckIn": {
+    "description": "When the most recent check-in at this place happened.",
+    "placeholders": {
+      "weekday": { "type": "String", "example": "Tue" },
+      "time": { "type": "String", "example": "6:30 PM" }
+    }
+  },
+  "placeSectionAutoCheckIn": "AUTO CHECK-IN",
+  "@placeSectionAutoCheckIn": {
+    "description": "Heading above the choice of how long a stay must last to count as a visit on its own. Displayed in upper case."
+  },
+  "placeAutoCheckInOff": "Off",
+  "@placeAutoCheckInOff": {
+    "description": "Auto check-in picker option: never count a visit on its own, only when the player taps the button."
+  },
+  "placeAutoCheckInHalfHourly": "30 min",
+  "@placeAutoCheckInHalfHourly": {
+    "description": "Auto check-in picker option: half an hour at the place counts as a visit. Kept short to fit the picker."
+  },
+  "placeAutoCheckInHourly": "1 hour",
+  "@placeAutoCheckInHourly": {
+    "description": "Auto check-in picker option: an hour at the place counts as a visit. The default."
+  },
+  "placeAutoCheckInTwoHourly": "2 hours",
+  "@placeAutoCheckInTwoHourly": {
+    "description": "Auto check-in picker option: two hours at the place count as a visit."
+  },
+  "placeAutoCheckInSummaryOff": "Only the button counts here — nothing is recorded on its own.",
+  "@placeAutoCheckInSummaryOff": {
+    "description": "Shown under the visit count when auto check-in is switched off for this place."
+  },
+  "placeAutoCheckInSummaryHalfHourly": "Half an hour spent here counts as a check-in on its own.",
+  "@placeAutoCheckInSummaryHalfHourly": {
+    "description": "Shown under the visit count when auto check-in is set to half an hour."
+  },
+  "placeAutoCheckInSummaryHourly": "An hour spent here counts as a check-in on its own.",
+  "@placeAutoCheckInSummaryHourly": {
+    "description": "Shown under the visit count when auto check-in is set to an hour."
+  },
+  "placeAutoCheckInSummaryTwoHourly": "Two hours spent here count as a check-in on their own.",
+  "@placeAutoCheckInSummaryTwoHourly": {
+    "description": "Shown under the visit count when auto check-in is set to two hours."
+  },
+  "placeAutoCheckInHelp": "What does this do?",
+  "@placeAutoCheckInHelp": {
+    "description": "Label of the question-mark button beside the auto check-in picker."
+  },
+  "placeAutoCheckInTipTitle": "Counting your visits for you",
+  "@placeAutoCheckInTipTitle": {
+    "description": "Title of the tip explaining automatic check-ins."
+  },
+  "placeAutoCheckInTipBody": "Stay within 150 m of this place and NoPlace records a visit for you, every time the interval you picked goes by. No tapping, and it keeps counting with the app in your pocket.\n\nIt waits 20 minutes without a sign of you before deciding you have left, so a wandering GPS signal can''t cut a visit short. Leaving and coming back starts the clock again.\n\nPick Off for somewhere you''re always at, like home — otherwise it would collect a visit every night.",
+  "@placeAutoCheckInTipBody": {
+    "description": "Body of the tip explaining automatic check-ins: the radius, the interval, when a stay ends, and when to switch it off."
+  },
+  "placeCheckedIn": "Checked in at {name}",
+  "@placeCheckedIn": {
+    "description": "Confirmation after recording a visit to the player''s own place.",
+    "placeholders": {
+      "name": { "type": "String", "example": "Bánh mì on the corner" }
+    }
+  },
+  "placeSaved": "{name} saved",
+  "@placeSaved": {
+    "description": "Confirmation after adding or editing a place.",
+    "placeholders": {
+      "name": { "type": "String", "example": "Bánh mì on the corner" }
+    }
+  },
+  "placeDelete": "Delete this place",
+  "@placeDelete": {
+    "description": "Removes a place the player saved."
+  },
+  "placeDeleted": "{name} deleted",
+  "@placeDeleted": {
+    "description": "Confirmation after deleting a place, shown alongside an undo action.",
+    "placeholders": {
+      "name": { "type": "String", "example": "Bánh mì on the corner" }
+    }
+  },
+  "placeUndo": "Undo",
+  "@placeUndo": {
+    "description": "Puts back a place that was just deleted."
   }
 }

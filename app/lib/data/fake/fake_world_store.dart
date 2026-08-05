@@ -313,6 +313,35 @@ class FakeWorldStore {
     _position.value = position;
   }
 
+  /// Marks every place in [placeIds] as one the player has been to.
+  ///
+  /// The world is seeded fresh on every launch, but the visits are not: they
+  /// live on the device in `place_visits`. Without this, a player who checked
+  /// into Chợ Bến Thành last week would be offered the first-visit bonus for it
+  /// again this morning, and the sheet would call a place they know "never
+  /// visited".
+  ///
+  /// It only ever *sets* the flag. A place the store already believes was
+  /// visited is not un-visited by an id missing from the record — the record is
+  /// evidence of a visit, not the absence of one.
+  void restoreVisited(Set<String> placeIds) {
+    if (placeIds.isEmpty) return;
+
+    // Nothing is emitted unless something actually changed: this runs on every
+    // write to the visit records, and the nearby list is rebuilt from `places`.
+    // Re-emitting an identical list would rebuild the map for nothing.
+    final places = [..._places.value];
+    var changed = false;
+    for (var index = 0; index < places.length; index++) {
+      final place = places[index];
+      if (place.visited || !placeIds.contains(place.id)) continue;
+      places[index] = place.copyWith(visited: true);
+      changed = true;
+    }
+
+    if (changed) _places.value = places;
+  }
+
   /// Places within [radiusMeters] of the player, nearest first.
   List<Place> nearbyPlaces(double radiusMeters) {
     final origin = _position.value;

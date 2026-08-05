@@ -21,4 +21,5 @@ export 'np_search_field.dart';
 export 'np_segmented_control.dart';
 export 'np_sheet.dart';
 export 'np_stat_tile.dart';
+export 'np_tip.dart';
 export 'np_top_tabs.dart';

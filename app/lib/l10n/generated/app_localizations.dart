@@ -151,6 +151,12 @@ abstract class AppL10n {
   /// **'Search'**
   String get commonSearch;
 
+  /// Dismiss button on an explanation the player has finished reading.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get commonGotIt;
+
   /// Experience points a player earns or can earn.
   ///
   /// In en, this message translates to:
@@ -918,6 +924,216 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Walk here'**
   String get regionArrivedAction;
+
+  /// Stands in for the name of a place the player saved without naming.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed place'**
+  String get placeUnnamed;
+
+  /// Title of the sheet for saving a place the player is standing at.
+  ///
+  /// In en, this message translates to:
+  /// **'New place'**
+  String get placeAddTitle;
+
+  /// Label of the map button that opens the new-place sheet, and of its confirm button.
+  ///
+  /// In en, this message translates to:
+  /// **'Save this place'**
+  String get placeAddAction;
+
+  /// Confirmation shown after a long press on the map, which saves a place at that spot rather than at the player.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a place here'**
+  String get placeAddHere;
+
+  /// Placeholder in the name field of the place sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'What do you call it?'**
+  String get placeNameHint;
+
+  /// Heading above the icon picker. Displayed in upper case.
+  ///
+  /// In en, this message translates to:
+  /// **'PICK AN ICON'**
+  String get placeSectionIcon;
+
+  /// Heading above the row of feelings. Displayed in upper case.
+  ///
+  /// In en, this message translates to:
+  /// **'HOW DID IT FEEL?'**
+  String get placeSectionMood;
+
+  /// Heading above the star rating. Displayed in upper case.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR RATING'**
+  String get placeSectionRating;
+
+  /// The best of the five feelings a player can record about a place.
+  ///
+  /// In en, this message translates to:
+  /// **'Love it'**
+  String get placeMoodLove;
+
+  /// Second of the five feelings a player can record about a place.
+  ///
+  /// In en, this message translates to:
+  /// **'Happy'**
+  String get placeMoodHappy;
+
+  /// Middle of the five feelings: peaceful, restful.
+  ///
+  /// In en, this message translates to:
+  /// **'Calm'**
+  String get placeMoodCalm;
+
+  /// Fourth of the five feelings: indifferent, nothing special.
+  ///
+  /// In en, this message translates to:
+  /// **'Meh'**
+  String get placeMoodMeh;
+
+  /// The worst of the five feelings a player can record about a place.
+  ///
+  /// In en, this message translates to:
+  /// **'Not for me'**
+  String get placeMoodBad;
+
+  /// The chosen star rating, read out beside the stars.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Not rated yet} =1{1 star} other{{count} stars}}'**
+  String placeStars(int count);
+
+  /// Confirm button when editing a place that already exists.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get placeSave;
+
+  /// Button that records a visit to a place the player saved.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'\'m here now'**
+  String get placeCheckInAction;
+
+  /// How many times the player has been at their own place, counting both taps and hours spent there.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No check-ins yet} =1{Checked in once} other{Checked in {count} times}}'**
+  String placeCheckInCount(int count);
+
+  /// When the most recent check-in at this place happened.
+  ///
+  /// In en, this message translates to:
+  /// **'Last time {weekday} at {time}'**
+  String placeLastCheckIn(String weekday, String time);
+
+  /// Heading above the choice of how long a stay must last to count as a visit on its own. Displayed in upper case.
+  ///
+  /// In en, this message translates to:
+  /// **'AUTO CHECK-IN'**
+  String get placeSectionAutoCheckIn;
+
+  /// Auto check-in picker option: never count a visit on its own, only when the player taps the button.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get placeAutoCheckInOff;
+
+  /// Auto check-in picker option: half an hour at the place counts as a visit. Kept short to fit the picker.
+  ///
+  /// In en, this message translates to:
+  /// **'30 min'**
+  String get placeAutoCheckInHalfHourly;
+
+  /// Auto check-in picker option: an hour at the place counts as a visit. The default.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour'**
+  String get placeAutoCheckInHourly;
+
+  /// Auto check-in picker option: two hours at the place count as a visit.
+  ///
+  /// In en, this message translates to:
+  /// **'2 hours'**
+  String get placeAutoCheckInTwoHourly;
+
+  /// Shown under the visit count when auto check-in is switched off for this place.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the button counts here — nothing is recorded on its own.'**
+  String get placeAutoCheckInSummaryOff;
+
+  /// Shown under the visit count when auto check-in is set to half an hour.
+  ///
+  /// In en, this message translates to:
+  /// **'Half an hour spent here counts as a check-in on its own.'**
+  String get placeAutoCheckInSummaryHalfHourly;
+
+  /// Shown under the visit count when auto check-in is set to an hour.
+  ///
+  /// In en, this message translates to:
+  /// **'An hour spent here counts as a check-in on its own.'**
+  String get placeAutoCheckInSummaryHourly;
+
+  /// Shown under the visit count when auto check-in is set to two hours.
+  ///
+  /// In en, this message translates to:
+  /// **'Two hours spent here count as a check-in on their own.'**
+  String get placeAutoCheckInSummaryTwoHourly;
+
+  /// Label of the question-mark button beside the auto check-in picker.
+  ///
+  /// In en, this message translates to:
+  /// **'What does this do?'**
+  String get placeAutoCheckInHelp;
+
+  /// Title of the tip explaining automatic check-ins.
+  ///
+  /// In en, this message translates to:
+  /// **'Counting your visits for you'**
+  String get placeAutoCheckInTipTitle;
+
+  /// Body of the tip explaining automatic check-ins: the radius, the interval, when a stay ends, and when to switch it off.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay within 150 m of this place and NoPlace records a visit for you, every time the interval you picked goes by. No tapping, and it keeps counting with the app in your pocket.\n\nIt waits 20 minutes without a sign of you before deciding you have left, so a wandering GPS signal can\'\'t cut a visit short. Leaving and coming back starts the clock again.\n\nPick Off for somewhere you\'\'re always at, like home — otherwise it would collect a visit every night.'**
+  String get placeAutoCheckInTipBody;
+
+  /// Confirmation after recording a visit to the player''s own place.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked in at {name}'**
+  String placeCheckedIn(String name);
+
+  /// Confirmation after adding or editing a place.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} saved'**
+  String placeSaved(String name);
+
+  /// Removes a place the player saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this place'**
+  String get placeDelete;
+
+  /// Confirmation after deleting a place, shown alongside an undo action.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} deleted'**
+  String placeDeleted(String name);
+
+  /// Puts back a place that was just deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get placeUndo;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

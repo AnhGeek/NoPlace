@@ -21,11 +21,13 @@ import '../../../domain/entities/place.dart';
 import '../../../domain/repositories/repositories.dart';
 import '../../../l10n/l10n.dart';
 import '../../check_in/presentation/check_in_sheet.dart';
+import '../../places/presentation/place_sheet.dart';
 import 'basemap/basemap.dart';
 import 'basemap/basemap_attribution.dart';
 import 'map_controller.dart';
 import 'picture_point_thumbnails.dart';
 import 'place_visuals.dart';
+import 'widgets/add_place_button.dart';
 import 'widgets/background_permission_sheet.dart';
 import 'widgets/fog_toggle_button.dart';
 import 'widgets/location_banner.dart';
@@ -126,6 +128,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ..watch(trailRecorderProvider)
       ..watch(trailPrecisionSyncProvider)
       ..watch(trailRegionSyncProvider)
+      // An hour spent at a place the player saved is a check-in they never had
+      // to tap for. Alive with the map, like the trail.
+      ..watch(placePresenceProvider)
+      // Puts the visits recorded on this device back onto the freshly seeded
+      // world, so a place checked into last week is not offered as new.
+      ..watch(placeVisitSyncProvider)
       // Starts the GPS and the foreground service, and feeds every fix into
       // the world. Alive for as long as the map is.
       ..watch(locationSyncProvider);
@@ -214,7 +222,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   fogSettings: fogSettings,
                   thumbnails: _thumbnails,
                   onPlaceTap: _openCheckInSheet,
-                  onMapPointTap: _showMapPoint,
+                  onMapPointTap: _openPlaceSheet,
+                  onLongPress: _addPlaceAt,
                   onUserMovedMap: _stopFollowing,
                   onMapReady: _onMapReady,
                   playerLabel: candidate == null
@@ -308,6 +317,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                     const SizedBox(height: NpSpace.sm),
                     RecentreButton(following: _following, onPressed: _recentre),
+                    const SizedBox(height: NpSpace.sm),
+                    // Closest to the thumb of the three, because it is the one
+                    // that gets used while standing somewhere rather than while
+                    // looking at the map.
+                    AddPlaceButton(onPressed: () => _addPlaceAt(null)),
                     const SizedBox(height: NpSpace.sm),
                     switch (nearest) {
                       null => const NearbyCard.empty(),
@@ -469,20 +483,66 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-  /// Tapping the player's own point. A proper detail sheet — rename, change
-  /// icon, view the photo full size, delete — lands with the authoring flows;
-  /// until then, say what it is rather than doing nothing.
-  void _showMapPoint(MapPoint point) {
-    final label = point.label.isNotEmpty
-        ? point.label
-        : switch (point.kind) {
-            MapPointKind.picture => context.l10n.settingsHidePicturePoints,
-            _ => context.l10n.settingsHideUserPoints,
-          };
+  /// Saves a place: at [location] for a long press, at the player for the
+  /// button.
+  ///
+  /// The button falls back to the map's centre when there is no fix yet, so the
+  /// control is never a dead end — somebody with location switched off can
+  /// still keep a list of places, they just have to aim.
+  Future<void> _addPlaceAt(GeoPoint? location) async {
+    final at =
+        location ?? ref.read(playerPositionProvider).value ?? _cameraCentre();
+    if (at == null) return;
 
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(label)));
+    final result = await showAddPlaceSheet(context: context, location: at);
+    _announce(result);
+  }
+
+  /// Where the map is looking, or null before it has been built — the same
+  /// "the camera does not exist yet" case [_moveTo] handles.
+  GeoPoint? _cameraCentre() {
+    try {
+      final centre = _mapController.camera.center;
+      return GeoPoint(centre.latitude, centre.longitude);
+    } on Object {
+      return null;
+    }
+  }
+
+  /// Tapping one of the player's own points: rate it, rename it, check in, or
+  /// delete it.
+  Future<void> _openPlaceSheet(MapPoint point) async {
+    final result = await showPlaceSheet(context: context, place: point);
+    _announce(result);
+  }
+
+  /// Says what the sheet did, and — for a deletion — offers the way back.
+  void _announce(PlaceSheetResult? result) {
+    if (!mounted || result == null) return;
+
+    final l10n = context.l10n;
+    final name = mapPointDisplayName(result.place, l10n);
+    final messenger = ScaffoldMessenger.of(context)..clearSnackBars();
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(switch (result.outcome) {
+          PlaceSheetOutcome.saved => l10n.placeSaved(name),
+          PlaceSheetOutcome.checkedIn => l10n.placeCheckedIn(name),
+          PlaceSheetOutcome.deleted => l10n.placeDeleted(name),
+        }),
+        action: result.outcome != PlaceSheetOutcome.deleted
+            ? null
+            // The place goes back exactly as it was, id and check-in count
+            // included: this is an undo, not a second attempt at making it.
+            : SnackBarAction(
+                label: l10n.placeUndo,
+                onPressed: () => unawaited(
+                  ref.read(mapPointRepositoryProvider).add(result.place),
+                ),
+              ),
+      ),
+    );
   }
 
   void _onSearchTap() {

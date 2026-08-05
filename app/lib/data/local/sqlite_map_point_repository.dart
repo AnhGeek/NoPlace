@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../core/async/replay_subject.dart';
+import '../../domain/entities/auto_check_in.dart';
 import '../../domain/entities/geo_point.dart';
 import '../../domain/entities/map_point.dart';
 import '../../domain/repositories/repositories.dart';
@@ -102,6 +103,13 @@ class SqliteMapPointRepository implements MapPointRepository {
     'icon_id': point.iconId,
     'image_path': point.imagePath,
     'created_at': point.createdAt.millisecondsSinceEpoch,
+    'stars': point.stars,
+    'mood': point.moodId,
+    'check_in_count': point.checkInCount,
+    'last_check_in_at': point.lastCheckInAt?.millisecondsSinceEpoch,
+    'stay_started_at': point.stayStartedAt?.millisecondsSinceEpoch,
+    'stay_last_seen_at': point.stayLastSeenAt?.millisecondsSinceEpoch,
+    'auto_check_in_minutes': AutoCheckIn.toMinutes(point.autoCheckInEvery),
   };
 
   static MapPoint _fromRow(Map<String, Object?> row) => MapPoint(
@@ -117,5 +125,18 @@ class SqliteMapPointRepository implements MapPointRepository {
     label: row['label'] as String? ?? '',
     iconId: row['icon_id'] as String? ?? MapPointIcon.defaultId,
     imagePath: row['image_path'] as String?,
+    // Clamped rather than trusted: the file is deliberately open to inspection
+    // (see [AppDatabase]), so a hand-edited row must not be able to assert an
+    // eight-star café past the entity's own bounds check.
+    stars: ((row['stars'] as int?) ?? 0).clamp(0, MapPoint.maxStars),
+    moodId: row['mood'] as String? ?? PlaceMood.none,
+    checkInCount: (row['check_in_count'] as int?) ?? 0,
+    lastCheckInAt: _time(row['last_check_in_at']),
+    stayStartedAt: _time(row['stay_started_at']),
+    stayLastSeenAt: _time(row['stay_last_seen_at']),
+    autoCheckInEvery: AutoCheckIn.fromMinutes(row['auto_check_in_minutes']),
   );
+
+  static DateTime? _time(Object? millis) =>
+      millis is int ? DateTime.fromMillisecondsSinceEpoch(millis) : null;
 }

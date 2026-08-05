@@ -15,12 +15,18 @@ import 'package:sqflite/sqflite.dart';
 ///     cat databases/noplace.db > noplace.db
 /// ```
 ///
-/// Schema, version 1:
+/// Schema, version 4:
 ///
-/// * `trail_points` — every metre of ground walked. Primary key is the
-///   metre-quantised cell, so re-walking a street is an ignored insert rather
-///   than a duplicate row.
-/// * `map_points` — points the player authored: dropped pins and photo points.
+/// * `trail_points` — every metre of ground walked, scoped to a region. Primary
+///   key is the metre-quantised cell, so re-walking a street is an ignored
+///   insert rather than a duplicate row.
+/// * `map_points` — points the player authored: dropped pins and photo points,
+///   with what they called them, how they rated them, how many times they have
+///   been there, and how long a stay has to run to count on its own.
+/// * `place_visits` — the same visit history for places the player did *not*
+///   author: the ones the world came with. Keyed by the place's id rather than
+///   stored on the place, because a place is world data a refresh may replace
+///   and having stood in it is not.
 /// * `preferences` — small key/value settings, so a checkbox does not need a
 ///   second storage mechanism.
 class AppDatabase {
@@ -30,7 +36,7 @@ class AppDatabase {
   Database? _database;
 
   static const String fileName = 'noplace.db';
-  static const int schemaVersion = 2;
+  static const int schemaVersion = 4;
 
   /// Where a trail written before the schema was region-scoped is filed.
   ///
@@ -86,18 +92,39 @@ class AppDatabase {
 
     await db.execute('''
       CREATE TABLE map_points (
-        id         TEXT    PRIMARY KEY,
-        kind       TEXT    NOT NULL,
-        latitude   REAL    NOT NULL,
-        longitude  REAL    NOT NULL,
-        label      TEXT    NOT NULL DEFAULT '',
-        icon_id    TEXT    NOT NULL DEFAULT 'pin',
-        image_path TEXT,
-        created_at INTEGER NOT NULL
+        id                TEXT    PRIMARY KEY,
+        kind              TEXT    NOT NULL,
+        latitude          REAL    NOT NULL,
+        longitude         REAL    NOT NULL,
+        label             TEXT    NOT NULL DEFAULT '',
+        icon_id           TEXT    NOT NULL DEFAULT 'pin',
+        image_path        TEXT,
+        created_at        INTEGER NOT NULL,
+        stars             INTEGER NOT NULL DEFAULT 0,
+        mood              TEXT    NOT NULL DEFAULT '',
+        check_in_count    INTEGER NOT NULL DEFAULT 0,
+        last_check_in_at  INTEGER,
+        stay_started_at   INTEGER,
+        stay_last_seen_at INTEGER,
+        auto_check_in_minutes INTEGER NOT NULL DEFAULT 60
       )
     ''');
 
     await db.execute('CREATE INDEX idx_map_points_kind ON map_points (kind)');
+
+    // The same four numbers as the visit half of `map_points`, for places the
+    // player did not author. No foreign key: the row outlives whichever build
+    // of the places data named that id, and losing somebody's visit count
+    // because a refresh renumbered a café would be the worse bug.
+    await db.execute('''
+      CREATE TABLE place_visits (
+        place_id          TEXT    PRIMARY KEY,
+        check_in_count    INTEGER NOT NULL DEFAULT 0,
+        last_check_in_at  INTEGER,
+        stay_started_at   INTEGER,
+        stay_last_seen_at INTEGER
+      )
+    ''');
 
     await db.execute('''
       CREATE TABLE preferences (
@@ -107,9 +134,8 @@ class AppDatabase {
     ''');
   }
 
-  /// No migrations yet. When the first one lands it goes here, one `if` per
-  /// version step, and every step must be tested against a database created by
-  /// the previous version.
+  /// One `if` per version step, in order, and every step is tested against a
+  /// database created by the previous version — see `sqlite_storage_test`.
   static Future<void> _upgradeSchema(
     Database db,
     int oldVersion,
@@ -154,6 +180,58 @@ class AppDatabase {
       );
 
       await db.execute('DROP TABLE trail_points_v1');
+    }
+
+    // v2 → v3: a point the player made can be rated, given a feeling, and can
+    // count its own visits.
+    //
+    // Added column by column, defaults and all, so an existing pin keeps its
+    // name and its icon and simply arrives unrated with nothing recorded — the
+    // same state a pin dropped today starts in. The primary key does not move,
+    // so unlike v2 there is nothing to rebuild.
+    if (oldVersion < 3) {
+      await db.execute(
+        'ALTER TABLE map_points ADD COLUMN stars INTEGER NOT NULL DEFAULT 0',
+      );
+      await db.execute(
+        "ALTER TABLE map_points ADD COLUMN mood TEXT NOT NULL DEFAULT ''",
+      );
+      await db.execute(
+        'ALTER TABLE map_points ADD COLUMN check_in_count INTEGER NOT NULL '
+        'DEFAULT 0',
+      );
+      await db.execute(
+        'ALTER TABLE map_points ADD COLUMN last_check_in_at INTEGER',
+      );
+      await db.execute(
+        'ALTER TABLE map_points ADD COLUMN stay_started_at INTEGER',
+      );
+      await db.execute(
+        'ALTER TABLE map_points ADD COLUMN stay_last_seen_at INTEGER',
+      );
+    }
+
+    // v3 → v4: the world's own places keep a visit history too, and the hour
+    // that earns one is now the player's to choose.
+    //
+    // The default of 60 is what every place did before the setting existed, so
+    // a database upgraded by this step behaves on Tuesday exactly as it did on
+    // Monday. `place_visits` starts empty: the counts it holds could only have
+    // been earned by a build that had it.
+    if (oldVersion < 4) {
+      await db.execute(
+        'ALTER TABLE map_points ADD COLUMN auto_check_in_minutes INTEGER '
+        'NOT NULL DEFAULT 60',
+      );
+      await db.execute('''
+        CREATE TABLE place_visits (
+          place_id          TEXT    PRIMARY KEY,
+          check_in_count    INTEGER NOT NULL DEFAULT 0,
+          last_check_in_at  INTEGER,
+          stay_started_at   INTEGER,
+          stay_last_seen_at INTEGER
+        )
+      ''');
     }
   }
 

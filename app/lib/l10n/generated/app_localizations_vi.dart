@@ -36,6 +36,9 @@ class AppL10nVi extends AppL10n {
   String get commonSearch => 'Tìm kiếm';
 
   @override
+  String get commonGotIt => 'Đã hiểu';
+
+  @override
   String commonXp(int xp) {
     return '+$xp XP';
   }
@@ -543,4 +546,138 @@ class AppL10nVi extends AppL10n {
 
   @override
   String get regionArrivedAction => 'Đi ở đây';
+
+  @override
+  String get placeUnnamed => 'Địa điểm chưa đặt tên';
+
+  @override
+  String get placeAddTitle => 'Địa điểm mới';
+
+  @override
+  String get placeAddAction => 'Lưu địa điểm này';
+
+  @override
+  String get placeAddHere => 'Lưu một địa điểm ở đây';
+
+  @override
+  String get placeNameHint => 'Bạn gọi nơi này là gì?';
+
+  @override
+  String get placeSectionIcon => 'CHỌN BIỂU TƯỢNG';
+
+  @override
+  String get placeSectionMood => 'Ở ĐÂY THẤY THẾ NÀO?';
+
+  @override
+  String get placeSectionRating => 'BẠN CHẤM MẤY SAO';
+
+  @override
+  String get placeMoodLove => 'Mê luôn';
+
+  @override
+  String get placeMoodHappy => 'Vui';
+
+  @override
+  String get placeMoodCalm => 'Yên bình';
+
+  @override
+  String get placeMoodMeh => 'Cũng thường';
+
+  @override
+  String get placeMoodBad => 'Không hợp';
+
+  @override
+  String placeStars(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sao',
+      zero: 'Chưa chấm sao',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get placeSave => 'Lưu thay đổi';
+
+  @override
+  String get placeCheckInAction => 'Mình đang ở đây';
+
+  @override
+  String placeCheckInCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Đã điểm danh $count lần',
+      zero: 'Chưa điểm danh lần nào',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String placeLastCheckIn(String weekday, String time) {
+    return 'Lần gần nhất $weekday lúc $time';
+  }
+
+  @override
+  String get placeSectionAutoCheckIn => 'TỰ ĐỘNG ĐIỂM DANH';
+
+  @override
+  String get placeAutoCheckInOff => 'Tắt';
+
+  @override
+  String get placeAutoCheckInHalfHourly => '30 phút';
+
+  @override
+  String get placeAutoCheckInHourly => '1 tiếng';
+
+  @override
+  String get placeAutoCheckInTwoHourly => '2 tiếng';
+
+  @override
+  String get placeAutoCheckInSummaryOff =>
+      'Chỉ khi bạn bấm nút mới được tính — không tự ghi nhận gì cả.';
+
+  @override
+  String get placeAutoCheckInSummaryHalfHourly =>
+      'Ở đây nửa tiếng cũng được tính là một lần điểm danh.';
+
+  @override
+  String get placeAutoCheckInSummaryHourly =>
+      'Ở đây một tiếng cũng được tính là một lần điểm danh.';
+
+  @override
+  String get placeAutoCheckInSummaryTwoHourly =>
+      'Ở đây hai tiếng cũng được tính là một lần điểm danh.';
+
+  @override
+  String get placeAutoCheckInHelp => 'Cái này để làm gì?';
+
+  @override
+  String get placeAutoCheckInTipTitle => 'Tự đếm số lần bạn ghé qua';
+
+  @override
+  String get placeAutoCheckInTipBody =>
+      'Chỉ cần bạn ở trong bán kính 150 m, NoPlace sẽ tự ghi nhận một lần ghé qua sau mỗi khoảng thời gian bạn chọn. Không cần bấm gì, và vẫn chạy khi điện thoại nằm trong túi.\n\nỨng dụng đợi 20 phút không thấy bạn đâu mới coi như bạn đã rời đi, nên tín hiệu GPS chập chờn không làm mất công bạn ngồi đó. Rời đi rồi quay lại thì đồng hồ bắt đầu lại từ đầu.\n\nHãy chọn Tắt cho những nơi bạn ở suốt, chẳng hạn như nhà mình — không thì tối nào cũng có thêm một lần ghé qua.';
+
+  @override
+  String placeCheckedIn(String name) {
+    return 'Đã điểm danh tại $name';
+  }
+
+  @override
+  String placeSaved(String name) {
+    return 'Đã lưu $name';
+  }
+
+  @override
+  String get placeDelete => 'Xoá địa điểm này';
+
+  @override
+  String placeDeleted(String name) {
+    return 'Đã xoá $name';
+  }
+
+  @override
+  String get placeUndo => 'Hoàn tác';
 }

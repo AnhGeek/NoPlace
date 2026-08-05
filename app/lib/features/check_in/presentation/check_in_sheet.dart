@@ -11,6 +11,7 @@ import '../../../domain/entities/place.dart';
 import '../../../domain/repositories/repositories.dart';
 import '../../../l10n/l10n.dart';
 import '../../map/presentation/place_visuals.dart';
+import '../../places/presentation/place_visit_card.dart';
 import 'check_in_controller.dart';
 
 /// Opens the check-in sheet for [place] and completes with the result, or
@@ -47,6 +48,9 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
     final l10n = context.l10n;
     final format = UnitFormatter.of(l10n);
     final isSubmitting = ref.watch(checkInControllerProvider).isLoading;
+    // Watched rather than read: checking in writes the record, and the count on
+    // screen should be the one the player just added to.
+    final visit = ref.watch(placeVisitProvider(_place.id));
     final alternatives = ref
         .watch(checkInCandidatesProvider)
         .where((candidate) => candidate.id != _place.id)
@@ -66,6 +70,14 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
             ),
             const SizedBox(height: NpSpace.md),
             _RewardTiles(place: _place),
+            // Only once there is something to say. A card reading "no check-ins
+            // yet" above a button offering to make one is noise, and it would
+            // sit on the sheet for every place the player has never been to —
+            // which is most of them.
+            if (visit.hasVisited) ...[
+              const SizedBox(height: NpSpace.xs),
+              PlaceVisitCard(visit: visit),
+            ],
             const SizedBox(height: NpSpace.md),
             NpPrimaryButton(
               label: l10n.checkInAction,

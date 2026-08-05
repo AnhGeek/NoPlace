@@ -19,6 +19,7 @@ import '../entities/log_entry.dart';
 import '../entities/map_layer_visibility.dart';
 import '../entities/map_point.dart';
 import '../entities/place.dart';
+import '../entities/place_visit.dart';
 import '../entities/player.dart';
 import '../entities/quest.dart';
 
@@ -127,6 +128,24 @@ abstract interface class MapPointRepository {
   Future<void> update(MapPoint point);
 
   Future<void> remove(String id);
+}
+
+/// How often the player has been to each of the world's places.
+///
+/// Separate from [WorldRepository] because the two answer to different owners.
+/// A [Place] is world data — a refresh may rename it, move it or replace the
+/// lot — while the fact that somebody stood in it on a Tuesday is theirs, lives
+/// on the device, and must survive that refresh. Points the player authored
+/// carry the same numbers inline on [MapPoint]; see [PlaceVisit].
+abstract interface class PlaceVisitRepository {
+  /// Every visited place, keyed by place id.
+  Stream<Map<String, PlaceVisit>> watch();
+
+  /// The record for [placeId] right now, or an empty one. Never null: "nobody
+  /// has been here" is a real answer, not a missing one.
+  PlaceVisit of(String placeId);
+
+  Future<void> save(PlaceVisit visit);
 }
 
 /// Small persisted choices.

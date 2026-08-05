@@ -12,6 +12,7 @@ import 'data/local/app_database.dart';
 import 'data/local/demo_map_points.dart';
 import 'data/local/region_catalogue.dart';
 import 'data/local/sqlite_map_point_repository.dart';
+import 'data/local/sqlite_place_visit_repository.dart';
 import 'data/local/sqlite_preferences_repository.dart';
 import 'data/local/sqlite_trail_repository.dart';
 import 'data/repository_providers.dart';
@@ -61,10 +62,12 @@ Future<void> bootstrap() async {
     regionId: RegionCatalogue.fallback.regionId,
   );
   final mapPoints = SqliteMapPointRepository(database);
+  final placeVisits = SqlitePlaceVisitRepository(database);
   final preferences = SqlitePreferencesRepository(database);
 
   await fogTrail.load();
   await mapPoints.load();
+  await placeVisits.load();
   await preferences.load();
 
   // Carries across a trail written by the build before the database existed,
@@ -94,6 +97,7 @@ Future<void> bootstrap() async {
         appDatabaseProvider.overrideWithValue(database),
         trailStoreProvider.overrideWithValue(fogTrail),
         mapPointStoreProvider.overrideWithValue(mapPoints),
+        placeVisitStoreProvider.overrideWithValue(placeVisits),
         preferencesStoreProvider.overrideWithValue(preferences),
       ],
       child: const NoPlaceApp(),

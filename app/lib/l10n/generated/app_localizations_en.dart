@@ -36,6 +36,9 @@ class AppL10nEn extends AppL10n {
   String get commonSearch => 'Search';
 
   @override
+  String get commonGotIt => 'Got it';
+
+  @override
   String commonXp(int xp) {
     return '+$xp XP';
   }
@@ -545,4 +548,140 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get regionArrivedAction => 'Walk here';
+
+  @override
+  String get placeUnnamed => 'Unnamed place';
+
+  @override
+  String get placeAddTitle => 'New place';
+
+  @override
+  String get placeAddAction => 'Save this place';
+
+  @override
+  String get placeAddHere => 'Save a place here';
+
+  @override
+  String get placeNameHint => 'What do you call it?';
+
+  @override
+  String get placeSectionIcon => 'PICK AN ICON';
+
+  @override
+  String get placeSectionMood => 'HOW DID IT FEEL?';
+
+  @override
+  String get placeSectionRating => 'YOUR RATING';
+
+  @override
+  String get placeMoodLove => 'Love it';
+
+  @override
+  String get placeMoodHappy => 'Happy';
+
+  @override
+  String get placeMoodCalm => 'Calm';
+
+  @override
+  String get placeMoodMeh => 'Meh';
+
+  @override
+  String get placeMoodBad => 'Not for me';
+
+  @override
+  String placeStars(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count stars',
+      one: '1 star',
+      zero: 'Not rated yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get placeSave => 'Save changes';
+
+  @override
+  String get placeCheckInAction => 'I\'m here now';
+
+  @override
+  String placeCheckInCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Checked in $count times',
+      one: 'Checked in once',
+      zero: 'No check-ins yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String placeLastCheckIn(String weekday, String time) {
+    return 'Last time $weekday at $time';
+  }
+
+  @override
+  String get placeSectionAutoCheckIn => 'AUTO CHECK-IN';
+
+  @override
+  String get placeAutoCheckInOff => 'Off';
+
+  @override
+  String get placeAutoCheckInHalfHourly => '30 min';
+
+  @override
+  String get placeAutoCheckInHourly => '1 hour';
+
+  @override
+  String get placeAutoCheckInTwoHourly => '2 hours';
+
+  @override
+  String get placeAutoCheckInSummaryOff =>
+      'Only the button counts here — nothing is recorded on its own.';
+
+  @override
+  String get placeAutoCheckInSummaryHalfHourly =>
+      'Half an hour spent here counts as a check-in on its own.';
+
+  @override
+  String get placeAutoCheckInSummaryHourly =>
+      'An hour spent here counts as a check-in on its own.';
+
+  @override
+  String get placeAutoCheckInSummaryTwoHourly =>
+      'Two hours spent here count as a check-in on their own.';
+
+  @override
+  String get placeAutoCheckInHelp => 'What does this do?';
+
+  @override
+  String get placeAutoCheckInTipTitle => 'Counting your visits for you';
+
+  @override
+  String get placeAutoCheckInTipBody =>
+      'Stay within 150 m of this place and NoPlace records a visit for you, every time the interval you picked goes by. No tapping, and it keeps counting with the app in your pocket.\n\nIt waits 20 minutes without a sign of you before deciding you have left, so a wandering GPS signal can\'t cut a visit short. Leaving and coming back starts the clock again.\n\nPick Off for somewhere you\'re always at, like home — otherwise it would collect a visit every night.';
+
+  @override
+  String placeCheckedIn(String name) {
+    return 'Checked in at $name';
+  }
+
+  @override
+  String placeSaved(String name) {
+    return '$name saved';
+  }
+
+  @override
+  String get placeDelete => 'Delete this place';
+
+  @override
+  String placeDeleted(String name) {
+    return '$name deleted';
+  }
+
+  @override
+  String get placeUndo => 'Undo';
 }

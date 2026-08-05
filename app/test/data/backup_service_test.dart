@@ -6,10 +6,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:noplace/data/local/app_database.dart';
 import 'package:noplace/data/local/backup_service.dart';
 import 'package:noplace/data/local/sqlite_map_point_repository.dart';
+import 'package:noplace/data/local/sqlite_place_visit_repository.dart';
 import 'package:noplace/data/local/sqlite_preferences_repository.dart';
 import 'package:noplace/data/local/sqlite_trail_repository.dart';
+import 'package:noplace/domain/entities/auto_check_in.dart';
 import 'package:noplace/domain/entities/geo_point.dart';
 import 'package:noplace/domain/entities/map_point.dart';
+import 'package:noplace/domain/entities/place_visit.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -32,6 +35,7 @@ void main() {
     AppDatabase database,
     SqliteTrailRepository trail,
     SqliteMapPointRepository mapPoints,
+    SqlitePlaceVisitRepository placeVisits,
     SqlitePreferencesRepository preferences,
     BackupService backup,
   })
@@ -40,6 +44,7 @@ void main() {
     final database = AppDatabase(directory: directory);
     final trail = SqliteTrailRepository(database, regionId: testRegion);
     final mapPoints = SqliteMapPointRepository(database);
+    final placeVisits = SqlitePlaceVisitRepository(database);
     final preferences = SqlitePreferencesRepository(database);
 
     addTearDown(() async {
@@ -52,11 +57,13 @@ void main() {
       database: database,
       trail: trail,
       mapPoints: mapPoints,
+      placeVisits: placeVisits,
       preferences: preferences,
       backup: BackupService(
         database: database,
         trail: trail,
         mapPoints: mapPoints,
+        placeVisits: placeVisits,
         preferences: preferences,
       ),
     );
@@ -250,6 +257,97 @@ void main() {
 
     expect(restored.trailPoints, 2);
     expect(fresh.trail.current.count, 2);
+  });
+
+  group('the visit history', () {
+    test('moves to the other phone, minus the stay in progress', () async {
+      final old = makeDevice();
+      await old.trail.load();
+      await old.mapPoints.load();
+      await old.placeVisits.load();
+      await old.preferences.load();
+
+      // A world place visited seven times, and one of the player's own with a
+      // stay running right now.
+      await old.placeVisits.save(
+        PlaceVisit(
+          placeId: 'place-ben-thanh',
+          checkInCount: 7,
+          lastCheckInAt: DateTime(2026, 8, 4, 14, 20),
+          stayStartedAt: DateTime(2026, 8, 5, 9),
+          stayLastSeenAt: DateTime(2026, 8, 5, 9, 40),
+        ),
+      );
+      await old.mapPoints.add(
+        point('p1').copyWith(
+          checkInCount: 3,
+          lastCheckInAt: DateTime(2026, 8, 4, 18),
+          stayStartedAt: DateTime(2026, 8, 5, 9),
+          stayLastSeenAt: DateTime(2026, 8, 5, 9, 40),
+          autoCheckInEvery: AutoCheckIn.twoHourly,
+        ),
+      );
+
+      final file = await old.backup.export();
+
+      final fresh = makeDevice();
+      await fresh.trail.load();
+      await fresh.mapPoints.load();
+      await fresh.placeVisits.load();
+      await fresh.preferences.load();
+      await fresh.backup.import(file);
+
+      final benThanhVisit = fresh.placeVisits.of('place-ben-thanh');
+      expect(benThanhVisit.checkInCount, 7);
+      expect(benThanhVisit.lastCheckInAt, DateTime(2026, 8, 4, 14, 20));
+
+      final restoredPoint = fresh.mapPoints.current.single;
+      expect(restoredPoint.checkInCount, 3);
+      // The setting is the player's and travels; the hour they were part-way
+      // through on the old phone is a fact about that phone and does not.
+      expect(restoredPoint.autoCheckInEvery, AutoCheckIn.twoHourly);
+      expect(restoredPoint.stayStartedAt, isNull);
+      expect(benThanhVisit.stayStartedAt, isNull);
+      expect(benThanhVisit.stayLastSeenAt, isNull);
+    });
+
+    test('is left alone by a backup written before it existed', () async {
+      final device = makeDevice();
+      await device.trail.load();
+      await device.mapPoints.load();
+      await device.placeVisits.load();
+      await device.preferences.load();
+      await device.placeVisits.save(
+        const PlaceVisit(placeId: 'place-ben-thanh', checkInCount: 2),
+      );
+
+      // A v3-era file: no `placeVisits` key, and a point with no interval on it.
+      final legacy = jsonEncode({
+        'format': BackupService.formatId,
+        'version': BackupService.formatVersion,
+        'trail': <Object?>[],
+        'mapPoints': [
+          {
+            'id': 'old',
+            'kind': 'user',
+            'latitude': 10.7725,
+            'longitude': 106.698,
+            'created_at': DateTime(2026, 7, 1).millisecondsSinceEpoch,
+          },
+        ],
+      });
+
+      await device.backup.import(Uint8List.fromList(utf8.encode(legacy)));
+
+      // Absent is not "empty them": the count on this phone was earned here.
+      expect(device.placeVisits.of('place-ben-thanh').checkInCount, 2);
+      // And a point restored from before the setting existed takes the default
+      // rather than arriving switched off.
+      final restored = device.mapPoints.current.firstWhere(
+        (point) => point.id == 'old',
+      );
+      expect(restored.autoCheckInEvery, AutoCheckIn.defaultInterval);
+    });
   });
 
   test('the file name sorts chronologically', () {

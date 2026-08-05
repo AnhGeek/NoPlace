@@ -21,3 +21,8 @@ pubspec_overrides.yaml
 *.mbtiles
 *.pmtiles
 tools/region_cooker/dist/
+
+# Built APKs. CI builds these from a tag and attaches them to the Release, so a
+# copy sitting in the working tree is a download, not a source file — and at
+# ~50 MB it is one git would carry forever.
+*.apk

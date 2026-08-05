@@ -11,10 +11,12 @@ import '../domain/entities/log_entry.dart';
 import '../domain/entities/map_layer_visibility.dart';
 import '../domain/entities/map_point.dart';
 import '../domain/entities/place.dart';
+import '../domain/entities/place_visit.dart';
 import '../domain/entities/player.dart';
 import '../domain/entities/quest.dart';
 import '../domain/repositories/repositories.dart';
 import '../domain/rules/exploration_rules.dart';
+import '../domain/rules/place_visit_rules.dart';
 import 'fake/fake_repositories.dart';
 import 'fake/fake_world_store.dart';
 import 'local/app_database.dart';
@@ -24,8 +26,10 @@ import 'local/region_catalogue.dart';
 import 'local/region_pack.dart';
 import 'local/region_pack_store.dart';
 import 'local/sqlite_map_point_repository.dart';
+import 'local/sqlite_place_visit_repository.dart';
 import 'local/sqlite_preferences_repository.dart';
 import 'local/sqlite_trail_repository.dart';
+import 'local/visit_recording_check_in_repository.dart';
 
 /// The composition root of the data layer.
 ///
@@ -54,8 +58,14 @@ final questRepositoryProvider = Provider<QuestRepository>((ref) {
   return FakeQuestRepository(ref.watch(fakeWorldStoreProvider));
 });
 
+/// The world's rules decide whether a check-in is allowed; the device keeps the
+/// record of it. Two owners, so two objects — see
+/// [VisitRecordingCheckInRepository].
 final checkInRepositoryProvider = Provider<CheckInRepository>((ref) {
-  return FakeCheckInRepository(ref.watch(fakeWorldStoreProvider));
+  return VisitRecordingCheckInRepository(
+    FakeCheckInRepository(ref.watch(fakeWorldStoreProvider)),
+    ref.watch(placeVisitRepositoryProvider),
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -108,6 +118,15 @@ final mapPointRepositoryProvider = Provider<MapPointRepository>(
   (ref) => ref.watch(mapPointStoreProvider),
 );
 
+/// The visit history of places the player did not author.
+final placeVisitStoreProvider = Provider<SqlitePlaceVisitRepository>((ref) {
+  return SqlitePlaceVisitRepository(ref.watch(appDatabaseProvider));
+});
+
+final placeVisitRepositoryProvider = Provider<PlaceVisitRepository>(
+  (ref) => ref.watch(placeVisitStoreProvider),
+);
+
 final preferencesStoreProvider = Provider<SqlitePreferencesRepository>((ref) {
   return SqlitePreferencesRepository(ref.watch(appDatabaseProvider));
 });
@@ -126,6 +145,7 @@ final backupServiceProvider = Provider<BackupService>((ref) {
     database: ref.watch(appDatabaseProvider),
     trail: ref.watch(trailStoreProvider),
     mapPoints: ref.watch(mapPointStoreProvider),
+    placeVisits: ref.watch(placeVisitStoreProvider),
     preferences: ref.watch(preferencesStoreProvider),
   );
 });
@@ -354,6 +374,21 @@ final mapPointsProvider = StreamProvider<List<MapPoint>>((ref) {
   return ref.watch(mapPointRepositoryProvider).watch();
 });
 
+/// How often the player has been to each of the world's places, keyed by id.
+final placeVisitsProvider = StreamProvider<Map<String, PlaceVisit>>((ref) {
+  return ref.watch(placeVisitRepositoryProvider).watch();
+});
+
+/// One place's history, for the sheet that is showing it.
+///
+/// A family over [placeVisitsProvider] rather than a lookup at each call site,
+/// so a check-in recorded while the sheet is open repaints the count under the
+/// player's thumb.
+final placeVisitProvider = Provider.family<PlaceVisit, String>((ref, placeId) {
+  final visits = ref.watch(placeVisitsProvider).value;
+  return visits?[placeId] ?? PlaceVisit.none(placeId);
+});
+
 /// How the fog behaves. Watched by the map and by the settings screen, so a
 /// slider drag is visible on the map behind it immediately.
 final fogSettingsProvider = StreamProvider<FogSettings>((ref) {
@@ -397,6 +432,86 @@ final trailRecorderProvider = Provider<void>((ref) {
     final position = next.value;
     if (position != null) unawaited(trail.record(position));
   }, fireImmediately: true);
+});
+
+/// Puts the device's record of which world places have been visited back onto
+/// the freshly seeded world.
+///
+/// The world is rebuilt from `_seedPlaces` on every launch and starts with
+/// almost everything unvisited; the visits are on disk. Without this the
+/// check-in sheet would call a place the player knows well "never visited", and
+/// would offer the first-visit bonus for it a second time.
+///
+/// Kept alive by the map, like the trail recorder.
+final placeVisitSyncProvider = Provider<void>((ref) {
+  ref.listen<AsyncValue<Map<String, PlaceVisit>>>(placeVisitsProvider, (
+    previous,
+    next,
+  ) {
+    final visits = next.value;
+    if (visits == null) return;
+
+    ref.read(fakeWorldStoreProvider).restoreVisited({
+      for (final entry in visits.entries)
+        if (entry.value.hasVisited) entry.key,
+    });
+  }, fireImmediately: true);
+});
+
+/// Turns time spent standing near a saved place into check-ins.
+///
+/// Sits next to [trailRecorderProvider] and for the same reason: "being
+/// somewhere counts" is a rule about the player, not about whichever screen
+/// happens to be open. Kept alive by the map.
+///
+/// The decision itself is [PlaceVisitRules.applyFix] — pure, and tested by
+/// moving a clock. All this does is feed it a position and write back the
+/// points that changed, which on the overwhelming majority of calls is none of
+/// them. How long a stay has to run is the place's own
+/// [MapPoint.autoCheckInEvery], so a place switched to "Off" costs nothing here
+/// beyond the comparison that skips it.
+///
+/// Only points the player saved accrue this way. The world's own places count a
+/// visit when somebody deliberately checks in, and nothing else: an hour spent
+/// near Chợ Bến Thành without tapping would otherwise quietly consume the
+/// first-visit bonus that check-in was going to pay.
+final placePresenceProvider = Provider<void>((ref) {
+  void evaluate(GeoPoint? position) {
+    // Same guard as the trail: the world opens on a seeded coordinate, and
+    // awarding visits from it would credit somebody an hour in a district they
+    // have never stood in.
+    if (position == null) return;
+    if (!ref.read(fakeWorldStoreProvider).hasRealPosition) return;
+
+    final store = ref.read(mapPointStoreProvider);
+    final now = DateTime.now();
+    for (final place in store.current) {
+      final updated = PlaceVisitRules.applyFix(
+        place,
+        position: position,
+        now: now,
+      );
+      if (updated != null) unawaited(store.update(updated));
+    }
+  }
+
+  ref.listen<AsyncValue<GeoPoint>>(
+    playerPositionProvider,
+    (previous, next) => evaluate(next.value),
+  );
+
+  // And on a clock of its own, because the feature is about *not* moving.
+  //
+  // Fixes are what the trail runs on, and they arrive as the player walks. A
+  // phone lying on a café table can go quiet for a long time — the position has
+  // genuinely not changed — and a stay measured only in fixes would then look
+  // abandoned exactly when it was most real. The ticker keeps the stay alive
+  // from the same position the GPS last reported.
+  final ticker = Timer.periodic(
+    PlaceVisitRules.heartbeat,
+    (_) => evaluate(ref.read(fakeWorldStoreProvider).currentPosition),
+  );
+  ref.onDispose(ticker.cancel);
 });
 
 final logEntriesProvider = StreamProvider<List<LogEntry>>((ref) {

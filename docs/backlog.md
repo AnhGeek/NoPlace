@@ -26,17 +26,32 @@ today, so nobody has to reverse-engineer the gap.
 - **A places API.** The seven seeded places are hard-coded. `WorldRepository`
   is the seam; nothing above it changes.
 - **Persistence.** The walked fog trail *is* stored on the device
-  ([adr/0005](adr/0005-tile-caching-and-fog-persistence.md)). Everything else —
-  language choice, XP, streak, check-in history — is still in memory and resets
-  on relaunch. `LocaleController.build()` is the single place a stored language
-  would be read.
-- **No authoring flows.** Dropping a pin, choosing its icon and taking a photo
-  for a picture point are all unbuilt: `MapPointRepository` has `add`/`update`/
-  `remove` and the map renders all three kinds, but the only points that exist
-  come from `DemoMapPoints`. `PicturePointThumbnails` is the prepared seam for
-  the photo half.
-- **No detail sheet for a player's point.** Tapping one shows its label in a
-  snackbar; rename, re-icon, view photo and delete are missing.
+  ([adr/0005](adr/0005-tile-caching-and-fog-persistence.md)), and so is the
+  visit history of every place — the player's own and the world's alike
+  ([adr/0012](adr/0012-visit-history-for-every-place.md)). Everything else —
+  language choice, XP, streak — is still in memory and resets on relaunch.
+  `LocaleController.build()` is the single place a stored language would be
+  read.
+- **Saving a place is built; photographing one is not.** The player can save the
+  spot they are standing on (or long-press the map for another), name it, pick
+  an icon, rate it, record how it felt, check in, and delete it with an undo —
+  see [adr/0011](adr/0011-places-the-player-saves.md). Time spent nearby earns
+  check-ins on its own (`PlaceVisitRules`). What is still missing is the photo
+  half: nothing captures an image, so `MapPointKind.picture` points only ever
+  come from `DemoMapPoints` and `PicturePointThumbnails` remains the prepared
+  seam. The sheet also has no way to view a photo full size.
+- **Saved places are only on the map.** They do not appear in the NEARBY list,
+  the logs, or search — those are all built on `Place`, which comes from the
+  world data. A "my places" list is the obvious next screen.
+- **Check-ins accrue only while the map is open.** `placePresenceProvider` is
+  kept alive by the map screen, so an hour spent somewhere with the app on the
+  profile tab counts for nothing.
+- **The visit history is a count, not a log.** `place_visits` holds one row per
+  place — how many times, and when last. "You came here every Sunday in July" is
+  not answerable, and would need the table to become append-only; see
+  [adr/0012](adr/0012-visit-history-for-every-place.md) for the shape that would
+  take. The XP a check-in paid is not recorded against the place either, so the
+  logs and the history cannot yet be reconciled.
 - **No way to clear the trail.** `ExplorationTrailRepository.clear()` exists and
   is tested, but nothing in the UI calls it. It needs a settings row behind a
   confirmation — wiping somebody's walking history by accident is unforgivable.
