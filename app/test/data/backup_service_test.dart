@@ -103,22 +103,25 @@ void main() {
     expect(fresh.preferences.currentNearbyRadiusMeters, 5000);
   });
 
-  test('the last metres of a walk are in the file, not still in memory', () async {
-    final old = makeDevice();
-    await old.trail.load();
+  test(
+    'the last metres of a walk are in the file, not still in memory',
+    () async {
+      final old = makeDevice();
+      await old.trail.load();
 
-    // Recorded and deliberately never flushed — the walk is still going. This
-    // is what a backup taken at the end of one has to catch.
-    await old.trail.record(benThanh);
-    final file = await old.backup.export();
+      // Recorded and deliberately never flushed — the walk is still going. This
+      // is what a backup taken at the end of one has to catch.
+      await old.trail.record(benThanh);
+      final file = await old.backup.export();
 
-    final fresh = makeDevice();
-    await fresh.trail.load();
-    await fresh.mapPoints.load();
-    await fresh.preferences.load();
+      final fresh = makeDevice();
+      await fresh.trail.load();
+      await fresh.mapPoints.load();
+      await fresh.preferences.load();
 
-    expect((await fresh.backup.import(file)).trailPoints, 1);
-  });
+      expect((await fresh.backup.import(file)).trailPoints, 1);
+    },
+  );
 
   test('restoring adds to what is there rather than replacing it', () async {
     final old = makeDevice();
@@ -139,22 +142,25 @@ void main() {
     expect(other.trail.current.contains(taoDan), isTrue);
   });
 
-  test('restoring the same file twice changes nothing the second time', () async {
-    final device = makeDevice();
-    await device.trail.load();
-    await device.mapPoints.load();
-    await device.preferences.load();
-    await device.trail.record(benThanh);
-    await device.mapPoints.add(point('p1'));
+  test(
+    'restoring the same file twice changes nothing the second time',
+    () async {
+      final device = makeDevice();
+      await device.trail.load();
+      await device.mapPoints.load();
+      await device.preferences.load();
+      await device.trail.record(benThanh);
+      await device.mapPoints.add(point('p1'));
 
-    final file = await device.backup.export();
-    await device.backup.import(file);
-    await device.backup.import(file);
+      final file = await device.backup.export();
+      await device.backup.import(file);
+      await device.backup.import(file);
 
-    final db = await device.database.open();
-    expect(await db.query('trail_points'), hasLength(1));
-    expect(await db.query('map_points'), hasLength(1));
-  });
+      final db = await device.database.open();
+      expect(await db.query('trail_points'), hasLength(1));
+      expect(await db.query('map_points'), hasLength(1));
+    },
+  );
 
   test('a backup can be read after being gunzipped by hand', () async {
     final old = makeDevice();

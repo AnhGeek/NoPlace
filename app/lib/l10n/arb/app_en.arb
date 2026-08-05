@@ -647,5 +647,13 @@
   "mapRecentre": "Centre on me",
   "@mapRecentre": {
     "description": "Accessibility label for the button that puts the map back on the player."
+  },
+  "mapHideFog": "Hide the fog",
+  "@mapHideFog": {
+    "description": "Label for the map button that lifts the fog, shown while the fog is drawn."
+  },
+  "mapShowFog": "Show the fog",
+  "@mapShowFog": {
+    "description": "Label for the map button that puts the fog back, shown while the fog is hidden."
   }
 }

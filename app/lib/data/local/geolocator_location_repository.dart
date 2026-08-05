@@ -224,8 +224,7 @@ class GeolocatorLocationRepository implements LocationRepository {
 
   /// Sends the player to the exemption prompt. They answer it, not us — the
   /// result shows up on the next [refreshBatteryOptimised].
-  Future<void> requestBatteryExemption() =>
-      _platform.requestBatteryExemption();
+  Future<void> requestBatteryExemption() => _platform.requestBatteryExemption();
 
   Future<LocationAvailability> _recheck() async {
     _restartWhenVisible = false;

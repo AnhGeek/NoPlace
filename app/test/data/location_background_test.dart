@@ -22,7 +22,9 @@ void main() {
   setUp(() {
     geolocator = _FakeGeolocator();
     GeolocatorPlatform.instance = geolocator;
-    repository = GeolocatorLocationRepository(platform: const _NoPlatformCalls());
+    repository = GeolocatorLocationRepository(
+      platform: const _NoPlatformCalls(),
+    );
   });
 
   tearDown(() async {

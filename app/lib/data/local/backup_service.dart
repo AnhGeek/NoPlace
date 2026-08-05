@@ -192,9 +192,8 @@ class BackupService {
       trailPoints: trail.length,
       mapPoints: mapPoints.length,
       preferences: preferences.length,
-      regions: {
-        for (final row in trail) row['region_id']! as String,
-      }.toList()..sort(),
+      regions: {for (final row in trail) row['region_id']! as String}.toList()
+        ..sort(),
     );
   }
 
@@ -204,7 +203,9 @@ class BackupService {
     final db = await _database.open();
 
     Future<int> count(String table) async =>
-        Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM $table')) ??
+        Sqflite.firstIntValue(
+          await db.rawQuery('SELECT COUNT(*) FROM $table'),
+        ) ??
         0;
 
     final regions = await db.rawQuery(
@@ -313,7 +314,9 @@ class BackupService {
         // Deliberately carried across even though the file it names is on the
         // other phone: the path is the only record of which photo the point
         // had, and a re-import on the original device restores the thumbnail.
-        'image_path': entry['image_path'] is String ? entry['image_path'] : null,
+        'image_path': entry['image_path'] is String
+            ? entry['image_path']
+            : null,
         'created_at': createdAt is int
             ? createdAt
             : DateTime.now().millisecondsSinceEpoch,

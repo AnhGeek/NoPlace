@@ -13,6 +13,7 @@ class MapLayerVisibility extends Equatable {
     this.showSuggested = true,
     this.showUser = true,
     this.showPictures = true,
+    this.showFog = true,
   });
 
   /// Points from the places data.
@@ -23,6 +24,15 @@ class MapLayerVisibility extends Equatable {
 
   /// Points created from a photo.
   final bool showPictures;
+
+  /// The fog itself.
+  ///
+  /// Off is a *look*, not a cheat: the trail underneath is untouched, the walk
+  /// keeps recording, and turning it back on shows exactly the ground the player
+  /// had earned before. It exists because the fog is also what stops you finding
+  /// the street you are looking for — and an explorer who cannot orient
+  /// themselves stops walking, which costs more than the peek does.
+  final bool showFog;
 
   bool isVisible(MapPointKind kind) => switch (kind) {
     MapPointKind.suggested => showSuggested,
@@ -36,19 +46,29 @@ class MapLayerVisibility extends Equatable {
           showSuggested: visible,
           showUser: showUser,
           showPictures: showPictures,
+          showFog: showFog,
         ),
         MapPointKind.user => MapLayerVisibility(
           showSuggested: showSuggested,
           showUser: visible,
           showPictures: showPictures,
+          showFog: showFog,
         ),
         MapPointKind.picture => MapLayerVisibility(
           showSuggested: showSuggested,
           showUser: showUser,
           showPictures: visible,
+          showFog: showFog,
         ),
       };
 
+  MapLayerVisibility withFog({required bool visible}) => MapLayerVisibility(
+    showSuggested: showSuggested,
+    showUser: showUser,
+    showPictures: showPictures,
+    showFog: visible,
+  );
+
   @override
-  List<Object?> get props => [showSuggested, showUser, showPictures];
+  List<Object?> get props => [showSuggested, showUser, showPictures, showFog];
 }

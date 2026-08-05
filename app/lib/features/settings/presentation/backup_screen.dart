@@ -72,8 +72,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
             builder: (context, snapshot) {
               // No spinner while it counts: the card is three lines of text and
               // a flash of empty rows is quieter than a flash of a loader.
-              final contents =
-                  snapshot.data ?? const BackupContents.empty();
+              final contents = snapshot.data ?? const BackupContents.empty();
               return NpCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

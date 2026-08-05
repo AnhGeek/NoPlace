@@ -37,7 +37,8 @@ map below; **NEARBY** is a list.
 │        ▒▒▒ fog ▒▒▒          │  everything unvisited is dark
 │      ◐ you are here         │  chip anchored to the player
 │    📍 pins for places       │  colour = category
-│                             │
+│                        (☁)  │  fog toggle — lit while the fog is off
+│                        (◎)  │  recentre — lit while following the GPS
 │  ┌───────────────────────┐  │
 │  │ You're near X         │  │  nearby card — only for places
 │  │ 40 m · never · +100XP │  │  inside the check-in radius
@@ -50,6 +51,15 @@ map below; **NEARBY** is a list.
 States: no nearby place → the card is absent, nothing else changes. Tiles still
 loading → the canvas colour shows through the fog, which reads as "unexplored"
 rather than "broken".
+
+**The fog toggle** lifts the fog for as long as the player wants it lifted, and
+is remembered across launches like the other layers. It erases nothing and stops
+nothing: the trail is untouched, the walk keeps recording, and putting the fog
+back shows exactly the ground earned meanwhile. It exists because the fog is also
+what hides the street you are standing on, and an explorer who cannot orient
+themselves stops walking. The lit state is fog *off* — the opposite of the
+recentre button — because fog on is the game as designed and needs no marker,
+while fog off is the state worth noticing.
 
 ### NEARBY — the list
 

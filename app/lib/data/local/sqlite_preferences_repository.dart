@@ -34,6 +34,7 @@ class SqlitePreferencesRepository implements PreferencesRepository {
   static const String _suggestedKey = 'map.show_suggested_points';
   static const String _userKey = 'map.show_user_points';
   static const String _pictureKey = 'map.show_picture_points';
+  static const String _fogVisibleKey = 'map.show_fog';
   static const String _clearingRadiusKey = 'fog.clearing_radius_meters';
   static const String _precisionKey = 'fog.recording_precision_meters';
   static const String _nearbyRadiusKey = 'nearby.radius_meters';
@@ -89,6 +90,7 @@ class SqlitePreferencesRepository implements PreferencesRepository {
         showSuggested: read(_suggestedKey),
         showUser: read(_userKey),
         showPictures: read(_pictureKey),
+        showFog: read(_fogVisibleKey),
       );
 
       const defaults = FogSettings();
@@ -161,5 +163,11 @@ class SqlitePreferencesRepository implements PreferencesRepository {
     };
 
     await _write(key, visible.toString());
+  }
+
+  @override
+  Future<void> setFogVisible({required bool visible}) async {
+    _visibility.value = _visibility.value.withFog(visible: visible);
+    await _write(_fogVisibleKey, visible.toString());
   }
 }

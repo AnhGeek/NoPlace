@@ -303,6 +303,23 @@ void main() {
       expect(preferences.currentVisibility.showSuggested, isTrue);
       expect(preferences.currentVisibility.showUser, isTrue);
       expect(preferences.currentVisibility.showPictures, isTrue);
+      expect(preferences.currentVisibility.showFog, isTrue);
+    });
+
+    test('lifting the fog survives a restart', () async {
+      final preferences = SqlitePreferencesRepository(database);
+      await preferences.load();
+      await preferences.setFogVisible(visible: false);
+
+      final reopened = SqlitePreferencesRepository(
+        AppDatabase(directory: directory),
+      );
+      await reopened.load();
+
+      expect(reopened.currentVisibility.showFog, isFalse);
+      // Hiding the fog is a change to one layer, not to the map.
+      expect(reopened.currentVisibility.showUser, isTrue);
+      expect(reopened.currentVisibility.showSuggested, isTrue);
     });
 
     test('hiding a layer survives a restart', () async {

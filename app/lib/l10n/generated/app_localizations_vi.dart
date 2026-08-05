@@ -516,4 +516,10 @@ class AppL10nVi extends AppL10n {
 
   @override
   String get mapRecentre => 'Về vị trí của tôi';
+
+  @override
+  String get mapHideFog => 'Ẩn sương mù';
+
+  @override
+  String get mapShowFog => 'Hiện sương mù';
 }

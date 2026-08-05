@@ -135,6 +135,10 @@ abstract interface class PreferencesRepository {
 
   Future<void> setMapLayerVisible(MapPointKind kind, {required bool visible});
 
+  /// Shows or hides the fog. Remembered, like the other layers: a player who
+  /// turned it off to find a street should not have to do it again every launch.
+  Future<void> setFogVisible({required bool visible});
+
   /// How the fog behaves. Tunable because the right values have to be walked,
   /// not argued about.
   Stream<FogSettings> watchFogSettings();

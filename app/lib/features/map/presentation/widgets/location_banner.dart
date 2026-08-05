@@ -146,7 +146,10 @@ class BackgroundSleepBanner extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.backgroundSleepTitle, style: NpTypography.bodyStrong),
+                  Text(
+                    l10n.backgroundSleepTitle,
+                    style: NpTypography.bodyStrong,
+                  ),
                   const SizedBox(height: NpSpace.xxs),
                   Text(
                     l10n.backgroundSleepBody,

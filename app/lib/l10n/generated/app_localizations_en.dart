@@ -518,4 +518,10 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get mapRecentre => 'Centre on me';
+
+  @override
+  String get mapHideFog => 'Hide the fog';
+
+  @override
+  String get mapShowFog => 'Show the fog';
 }

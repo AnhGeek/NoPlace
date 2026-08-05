@@ -167,11 +167,15 @@ class MapCanvas extends StatelessWidget {
             fileCacheMaximumSizeInBytes: 0,
           ),
 
-        _FogLayer(
-          playerPosition: playerPosition,
-          exploredArea: exploredArea,
-          settings: fogSettings,
-        ),
+        // Hidden, not emptied: the trail underneath is untouched and the walk
+        // keeps recording, so turning the fog back on shows exactly the ground
+        // that had been earned while it was off.
+        if (visibility.showFog)
+          _FogLayer(
+            playerPosition: playerPosition,
+            exploredArea: exploredArea,
+            settings: fogSettings,
+          ),
 
         // The city's edge, over the fog.
         //

@@ -24,7 +24,9 @@ class BackgroundTrackingChannel {
   Future<bool> ensureNotificationPermission() async {
     if (!_supported) return true;
     try {
-      return await _channel.invokeMethod<bool>('ensureNotificationPermission') ??
+      return await _channel.invokeMethod<bool>(
+            'ensureNotificationPermission',
+          ) ??
           true;
     } on PlatformException catch (error) {
       debugPrint('Background tracking: notification permission ($error)');

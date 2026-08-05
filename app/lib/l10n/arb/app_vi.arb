@@ -145,5 +145,7 @@
   "mapNearestMeta": "Cách {distance} · đi gần hơn để điểm danh",
   "mapNothingNearbyTitle": "Chưa có địa điểm nào ở đây",
   "mapNothingNearbyBody": "Cứ đi tiếp — bản đồ vẫn mở ra theo bước chân bạn.",
-  "mapRecentre": "Về vị trí của tôi"
+  "mapRecentre": "Về vị trí của tôi",
+  "mapHideFog": "Ẩn sương mù",
+  "mapShowFog": "Hiện sương mù"
 }

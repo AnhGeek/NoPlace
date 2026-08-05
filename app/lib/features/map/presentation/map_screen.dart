@@ -26,6 +26,7 @@ import 'map_controller.dart';
 import 'picture_point_thumbnails.dart';
 import 'place_visuals.dart';
 import 'widgets/background_permission_sheet.dart';
+import 'widgets/fog_toggle_button.dart';
 import 'widgets/location_banner.dart';
 import 'widgets/map_canvas.dart';
 import 'widgets/nearby_card.dart';
@@ -292,6 +293,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    FogToggleButton(
+                      fogVisible: visibility.showFog,
+                      onPressed: () => _toggleFog(visible: !visibility.showFog),
+                    ),
+                    const SizedBox(height: NpSpace.sm),
                     RecentreButton(following: _following, onPressed: _recentre),
                     const SizedBox(height: NpSpace.sm),
                     switch (nearest) {
@@ -361,6 +367,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     setState(() => _following = true);
     if (position == null) return;
     _moveTo(position, mapDefaultZoom);
+  }
+
+  /// Lifts the fog, or puts it back.
+  ///
+  /// Written straight to preferences rather than held in this State: the choice
+  /// is remembered like the other layers, and the map reads it from the same
+  /// stream the settings screen does — so there is one answer to "is the fog
+  /// on", not two that can disagree.
+  void _toggleFog({required bool visible}) {
+    unawaited(
+      ref.read(preferencesRepositoryProvider).setFogVisible(visible: visible),
+    );
   }
 
   void _moveTo(GeoPoint position, double zoom) {

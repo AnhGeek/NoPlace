@@ -870,6 +870,18 @@ abstract class AppL10n {
   /// In en, this message translates to:
   /// **'Centre on me'**
   String get mapRecentre;
+
+  /// Label for the map button that lifts the fog, shown while the fog is drawn.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide the fog'**
+  String get mapHideFog;
+
+  /// Label for the map button that puts the fog back, shown while the fog is hidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the fog'**
+  String get mapShowFog;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
