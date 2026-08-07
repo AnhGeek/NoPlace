@@ -63,7 +63,7 @@ One file: `regions/<id>.json`. Nothing else changes.
   "bbox": [107.96, 15.92, 108.35, 16.15],
   "minzoom": 8,
   "maxzoom": 15,
-  "build": "20260731",
+  "build": "20260806",
   "attribution": "© OpenStreetMap contributors",
   "tile_source": "protomaps-v4",
   "max_size_mb": 120
@@ -73,6 +73,21 @@ One file: `regions/<id>.json`. Nothing else changes.
 `build` is pinned to a date on purpose, never "latest": two cooks of the same
 input must produce the same pack, or nothing downstream can be trusted. Bump it
 deliberately when you want newer map data.
+
+It also has to be bumped whether you want newer data or not. Protomaps keeps
+only about a week of daily builds, so a pin older than that is a 404 and the
+cook dies on `Failed to create range reader`. That is a release-day failure —
+the tag is already pushed by the time it happens, as v0.7.1 found out — so bump
+the pin *before* tagging if the last one is more than a few days old. Check what
+is still up with:
+
+```bash
+curl -sI -r 0-0 https://build.protomaps.com/20260806.pmtiles | head -1
+```
+
+The reproducibility this pin buys is therefore a week long, not forever. Keeping
+a pack byte-identical beyond that means hosting the planet build ourselves,
+which is a bigger decision than this tool should make on its own.
 
 `maxzoom` is the size dial. z15 is a street corner and costs ~33 MB for HCMC;
 z14 is roughly a quarter of that and stops being useful on foot.

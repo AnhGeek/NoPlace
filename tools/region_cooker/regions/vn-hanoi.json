@@ -14,7 +14,7 @@
   "minzoom": 8,
   "maxzoom": 15,
   "//build": "Pinned, never 'latest': two cooks of the same input must produce the same pack. Bump it on purpose.",
-  "build": "20260731",
+  "build": "20260806",
   "attribution": "© OpenStreetMap contributors",
   "tile_source": "protomaps-v4",
   "//budget": "Refuse to publish a pack larger than this. Catches a bbox typo before it becomes a 400 MB APK.",
