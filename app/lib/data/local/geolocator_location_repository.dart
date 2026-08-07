@@ -214,6 +214,42 @@ class GeolocatorLocationRepository implements LocationRepository {
     return _availability.value;
   }
 
+  /// Asks the OS where the phone is *now* and pushes the answer into the
+  /// stream.
+  ///
+  /// For coming back to the app. The position stream only speaks when the
+  /// player has moved [ExplorationRules.defaultRecordingPrecisionMeters], so
+  /// somebody who closes the app on one street and reopens it on another after
+  /// the service was killed — or who never granted the background exemption —
+  /// comes back to a marker sitting where they were last time. That is the one
+  /// thing the map exists to be right about, so it is worth an explicit ask
+  /// rather than waiting for the stream to notice.
+  ///
+  /// The last known position is the fallback, not the first choice: on a resume
+  /// it can be older than what the stream has already delivered, and a stale
+  /// fix landing on top of a fresh one would walk the marker backwards.
+  Future<void> refreshPosition() async {
+    if (_availability.value != LocationAvailability.ready) return;
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          // Bounded on purpose: this runs while the player is looking at the
+          // map, and a fix that takes longer than this is one the stream will
+          // deliver on its own anyway.
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      if (_positions.isClosed) return;
+      _positions.add(GeoPoint(position.latitude, position.longitude));
+    } on Object catch (error) {
+      // Indoors, timed out, or the service went away between the check above
+      // and the ask. The map keeps the position it had.
+      debugPrint('Location: could not refresh the fix ($error)');
+    }
+  }
+
   /// Re-reads whether the process can still be frozen. Cheap, and worth doing
   /// on every resume: the player may have just answered the prompt.
   Future<bool> refreshBatteryOptimised() async {

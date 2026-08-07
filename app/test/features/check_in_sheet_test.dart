@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noplace/data/repository_providers.dart';
+import 'package:noplace/domain/entities/check_in.dart';
 import 'package:noplace/domain/entities/geo_point.dart';
 import 'package:noplace/domain/entities/place.dart';
 import 'package:noplace/domain/entities/place_visit.dart';
@@ -26,6 +28,14 @@ class _FakeVisits implements PlaceVisitRepository {
   Stream<Map<String, PlaceVisit>> watch() => Stream.value(_visits);
 }
 
+/// A world that refuses every claim, for the same reason the real one does when
+/// the player has drifted off the doorstep while the sheet was open.
+class _OutOfRange implements CheckInRepository {
+  @override
+  Future<CheckInResult> checkIn(String placeId) async =>
+      throw const CheckInFailure(CheckInFailureReason.outOfRange);
+}
+
 void main() {
   const benThanh = Place(
     id: 'place-ben-thanh',
@@ -40,6 +50,7 @@ void main() {
     WidgetTester tester, {
     required Place place,
     PlaceVisit? visit,
+    List<Override> overrides = const [],
   }) async {
     await tester.pumpApp(
       Builder(
@@ -52,6 +63,7 @@ void main() {
         placeVisitRepositoryProvider.overrideWithValue(
           _FakeVisits(visit == null ? null : {visit.placeId: visit}),
         ),
+        ...overrides,
       ],
     );
 
@@ -88,5 +100,32 @@ void main() {
     expect(find.text('Check in here'), findsOneWidget);
     expect(find.textContaining('Checked in'), findsNothing);
     expect(find.textContaining('No check-ins yet'), findsNothing);
+  });
+
+  testWidgets('a refused check-in says why, on the sheet itself', (
+    tester,
+  ) async {
+    await open(
+      tester,
+      place: benThanh,
+      overrides: [checkInRepositoryProvider.overrideWithValue(_OutOfRange())],
+    );
+
+    await tester.tap(find.text('Check in here'));
+    await tester.pumpAndSettle();
+
+    // On the sheet, not in a `SnackBar`: the messenger that draws those lives
+    // in the screen underneath, so the message used to be painted behind the
+    // sheet and the scrim where nobody could read it.
+    final message = find.text("You're too far away to check in here.");
+    expect(message, findsOneWidget);
+    expect(
+      find.ancestor(of: message, matching: find.byType(CheckInSheet)),
+      findsOneWidget,
+    );
+
+    // And the sheet stays open, so the player can pick the right place or walk
+    // the last few metres and try again.
+    expect(find.text('Check in here'), findsOneWidget);
   });
 }

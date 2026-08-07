@@ -219,7 +219,7 @@ final regionPackStoreProvider = Provider<RegionPackStore>((ref) {
 
 /// Which city's map to open, decided by where the player is standing.
 ///
-/// Three rules, and each of them is a bug that was worth not having:
+/// Four rules, and each of them is a bug that was worth not having:
 ///
 ///  * only a **real** fix moves the region. The world opens on a seeded
 ///    coordinate in District 1, and resolving from that would open a city the
@@ -228,7 +228,12 @@ final regionPackStoreProvider = Provider<RegionPackStore>((ref) {
 ///    rather than snapping back to the fallback. Walking off the eastern edge
 ///    of Đồng Nai must not quietly move the player's fog to Ho Chi Minh City;
 ///  * the region is state, not a computation over the latest fix, so the pack
-///    and the trail change once per border crossing instead of once per fix.
+///    and the trail change once per border crossing instead of once per fix;
+///  * the answer **survives the app being closed**. The city the player was in
+///    yesterday is on disk, so a cold start in the same city is not an arrival
+///    and does not open the sheet. Launching the app used to ask "which city is
+///    this?" every single morning, which taught people to tap it away without
+///    reading — and then it was worth nothing on the morning it was right.
 class RegionPackSourceNotifier extends Notifier<RegionPackSource> {
   /// The region the *ground* last resolved to, which is not always the region
   /// being shown: [select] lets the player override the map without moving.
@@ -239,12 +244,30 @@ class RegionPackSourceNotifier extends Notifier<RegionPackSource> {
   /// fix, which still resolves to Đồng Nai.
   String? _lastResolvedId;
 
+  /// The fix [_lastResolvedId] was worked out from. Restored from the device on
+  /// launch, so "have I moved cities since I last had this open" is answerable
+  /// on the first frame rather than a question we re-ask every launch.
+  GeoPoint? _lastResolvedAt;
+
   @override
   RegionPackSource build() {
     ref.listen<AsyncValue<GeoPoint>>(playerPositionProvider, (_, next) {
-      final resolved = _resolve(next.value);
+      final position = next.value;
+      if (position == null) return;
+
+      final resolved = _resolve(position);
       if (resolved == null || resolved.regionId == _lastResolvedId) return;
-      _lastResolvedId = resolved.regionId;
+
+      // A different rectangle is not yet a different city. Two fixes either
+      // side of a border can be metres apart, and believing that would swap
+      // the streets and reload the fog over GPS noise.
+      final from = _lastResolvedAt;
+      if (from != null &&
+          position.distanceTo(from) < RegionCatalogue.crossingDistanceMeters) {
+        return;
+      }
+
+      _remember(resolved, position);
 
       if (resolved.regionId != state.regionId) state = resolved;
 
@@ -259,8 +282,23 @@ class RegionPackSourceNotifier extends Notifier<RegionPackSource> {
     // — which is what stops the first frame drawing the wrong city.
     final world = ref.read(fakeWorldStoreProvider);
     final opening = _resolve(world.currentPosition);
-    _lastResolvedId = opening?.regionId;
-    return opening ?? RegionCatalogue.fallback;
+    if (opening != null) {
+      _remember(opening, world.currentPosition);
+      return opening;
+    }
+
+    // Nothing from the GPS yet, so fall back to where this device was when it
+    // last worked the question out. Restoring the *position* rather than the
+    // region id means the catalogue stays the one authority on which ground
+    // belongs to which city, even after its boundaries are redrawn.
+    final remembered = ref.read(preferencesRepositoryProvider).lastFix;
+    _lastResolvedAt = remembered;
+    final rememberedRegion = remembered == null
+        ? null
+        : RegionCatalogue.forPosition(remembered);
+    _lastResolvedId = rememberedRegion?.regionId;
+
+    return rememberedRegion ?? RegionCatalogue.fallback;
   }
 
   /// The player's own choice of map, from the arrival sheet.
@@ -273,8 +311,16 @@ class RegionPackSourceNotifier extends Notifier<RegionPackSource> {
     state = source;
   }
 
-  RegionPackSource? _resolve(GeoPoint? position) {
-    if (position == null) return null;
+  /// Records the answer, in memory for this session and on disk for the next
+  /// one. Fire-and-forget: a write that fails costs one redundant question on
+  /// some future launch, which is not worth holding a position fix for.
+  void _remember(RegionPackSource region, GeoPoint position) {
+    _lastResolvedId = region.regionId;
+    _lastResolvedAt = position;
+    unawaited(ref.read(preferencesRepositoryProvider).saveLastFix(position));
+  }
+
+  RegionPackSource? _resolve(GeoPoint position) {
     if (!ref.read(fakeWorldStoreProvider).hasRealPosition) return null;
     return RegionCatalogue.forPosition(position);
   }

@@ -5,6 +5,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../../core/async/replay_subject.dart';
 import '../../domain/entities/fog_settings.dart';
+import '../../domain/entities/geo_point.dart';
 import '../../domain/entities/map_layer_visibility.dart';
 import '../../domain/entities/map_point.dart';
 import '../../domain/repositories/repositories.dart';
@@ -39,9 +40,15 @@ class SqlitePreferencesRepository implements PreferencesRepository {
   static const String _precisionKey = 'fog.recording_precision_meters';
   static const String _nearbyRadiusKey = 'nearby.radius_meters';
   static const String _backgroundPromptKey = 'background.prompt_seen';
+  static const String _lastFixKey = 'location.last_fix';
 
   /// Asked once, then never again — see [PreferencesRepository].
   final ReplaySubject<bool> _backgroundPromptSeen = ReplaySubject(false);
+
+  /// Where the player was standing the last time the app worked out which
+  /// city they were in — see [PreferencesRepository.lastFix]. A plain field
+  /// rather than a subject: nothing on screen renders it.
+  GeoPoint? _lastFix;
 
   @override
   Stream<MapLayerVisibility> watchMapLayerVisibility() => _visibility.stream;
@@ -62,6 +69,19 @@ class SqlitePreferencesRepository implements PreferencesRepository {
   double get currentNearbyRadiusMeters => _nearbyRadius.value;
 
   bool get currentBackgroundPromptSeen => _backgroundPromptSeen.value;
+
+  @override
+  GeoPoint? get lastFix => _lastFix;
+
+  /// Written on a region resolution rather than on every fix: the question it
+  /// answers is which city, and a walk across town is thousands of fixes and
+  /// one answer.
+  @override
+  Future<void> saveLastFix(GeoPoint position) async {
+    if (_lastFix == position) return;
+    _lastFix = position;
+    await _write(_lastFixKey, '${position.latitude},${position.longitude}');
+  }
 
   Future<void> load() async {
     if (_loaded) return;
@@ -110,6 +130,8 @@ class SqlitePreferencesRepository implements PreferencesRepository {
       // Absent means "not asked yet", which is the one case that shows the
       // dialog — so this cannot use `read()`, whose default is true.
       _backgroundPromptSeen.value = values[_backgroundPromptKey] == 'true';
+
+      _lastFix = _parseFix(values[_lastFixKey]);
     } on Object catch (error) {
       // Falling back to "show everything" is the safe default: a preference we
       // cannot read must never hide the player's own points.
@@ -135,6 +157,26 @@ class SqlitePreferencesRepository implements PreferencesRepository {
     if (_backgroundPromptSeen.value) return;
     _backgroundPromptSeen.value = true;
     await _write(_backgroundPromptKey, 'true');
+  }
+
+  /// `"10.7725,106.698"`, or null for anything else.
+  ///
+  /// Anything else includes a row written by a build that stored something
+  /// different here, and a latitude that has since become out of range — the
+  /// [GeoPoint] assertion would otherwise take the whole preferences read down
+  /// with it and leave the player looking at default settings.
+  static GeoPoint? _parseFix(String? value) {
+    if (value == null) return null;
+
+    final parts = value.split(',');
+    if (parts.length != 2) return null;
+
+    final latitude = double.tryParse(parts.first);
+    final longitude = double.tryParse(parts.last);
+    if (latitude == null || longitude == null) return null;
+    if (latitude.abs() > 90 || longitude.abs() > 180) return null;
+
+    return GeoPoint(latitude, longitude);
   }
 
   Future<void> _write(String key, String value) async {

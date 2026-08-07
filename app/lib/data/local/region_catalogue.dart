@@ -69,10 +69,24 @@ abstract final class RegionCatalogue {
 
   static const List<RegionPackSource> all = [hcmc, dongNai, hanoi];
 
-  /// The region the app opens with, before the GPS has said anything.
+  /// The region the app opens with, before the GPS has said anything and
+  /// before this device has ever recorded where it was.
   ///
   /// Also where a trail written before the schema was region-scoped lives.
   static const RegionPackSource fallback = hcmc;
+
+  /// How far the player has to be from the last fix we resolved a city from
+  /// before a *different* city is believed.
+  ///
+  /// The claims are rectangles and their edges run through real streets. Two
+  /// fixes a hundred metres apart can land either side of one — GPS drift alone
+  /// is enough — and without a floor that reads as the player crossing a border
+  /// and back, which costs them the arrival sheet and a fog reload each way.
+  ///
+  /// Two kilometres is well beyond any drift and well inside any real move: the
+  /// nearest two regions we ship are a river apart, and nobody crosses that
+  /// river without also covering this.
+  static const double crossingDistanceMeters = 2000;
 
   /// The region whose ground [position] is standing on, or null when we have no
   /// map for it.

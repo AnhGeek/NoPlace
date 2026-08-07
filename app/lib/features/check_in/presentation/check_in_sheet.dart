@@ -43,6 +43,16 @@ class CheckInSheet extends ConsumerStatefulWidget {
 class _CheckInSheetState extends ConsumerState<CheckInSheet> {
   late Place _place = widget.place;
 
+  /// Why the last attempt was refused, shown on the sheet itself.
+  ///
+  /// Deliberately not a `SnackBar`. A modal sheet is pushed on the root
+  /// navigator and the `ScaffoldMessenger` that shows snack bars lives in the
+  /// screen *underneath* it, so the message was drawn behind the sheet and the
+  /// scrim — the player tapped "Check in here", nothing appeared to happen, and
+  /// the one explanation they were given was invisible. It belongs next to the
+  /// button that produced it.
+  String? _error;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -80,6 +90,10 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
               PlaceVisitCard(visit: visit),
             ],
             const SizedBox(height: NpSpace.md),
+            if (_error case final error?) ...[
+              _Refusal(message: error),
+              const SizedBox(height: NpSpace.sm),
+            ],
             NpPrimaryButton(
               label: l10n.checkInAction,
               onPressed: isSubmitting ? null : _submit,
@@ -112,7 +126,13 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
                   distanceMeters: ref.watch(
                     distanceToPlaceProvider(alternative),
                   ),
-                  onTap: () => setState(() => _place = alternative),
+                  // A refusal is about the place it was refused for. Carrying
+                  // "you're too far away" over to a different place would be
+                  // the sheet telling the player something it does not know.
+                  onTap: () => setState(() {
+                    _place = alternative;
+                    _error = null;
+                  }),
                 ),
                 const SizedBox(height: NpSpace.xs),
               ],
@@ -131,6 +151,8 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
   }
 
   Future<void> _submit() async {
+    setState(() => _error = null);
+
     final result = await ref
         .read(checkInControllerProvider.notifier)
         .checkIn(_place.id);
@@ -142,19 +164,58 @@ class _CheckInSheetState extends ConsumerState<CheckInSheet> {
     }
 
     // The rules refused it — most often because the player drifted out of
-    // range while the sheet was open. Say so here rather than closing the
-    // sheet on a silent failure.
+    // range while the sheet was open. Say so on the sheet rather than closing
+    // it on a silent failure.
     final error = ref.read(checkInControllerProvider).error;
     final l10n = context.l10n;
-    final message =
-        error is CheckInFailure &&
-            error.reason == CheckInFailureReason.outOfRange
-        ? l10n.checkInTooFar
-        : l10n.checkInFailed;
 
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    setState(() {
+      _error =
+          error is CheckInFailure &&
+              error.reason == CheckInFailureReason.outOfRange
+          ? l10n.checkInTooFar
+          : l10n.checkInFailed;
+    });
+  }
+}
+
+/// Why the check-in did not happen, on the sheet that offered it.
+///
+/// Sits directly above the button rather than at the top of the sheet: the
+/// player's eyes are already there, and a message at the other end of a
+/// scrolling column is one they have to go looking for.
+class _Refusal extends StatelessWidget {
+  const _Refusal({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return NpCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: NpSpace.md,
+        vertical: NpSpace.sm,
+      ),
+      borderColor: NpColors.statusWarning,
+      child: Row(
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            size: NpSize.iconMd,
+            color: NpColors.statusWarning,
+          ),
+          const SizedBox(width: NpSpace.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: NpTypography.footnote.copyWith(
+                color: NpColors.statusWarning,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

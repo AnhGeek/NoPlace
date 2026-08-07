@@ -68,6 +68,24 @@ the player can act on all of them. `LocationBanner` shows the matching sentence
 and the one button that fixes it, and an `AppLifecycleListener` re-checks on
 resume so returning from Settings does not land on the same banner.
 
+**A resume refreshes the position but not the camera.** It does two things:
+repair whatever broke while we were away, and ask the OS where the phone is
+*now* via `refreshPosition`. Waiting for the stream is not good enough — it only
+speaks after the player has moved the distance filter, and a phone that was
+frozen in a pocket or closed on another street comes back with the marker
+sitting where it was left. The current fix is asked for rather than the last
+known one: on a resume the cached fix can be older than something the stream has
+already delivered, and a stale position landing on top of a fresh one walks the
+marker backwards.
+
+Moving the camera is deliberately *not* part of that. Opening the app is the
+player asking where they are, and the first real fix answers it at the opening
+zoom. Flicking back from a message is not the same question — they are returning
+to a map they had already put where they wanted it, and re-centring at the
+opening zoom throws that away every time they glance at a notification. The
+fresh fix still moves the camera while `_following` is on, at the zoom they
+chose; `RecentreButton` is how somebody who wants the jump asks for it.
+
 ## Consequences
 
 - **The permission we ask for is the one people grant.** "While using the app"

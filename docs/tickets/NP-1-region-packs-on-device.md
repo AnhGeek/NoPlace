@@ -165,6 +165,24 @@ what stops them being re-argued.
    wide enough to hold the overlap, so the map draws either way. Province
    polygons are the real fix and are not worth their weight yet.
 
+   **Revised 2026-08-06: the moment is per *device*, not per launch.** As
+   built, the answer lived in memory, so every cold start resolved a region
+   against nothing and the sheet opened on a player who had not moved a metre —
+   a question asked every morning is one people learn to tap away, and then it
+   is worth nothing on the morning it is right. The fix is one row in
+   `preferences`: the fix a region was last resolved from, written as it is
+   worked out and read back before the first frame. Opening in the same city is
+   silent, opening in a new one still asks, and the map now opens on the city
+   the phone was last in rather than on the fallback.
+
+   The position is stored rather than the region id, so the catalogue stays the
+   one authority on which ground belongs to which city even after a claim is
+   redrawn. A second rule falls out of having a position to measure from:
+   `RegionCatalogue.crossingDistanceMeters` (2 km) is how far the player has to
+   be from that fix before a *different* claim is believed. Rectangle edges run
+   through real streets and GPS drift alone can cross one, which used to read
+   as a border crossing and back — an arrival sheet and a fog reload each way.
+
 ## Still open
 
 - **The fog trail is one global set**, not partitioned by region. Listed in the

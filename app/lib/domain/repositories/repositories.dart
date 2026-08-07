@@ -181,6 +181,21 @@ abstract interface class PreferencesRepository {
   Stream<bool> watchBackgroundPromptSeen();
 
   Future<void> markBackgroundPromptSeen();
+
+  /// Where the player was standing the last time the app worked out which city
+  /// they were in, or null on a device that has never had a fix.
+  ///
+  /// A synchronous getter rather than a stream, and the only one on this
+  /// interface. It is read once, while the opening region is being decided and
+  /// before the first frame — see `RegionPackSourceNotifier` — and a stream
+  /// there would still be carrying "loading" at the only moment the answer is
+  /// worth anything.
+  GeoPoint? get lastFix;
+
+  /// Remembers where the player was when the city was last worked out, so the
+  /// next cold start can tell "still here" from "somewhere new" instead of
+  /// asking again every morning.
+  Future<void> saveLastFix(GeoPoint position);
 }
 
 /// The player's own progression.

@@ -93,9 +93,31 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(
-      onResume: () => unawaited(ref.read(locationRepositoryProvider).refresh()),
-    );
+    _lifecycle = AppLifecycleListener(onResume: () => unawaited(_onResume()));
+  }
+
+  /// Answers "where am I *now*" every time the app comes back.
+  ///
+  /// Two steps: repair whatever broke while we were away, then ask the OS for a
+  /// current fix rather than waiting for the stream to notice movement. A
+  /// marker still sitting on the street you left an hour ago is the map
+  /// answering the one question it exists to answer wrong.
+  ///
+  /// It deliberately stops there. **Taking hold of the camera is a cold-start
+  /// move, not a resume one** — opening the app is the player asking where they
+  /// are, but flicking back from a message is them returning to a map they had
+  /// already put where they wanted it, and yanking it to the player at the
+  /// opening zoom throws that away. The fresh fix still moves the camera when
+  /// [_following] is on, which is ordinary follow behaviour and stays at the
+  /// zoom they chose; [RecentreButton] is how somebody who wants the jump asks
+  /// for it.
+  Future<void> _onResume() async {
+    final location = ref.read(locationRepositoryProvider);
+
+    await location.refresh();
+    if (!mounted) return;
+
+    await location.refreshPosition();
   }
 
   @override
@@ -520,29 +542,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _announce(PlaceSheetResult? result) {
     if (!mounted || result == null) return;
 
-    final l10n = context.l10n;
-    final name = mapPointDisplayName(result.place, l10n);
-    final messenger = ScaffoldMessenger.of(context)..clearSnackBars();
-
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(switch (result.outcome) {
-          PlaceSheetOutcome.saved => l10n.placeSaved(name),
-          PlaceSheetOutcome.checkedIn => l10n.placeCheckedIn(name),
-          PlaceSheetOutcome.deleted => l10n.placeDeleted(name),
-        }),
-        action: result.outcome != PlaceSheetOutcome.deleted
-            ? null
-            // The place goes back exactly as it was, id and check-in count
-            // included: this is an undo, not a second attempt at making it.
-            : SnackBarAction(
-                label: l10n.placeUndo,
-                onPressed: () => unawaited(
-                  ref.read(mapPointRepositoryProvider).add(result.place),
-                ),
-              ),
-      ),
-    );
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        placeOutcomeSnackBar(
+          result: result,
+          l10n: context.l10n,
+          onUndo: () =>
+              unawaited(ref.read(mapPointRepositoryProvider).add(result.place)),
+        ),
+      );
   }
 
   void _onSearchTap() {
@@ -576,6 +585,45 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ),
       );
   }
+}
+
+/// What the map says after the place sheet has closed.
+///
+/// Built here rather than inline so the one thing that has already gone wrong
+/// with it can be tested: a message that outstays its welcome is a bug the
+/// widget test can catch, and only if it can get hold of the bar itself.
+SnackBar placeOutcomeSnackBar({
+  required PlaceSheetResult result,
+  required AppL10n l10n,
+  required VoidCallback onUndo,
+}) {
+  final name = mapPointDisplayName(result.place, l10n);
+  final deleted = result.outcome == PlaceSheetOutcome.deleted;
+
+  return SnackBar(
+    // Said out loud because the default is the opposite: a `SnackBar` carrying
+    // an action defaults to `persist: action != null`, so the undo below would
+    // keep this bar on screen *for ever*. It never times out, and the only ways
+    // out are tapping Undo — the one thing somebody who meant the deletion does
+    // not want — or swiping a bar most people do not know is swipeable.
+    // Deleting a place left a message sitting over the map until the app was
+    // restarted.
+    persist: false,
+    // Longer than the 4s default when there is something to undo: that window
+    // is not a confirmation, it is the whole chance to take the deletion back,
+    // and four seconds is not enough to read a name and change your mind.
+    duration: Duration(seconds: deleted ? 8 : 4),
+    content: Text(switch (result.outcome) {
+      PlaceSheetOutcome.saved => l10n.placeSaved(name),
+      PlaceSheetOutcome.checkedIn => l10n.placeCheckedIn(name),
+      PlaceSheetOutcome.deleted => l10n.placeDeleted(name),
+    }),
+    // The place goes back exactly as it was, id and check-in count included:
+    // this is an undo, not a second attempt at making it.
+    action: deleted
+        ? SnackBarAction(label: l10n.placeUndo, onPressed: onUndo)
+        : null,
+  );
 }
 
 /// Keeps the tabs and the search field legible over bright map tiles.
