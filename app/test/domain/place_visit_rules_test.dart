@@ -25,6 +25,7 @@ void main() {
   MapPoint place({
     DateTime? startedAt,
     DateTime? seenAt,
+    DateTime? lastCheckInAt,
     int checkIns = 0,
     Duration every = AutoCheckIn.hourly,
   }) => MapPoint(
@@ -34,6 +35,7 @@ void main() {
     createdAt: opened,
     label: 'The café',
     checkInCount: checkIns,
+    lastCheckInAt: lastCheckInAt,
     stayStartedAt: startedAt,
     stayLastSeenAt: seenAt,
     autoCheckInEvery: every,
@@ -253,32 +255,6 @@ void main() {
   });
 
   group('the interval the player picked', () {
-    test('half an hour pays out twice as often', () {
-      final updated = PlaceVisitRules.applyFix(
-        place(
-          startedAt: opened,
-          seenAt: opened.add(const Duration(minutes: 28)),
-          every: AutoCheckIn.halfHourly,
-        ),
-        position: cafe,
-        now: opened.add(const Duration(minutes: 31)),
-      );
-
-      expect(updated!.checkInCount, 1);
-      // On an hourly place the same sitting would still be waiting.
-      expect(
-        PlaceVisitRules.applyFix(
-          place(
-            startedAt: opened,
-            seenAt: opened.add(const Duration(minutes: 28)),
-          ),
-          position: cafe,
-          now: opened.add(const Duration(minutes: 31)),
-        )?.checkInCount,
-        anyOf(isNull, 0),
-      );
-    });
-
     test('two hours does not pay out after one', () {
       // Last seen six minutes ago, so the heartbeat is due and there *is*
       // something to write — which is what makes "nothing was awarded"
@@ -356,6 +332,116 @@ void main() {
 
       expect(updated!.checkInCount, 0);
       expect(updated.stayStartedAt, opened.add(const Duration(days: 2)));
+    });
+  });
+
+  group('once a day', () {
+    MapPoint daily({
+      DateTime? lastCheckInAt,
+      DateTime? seenAt,
+      int checkIns = 0,
+    }) => place(
+      every: AutoCheckIn.daily,
+      lastCheckInAt: lastCheckInAt,
+      seenAt: seenAt,
+      startedAt: seenAt == null ? null : opened,
+      checkIns: checkIns,
+    );
+
+    test('turning up is the whole condition — no waiting', () {
+      // The one option that pays out on the first fix. Everywhere else this
+      // same call starts a stay worth nothing.
+      final updated = PlaceVisitRules.applyFix(
+        daily(),
+        position: nextDoor,
+        now: opened,
+      );
+
+      expect(updated!.checkInCount, 1);
+      expect(updated.lastCheckInAt, opened);
+      expect(updated.stayStartedAt, opened);
+    });
+
+    test('a second visit the same day is not a second check-in', () {
+      // Out for lunch and back again. One line for the day is the promise.
+      final afternoon = opened.add(const Duration(hours: 6));
+      final updated = PlaceVisitRules.applyFix(
+        daily(lastCheckInAt: opened, checkIns: 1),
+        position: cafe,
+        now: afternoon,
+      );
+
+      expect(updated?.checkInCount, anyOf(isNull, 1));
+      expect(updated?.lastCheckInAt, anyOf(isNull, opened));
+    });
+
+    test('standing there all day is still one check-in', () {
+      // Eleven hours without moving. An hourly place would have paid eleven
+      // times over; this one said its piece this morning.
+      final lateEvening = DateTime(2026, 8, 5, 20);
+      final updated = PlaceVisitRules.applyFix(
+        daily(
+          lastCheckInAt: opened,
+          seenAt: lateEvening.subtract(const Duration(minutes: 6)),
+          checkIns: 1,
+        ),
+        position: cafe,
+        now: lateEvening,
+      );
+
+      // The heartbeat is due, so there is a write — it just isn't a check-in.
+      expect(updated!.checkInCount, 1);
+      expect(updated.stayLastSeenAt, lateEvening);
+    });
+
+    test('the next calendar day counts again', () {
+      // Ten past midnight: eight hours after the last one, and a new day. The
+      // rolling-window version of this rule would refuse it.
+      final justAfterMidnight = DateTime(2026, 8, 6, 0, 10);
+      final updated = PlaceVisitRules.applyFix(
+        daily(
+          lastCheckInAt: DateTime(2026, 8, 5, 16),
+          seenAt: DateTime(2026, 8, 5, 16),
+          checkIns: 1,
+        ),
+        position: cafe,
+        now: justAfterMidnight,
+      );
+
+      expect(updated!.checkInCount, 2);
+      expect(updated.lastCheckInAt, justAfterMidnight);
+    });
+
+    test('a morning arrival is not refused for being early the next day', () {
+      // 08:55 today after 09:00 yesterday — 23 hours 55 minutes. The commute
+      // that a rolling day would drop roughly once a week.
+      final nextMorning = DateTime(2026, 8, 6, 8, 55);
+      final updated = PlaceVisitRules.applyFix(
+        daily(lastCheckInAt: opened, seenAt: opened, checkIns: 1),
+        position: cafe,
+        now: nextMorning,
+      );
+
+      expect(updated!.checkInCount, 2);
+    });
+
+    test('tapping the button uses up the day', () {
+      // A deliberate check-in this morning, then a fix at lunchtime. Counting
+      // that would be the same arrival recorded twice.
+      final updated = PlaceVisitRules.applyFix(
+        PlaceVisitRules.checkIn(daily(), now: opened),
+        position: cafe,
+        now: opened.add(const Duration(hours: 3)),
+      );
+
+      expect(updated?.checkInCount, anyOf(isNull, 1));
+    });
+
+    test('walking past the other side of town counts nothing', () {
+      expect(
+        PlaceVisitRules.applyFix(daily(), position: acrossTown, now: opened),
+        isNull,
+      );
     });
   });
 

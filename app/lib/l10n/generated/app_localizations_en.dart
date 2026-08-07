@@ -630,21 +630,17 @@ class AppL10nEn extends AppL10n {
   String get placeAutoCheckInOff => 'Off';
 
   @override
-  String get placeAutoCheckInHalfHourly => '30 min';
-
-  @override
   String get placeAutoCheckInHourly => '1 hour';
 
   @override
   String get placeAutoCheckInTwoHourly => '2 hours';
 
   @override
-  String get placeAutoCheckInSummaryOff =>
-      'Only the button counts here — nothing is recorded on its own.';
+  String get placeAutoCheckInDaily => 'Once a day';
 
   @override
-  String get placeAutoCheckInSummaryHalfHourly =>
-      'Half an hour spent here counts as a check-in on its own.';
+  String get placeAutoCheckInSummaryOff =>
+      'Only the button counts here — nothing is recorded on its own.';
 
   @override
   String get placeAutoCheckInSummaryHourly =>
@@ -655,6 +651,10 @@ class AppL10nEn extends AppL10n {
       'Two hours spent here count as a check-in on their own.';
 
   @override
+  String get placeAutoCheckInSummaryDaily =>
+      'Arriving here counts as a check-in, once a day. No need to stay.';
+
+  @override
   String get placeAutoCheckInHelp => 'What does this do?';
 
   @override
@@ -662,7 +662,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get placeAutoCheckInTipBody =>
-      'Stay within 150 m of this place and NoPlace records a visit for you, every time the interval you picked goes by. No tapping, and it keeps counting with the app in your pocket.\n\nIt waits 20 minutes without a sign of you before deciding you have left, so a wandering GPS signal can\'t cut a visit short. Leaving and coming back starts the clock again.\n\nPick Off for somewhere you\'re always at, like home — otherwise it would collect a visit every night.';
+      'Stay within 150 m of this place and NoPlace records a visit for you, every time the interval you picked goes by. No tapping, and it keeps counting with the app in your pocket.\n\nOnce a day is the exception: it counts the moment you arrive and then goes quiet until tomorrow. Pick it for somewhere you pass through rather than sit in.\n\nThe intervals wait 20 minutes without a sign of you before deciding you have left, so a wandering GPS signal can\'t cut a visit short. Leaving and coming back starts the clock again.\n\nPick Off for somewhere you\'re always at, like home — otherwise it would collect a visit every night.';
 
   @override
   String placeCheckedIn(String name) {

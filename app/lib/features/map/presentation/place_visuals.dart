@@ -96,13 +96,13 @@ String mapPointDisplayName(MapPoint point, AppL10n l10n) =>
 /// The name of an auto check-in interval, short enough for a picker segment.
 ///
 /// Written out per option rather than composed from a number and a unit,
-/// because "30 min" and "1 hour" are not the same sentence in every language —
+/// because "1 hour" and "2 hours" are not the same sentence in every language —
 /// and an interval we no longer offer falls back to the default's label rather
 /// than printing a raw duration.
 String autoCheckInLabel(Duration every, AppL10n l10n) => switch (every) {
   AutoCheckIn.off => l10n.placeAutoCheckInOff,
-  AutoCheckIn.halfHourly => l10n.placeAutoCheckInHalfHourly,
   AutoCheckIn.twoHourly => l10n.placeAutoCheckInTwoHourly,
+  AutoCheckIn.daily => l10n.placeAutoCheckInDaily,
   _ => l10n.placeAutoCheckInHourly,
 };
 
@@ -110,7 +110,7 @@ String autoCheckInLabel(Duration every, AppL10n l10n) => switch (every) {
 /// count. See [autoCheckInLabel] for why each one is written out.
 String autoCheckInSummary(Duration every, AppL10n l10n) => switch (every) {
   AutoCheckIn.off => l10n.placeAutoCheckInSummaryOff,
-  AutoCheckIn.halfHourly => l10n.placeAutoCheckInSummaryHalfHourly,
   AutoCheckIn.twoHourly => l10n.placeAutoCheckInSummaryTwoHourly,
+  AutoCheckIn.daily => l10n.placeAutoCheckInSummaryDaily,
   _ => l10n.placeAutoCheckInSummaryHourly,
 };

@@ -779,10 +779,6 @@
   "@placeAutoCheckInOff": {
     "description": "Auto check-in picker option: never count a visit on its own, only when the player taps the button."
   },
-  "placeAutoCheckInHalfHourly": "30 min",
-  "@placeAutoCheckInHalfHourly": {
-    "description": "Auto check-in picker option: half an hour at the place counts as a visit. Kept short to fit the picker."
-  },
   "placeAutoCheckInHourly": "1 hour",
   "@placeAutoCheckInHourly": {
     "description": "Auto check-in picker option: an hour at the place counts as a visit. The default."
@@ -791,13 +787,13 @@
   "@placeAutoCheckInTwoHourly": {
     "description": "Auto check-in picker option: two hours at the place count as a visit."
   },
+  "placeAutoCheckInDaily": "Once a day",
+  "@placeAutoCheckInDaily": {
+    "description": "Auto check-in picker option: arriving counts as a visit, at most once per calendar day. Unlike the others this is not a waiting time. Kept short to fit the picker."
+  },
   "placeAutoCheckInSummaryOff": "Only the button counts here — nothing is recorded on its own.",
   "@placeAutoCheckInSummaryOff": {
     "description": "Shown under the visit count when auto check-in is switched off for this place."
-  },
-  "placeAutoCheckInSummaryHalfHourly": "Half an hour spent here counts as a check-in on its own.",
-  "@placeAutoCheckInSummaryHalfHourly": {
-    "description": "Shown under the visit count when auto check-in is set to half an hour."
   },
   "placeAutoCheckInSummaryHourly": "An hour spent here counts as a check-in on its own.",
   "@placeAutoCheckInSummaryHourly": {
@@ -807,6 +803,10 @@
   "@placeAutoCheckInSummaryTwoHourly": {
     "description": "Shown under the visit count when auto check-in is set to two hours."
   },
+  "placeAutoCheckInSummaryDaily": "Arriving here counts as a check-in, once a day. No need to stay.",
+  "@placeAutoCheckInSummaryDaily": {
+    "description": "Shown under the visit count when auto check-in is set to once a day. Says the two things that make this option different from the intervals: it counts on arrival, and it counts only once before the day is out."
+  },
   "placeAutoCheckInHelp": "What does this do?",
   "@placeAutoCheckInHelp": {
     "description": "Label of the question-mark button beside the auto check-in picker."
@@ -815,9 +815,9 @@
   "@placeAutoCheckInTipTitle": {
     "description": "Title of the tip explaining automatic check-ins."
   },
-  "placeAutoCheckInTipBody": "Stay within 150 m of this place and NoPlace records a visit for you, every time the interval you picked goes by. No tapping, and it keeps counting with the app in your pocket.\n\nIt waits 20 minutes without a sign of you before deciding you have left, so a wandering GPS signal can''t cut a visit short. Leaving and coming back starts the clock again.\n\nPick Off for somewhere you''re always at, like home — otherwise it would collect a visit every night.",
+  "placeAutoCheckInTipBody": "Stay within 150 m of this place and NoPlace records a visit for you, every time the interval you picked goes by. No tapping, and it keeps counting with the app in your pocket.\n\nOnce a day is the exception: it counts the moment you arrive and then goes quiet until tomorrow. Pick it for somewhere you pass through rather than sit in.\n\nThe intervals wait 20 minutes without a sign of you before deciding you have left, so a wandering GPS signal can''t cut a visit short. Leaving and coming back starts the clock again.\n\nPick Off for somewhere you''re always at, like home — otherwise it would collect a visit every night.",
   "@placeAutoCheckInTipBody": {
-    "description": "Body of the tip explaining automatic check-ins: the radius, the interval, when a stay ends, and when to switch it off."
+    "description": "Body of the tip explaining automatic check-ins: the radius, the interval, how the once-a-day option differs, when a stay ends, and when to switch it off."
   },
   "placeCheckedIn": "Checked in at {name}",
   "@placeCheckedIn": {

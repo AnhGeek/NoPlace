@@ -66,6 +66,8 @@ abstract final class PlaceVisitRules {
   /// [every] is how long a stay must run to be worth a check-in. At
   /// [AutoCheckIn.off] the whole thing is skipped: a place the player has told
   /// us not to watch should not be costing them database writes either.
+  /// [AutoCheckIn.daily] does not mean a day of standing there — see
+  /// [_arrived].
   static PlaceVisit? advance(
     PlaceVisit visit, {
     required double distanceMeters,
@@ -74,6 +76,7 @@ abstract final class PlaceVisitRules {
   }) {
     if (!AutoCheckIn.isOn(every)) return null;
     if (distanceMeters > presenceRadiusMeters) return null;
+    if (every == AutoCheckIn.daily) return _arrived(visit, now: now);
 
     final startedAt = visit.stayStartedAt;
     final seenAt = visit.stayLastSeenAt;
@@ -107,6 +110,61 @@ abstract final class PlaceVisitRules {
 
     return null;
   }
+
+  /// [AutoCheckIn.daily], which counts arriving rather than staying.
+  ///
+  /// The player is inside the radius; that is the whole condition. Turning up is
+  /// the visit, so the check-in lands on the first fix rather than a day later,
+  /// and then nothing more is collected here until midnight.
+  ///
+  /// Calendar days, not a rolling twenty-four hours, because the promise the
+  /// setting makes is "once a day" and a rolling window quietly breaks it: a
+  /// commute that arrives a few minutes earlier each morning would skip a day
+  /// roughly once a week, which reads as the feature failing rather than as a
+  /// rule being kept.
+  ///
+  /// [PlaceVisit.lastCheckInAt] is what the day is measured against, and it is
+  /// set by tapping the button too. That is deliberate — somebody who checked in
+  /// by hand this morning has already got their line for today, and a second one
+  /// an hour later would be the app counting the same arrival twice.
+  ///
+  /// Deliberately does not touch [PlaceVisit.claimedAt]: turning up unattended
+  /// is not the deliberate first visit that spends the bonus. Same reason as
+  /// [advance] — see [PlaceVisit.claimedAt].
+  static PlaceVisit? _arrived(PlaceVisit visit, {required DateTime now}) {
+    final lastCheckInAt = visit.lastCheckInAt;
+    if (lastCheckInAt == null || !_isSameDay(lastCheckInAt, now)) {
+      return visit.copyWith(
+        checkInCount: visit.checkInCount + 1,
+        lastCheckInAt: now,
+        stayStartedAt: now,
+        stayLastSeenAt: now,
+      );
+    }
+
+    // Already counted today. The stay is still kept, by the same rules as
+    // everywhere else, so that switching this place to an interval later in the
+    // day finds a live stay rather than starting one from scratch.
+    final startedAt = visit.stayStartedAt;
+    final seenAt = visit.stayLastSeenAt;
+    if (startedAt == null ||
+        seenAt == null ||
+        now.isBefore(seenAt) ||
+        now.difference(seenAt) > presenceGap) {
+      return visit.copyWith(stayStartedAt: now, stayLastSeenAt: now);
+    }
+    if (now.difference(seenAt) >= heartbeat) {
+      return visit.copyWith(stayLastSeenAt: now);
+    }
+
+    return null;
+  }
+
+  /// Whether two moments fall on the same day, in the phone's own timezone —
+  /// which is the one the player is standing in, and the only one in which
+  /// "until the end of the day" means anything to them.
+  static bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 
   /// [advance], for a place the player saved. Null when nothing changed.
   static MapPoint? applyFix(

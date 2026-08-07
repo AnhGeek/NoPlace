@@ -626,21 +626,17 @@ class AppL10nVi extends AppL10n {
   String get placeAutoCheckInOff => 'Tắt';
 
   @override
-  String get placeAutoCheckInHalfHourly => '30 phút';
-
-  @override
   String get placeAutoCheckInHourly => '1 tiếng';
 
   @override
   String get placeAutoCheckInTwoHourly => '2 tiếng';
 
   @override
-  String get placeAutoCheckInSummaryOff =>
-      'Chỉ khi bạn bấm nút mới được tính — không tự ghi nhận gì cả.';
+  String get placeAutoCheckInDaily => 'Mỗi ngày';
 
   @override
-  String get placeAutoCheckInSummaryHalfHourly =>
-      'Ở đây nửa tiếng cũng được tính là một lần điểm danh.';
+  String get placeAutoCheckInSummaryOff =>
+      'Chỉ khi bạn bấm nút mới được tính — không tự ghi nhận gì cả.';
 
   @override
   String get placeAutoCheckInSummaryHourly =>
@@ -651,6 +647,10 @@ class AppL10nVi extends AppL10n {
       'Ở đây hai tiếng cũng được tính là một lần điểm danh.';
 
   @override
+  String get placeAutoCheckInSummaryDaily =>
+      'Cứ tới đây là được tính một lần, mỗi ngày một lần. Không cần ở lại.';
+
+  @override
   String get placeAutoCheckInHelp => 'Cái này để làm gì?';
 
   @override
@@ -658,7 +658,7 @@ class AppL10nVi extends AppL10n {
 
   @override
   String get placeAutoCheckInTipBody =>
-      'Chỉ cần bạn ở trong bán kính 150 m, NoPlace sẽ tự ghi nhận một lần ghé qua sau mỗi khoảng thời gian bạn chọn. Không cần bấm gì, và vẫn chạy khi điện thoại nằm trong túi.\n\nỨng dụng đợi 20 phút không thấy bạn đâu mới coi như bạn đã rời đi, nên tín hiệu GPS chập chờn không làm mất công bạn ngồi đó. Rời đi rồi quay lại thì đồng hồ bắt đầu lại từ đầu.\n\nHãy chọn Tắt cho những nơi bạn ở suốt, chẳng hạn như nhà mình — không thì tối nào cũng có thêm một lần ghé qua.';
+      'Chỉ cần bạn ở trong bán kính 150 m, NoPlace sẽ tự ghi nhận một lần ghé qua sau mỗi khoảng thời gian bạn chọn. Không cần bấm gì, và vẫn chạy khi điện thoại nằm trong túi.\n\nRiêng \"Mỗi ngày\" thì khác: vừa tới nơi là được tính ngay, rồi thôi cho tới hôm sau. Hãy chọn nó cho những nơi bạn chỉ ghé ngang chứ không ngồi lại.\n\nVới các mốc thời gian, ứng dụng đợi 20 phút không thấy bạn đâu mới coi như bạn đã rời đi, nên tín hiệu GPS chập chờn không làm mất công bạn ngồi đó. Rời đi rồi quay lại thì đồng hồ bắt đầu lại từ đầu.\n\nHãy chọn Tắt cho những nơi bạn ở suốt, chẳng hạn như nhà mình — không thì tối nào cũng có thêm một lần ghé qua.';
 
   @override
   String placeCheckedIn(String name) {

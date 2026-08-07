@@ -1045,12 +1045,6 @@ abstract class AppL10n {
   /// **'Off'**
   String get placeAutoCheckInOff;
 
-  /// Auto check-in picker option: half an hour at the place counts as a visit. Kept short to fit the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'30 min'**
-  String get placeAutoCheckInHalfHourly;
-
   /// Auto check-in picker option: an hour at the place counts as a visit. The default.
   ///
   /// In en, this message translates to:
@@ -1063,17 +1057,17 @@ abstract class AppL10n {
   /// **'2 hours'**
   String get placeAutoCheckInTwoHourly;
 
+  /// Auto check-in picker option: arriving counts as a visit, at most once per calendar day. Unlike the others this is not a waiting time. Kept short to fit the picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Once a day'**
+  String get placeAutoCheckInDaily;
+
   /// Shown under the visit count when auto check-in is switched off for this place.
   ///
   /// In en, this message translates to:
   /// **'Only the button counts here — nothing is recorded on its own.'**
   String get placeAutoCheckInSummaryOff;
-
-  /// Shown under the visit count when auto check-in is set to half an hour.
-  ///
-  /// In en, this message translates to:
-  /// **'Half an hour spent here counts as a check-in on its own.'**
-  String get placeAutoCheckInSummaryHalfHourly;
 
   /// Shown under the visit count when auto check-in is set to an hour.
   ///
@@ -1087,6 +1081,12 @@ abstract class AppL10n {
   /// **'Two hours spent here count as a check-in on their own.'**
   String get placeAutoCheckInSummaryTwoHourly;
 
+  /// Shown under the visit count when auto check-in is set to once a day. Says the two things that make this option different from the intervals: it counts on arrival, and it counts only once before the day is out.
+  ///
+  /// In en, this message translates to:
+  /// **'Arriving here counts as a check-in, once a day. No need to stay.'**
+  String get placeAutoCheckInSummaryDaily;
+
   /// Label of the question-mark button beside the auto check-in picker.
   ///
   /// In en, this message translates to:
@@ -1099,10 +1099,10 @@ abstract class AppL10n {
   /// **'Counting your visits for you'**
   String get placeAutoCheckInTipTitle;
 
-  /// Body of the tip explaining automatic check-ins: the radius, the interval, when a stay ends, and when to switch it off.
+  /// Body of the tip explaining automatic check-ins: the radius, the interval, how the once-a-day option differs, when a stay ends, and when to switch it off.
   ///
   /// In en, this message translates to:
-  /// **'Stay within 150 m of this place and NoPlace records a visit for you, every time the interval you picked goes by. No tapping, and it keeps counting with the app in your pocket.\n\nIt waits 20 minutes without a sign of you before deciding you have left, so a wandering GPS signal can\'\'t cut a visit short. Leaving and coming back starts the clock again.\n\nPick Off for somewhere you\'\'re always at, like home — otherwise it would collect a visit every night.'**
+  /// **'Stay within 150 m of this place and NoPlace records a visit for you, every time the interval you picked goes by. No tapping, and it keeps counting with the app in your pocket.\n\nOnce a day is the exception: it counts the moment you arrive and then goes quiet until tomorrow. Pick it for somewhere you pass through rather than sit in.\n\nThe intervals wait 20 minutes without a sign of you before deciding you have left, so a wandering GPS signal can\'\'t cut a visit short. Leaving and coming back starts the clock again.\n\nPick Off for somewhere you\'\'re always at, like home — otherwise it would collect a visit every night.'**
   String get placeAutoCheckInTipBody;
 
   /// Confirmation after recording a visit to the player''s own place.

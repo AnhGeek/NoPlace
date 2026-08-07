@@ -140,10 +140,13 @@ place and coming back to it are the same form:
    "meh" and "I have not said" are different answers.
 4. **Rating** — five stars, and tapping the star you are on clears it, which is
    the only way back to unrated.
-5. **Auto check-in** — Off · 30 min · 1 hour · 2 hours, defaulting to the hour.
-   How long you have to stay before it counts as a visit without you tapping
-   anything. The **?** beside the heading opens the explanation: the 150 m
-   radius, the interval, and the twenty minutes of quiet that end a stay. It is
+5. **Auto check-in** — Off · 1 hour · 2 hours · Once a day, defaulting to the
+   hour. How long you have to stay before it counts as a visit without you
+   tapping anything — except for **Once a day**, which counts the moment you
+   arrive and then goes quiet until midnight, for somewhere you pass through
+   rather than sit in. The **?** beside the heading opens the explanation: the
+   150 m radius, the interval, how once-a-day differs, and the twenty minutes
+   of quiet that end a stay. It is
    a button rather than a tooltip because this is the one control on the sheet
    that keeps acting after the phone is back in a pocket. Off is the right
    answer for somewhere you are always at, like home.

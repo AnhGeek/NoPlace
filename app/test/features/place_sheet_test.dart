@@ -218,6 +218,29 @@ void main() {
       expect(place.autoChecksIn, isFalse);
     });
 
+    testWidgets('once a day is on offer, and says it needs no waiting', (
+      tester,
+    ) async {
+      final repository = await open(tester, existing: saved);
+
+      await tester.tap(find.text('Once a day'));
+      await tester.pump();
+
+      // The one option whose note is not about how long to stay, because the
+      // rule behind it is not either.
+      expect(
+        find.text(
+          'Arriving here counts as a check-in, once a day. No need to stay.',
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Save changes'));
+      await tester.pumpAndSettle();
+
+      expect(repository.updated.single.autoCheckInEvery, AutoCheckIn.daily);
+    });
+
     testWidgets('the note under the count follows the picker immediately', (
       tester,
     ) async {

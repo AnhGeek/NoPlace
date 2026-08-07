@@ -61,9 +61,23 @@ from the record is the absence of evidence, not evidence of absence.
 
 ### The interval is per place, and one of the choices is "off"
 
-`AutoCheckIn` offers off, 30 minutes, an hour and two hours, defaulting to the
+`AutoCheckIn` offers off, an hour, two hours and once a day, defaulting to the
 hour — which is exactly what every place did before the setting existed, so an
 upgraded database behaves on Tuesday as it did on Monday.
+
+Once a day replaced the original half-hour option rather than joining it: four
+segments are what fit on one line, and half an hour was barely longer than the
+twenty minutes it takes to decide a stay has ended. Places already set to it
+read back as hourly — `AutoCheckIn.fromMinutes` now falls back to the default
+for any value the picker cannot show, so the label and the behaviour cannot
+drift apart.
+
+It is also the one choice that is not a waiting time. Arriving is the check-in,
+and nothing more is collected until midnight, so a place walked through daily
+still earns a line a day. `PlaceVisitRules.advance` special-cases it before the
+dwell arithmetic; the day is a calendar day in the phone's own timezone, because
+"once a day" is the promise, and a rolling twenty-four hours would refuse a
+commute that arrived a few minutes early.
 
 Stored as a `Duration` with `Duration.zero` for off, not a nullable one. A
 `copyWith` built on `??` cannot put a null back, so a nullable field would have
