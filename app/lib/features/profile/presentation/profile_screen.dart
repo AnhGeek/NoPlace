@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,104 +8,249 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/routes.dart';
 import '../../../app/shell/home_shell.dart';
 import '../../../core/formatting/unit_formatter.dart';
-import '../../../core/ui/np_async_view.dart';
+import '../../../data/local/region_catalogue.dart';
+import '../../../data/local/region_pack_store.dart';
 import '../../../data/repository_providers.dart';
 import '../../../design_system/components/components.dart';
 import '../../../design_system/theme/np_typography.dart';
 import '../../../design_system/tokens/design_tokens.g.dart';
-import '../../../domain/entities/district.dart';
-import '../../../domain/entities/player.dart';
+import '../../../domain/entities/explorer_profile.dart';
 import '../../../l10n/l10n.dart';
 
 /// Who the player has become. Everything here is a consequence of walking, so
 /// the numbers are the reward — no vanity fields, no editable bio.
+///
+/// And everything here is *theirs*: the name and the photo are on this phone,
+/// the kilometres come from the trail on it, the districts come from the
+/// boundaries of the map they are walking. Nothing is seeded and nothing is
+/// fetched, which is why the ranking card says it has nothing to say.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
+
+  /// How many districts the card lists before it stops and counts the rest.
+  /// A region is a couple of hundred wards; the profile is not the place to
+  /// scroll them.
+  static const int _districtsShown = 8;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final player = ref.watch(playerProvider);
-    final city = ref.watch(currentCityProvider).value;
-    final districts = ref.watch(districtsProvider).value ?? const <District>[];
+    final profile = ref.watch(explorerProfileProvider);
+    final format = UnitFormatter.of(l10n);
 
     return SafeArea(
       bottom: false,
-      child: NpAsyncView<Player>(
-        value: player,
-        data: (player) {
-          final format = UnitFormatter.of(l10n);
-
-          return ListView(
-            padding: EdgeInsets.fromLTRB(
-              NpSpace.lg,
-              0,
-              NpSpace.lg,
-              HomeShell.bottomInsetFor(context),
-            ),
+      child: ListView(
+        padding: EdgeInsets.fromLTRB(
+          NpSpace.lg,
+          0,
+          NpSpace.lg,
+          HomeShell.bottomInsetFor(context),
+        ),
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(child: NpScreenHeader(title: l10n.profileTitle)),
-                  IconButton(
-                    onPressed: () => context.pushNamed(AppRoute.settingsName),
-                    icon: const Icon(Icons.settings_outlined),
-                    tooltip: l10n.settingsTitle,
-                  ),
-                ],
+              Expanded(child: NpScreenHeader(title: l10n.profileTitle)),
+              IconButton(
+                onPressed: () => context.pushNamed(AppRoute.settingsName),
+                icon: const Icon(Icons.settings_outlined),
+                tooltip: l10n.settingsTitle,
               ),
-              const SizedBox(height: NpSpace.xs),
-              const Center(child: NpAvatar()),
-              const SizedBox(height: NpSpace.sm),
-              Text(
-                player.displayName,
-                style: NpTypography.headline,
-                textAlign: TextAlign.center,
-              ),
-              Text(
-                l10n.profileLevelLine(player.level, player.xp),
-                style: NpTypography.footnote,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: NpSpace.md),
-              Text(
-                l10n.profileChartedShare(
-                  (player.chartedFraction * 100).round(),
-                ),
-                style: NpTypography.statHero,
-                textAlign: TextAlign.center,
-              ),
-              Text(
-                l10n.profileChartedCaption,
-                style: NpTypography.bodyLarge.copyWith(
-                  color: NpColors.contentSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: NpSpace.lg),
-              _StatRow(player: player, format: format),
-              const SizedBox(height: NpSpace.lg),
-              _CityChips(currentCityName: city?.name ?? ''),
-              const SizedBox(height: NpSpace.md),
-              _CityProgressCard(
-                cityName: city?.name ?? '',
-                districtCount: city?.districtCount ?? districts.length,
-                districts: districts,
-              ),
-              const SizedBox(height: NpSpace.md),
-              _RankingCard(player: player),
             ],
-          );
-        },
+          ),
+          const SizedBox(height: NpSpace.xs),
+          _Identity(profile: profile),
+          const SizedBox(height: NpSpace.md),
+          Text(
+            format.squareKilometers(profile.chartedSquareMeters),
+            style: NpTypography.statHero,
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            l10n.profileChartedCaption(profile.regionName),
+            style: NpTypography.bodyLarge.copyWith(
+              color: NpColors.contentSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: NpSpace.lg),
+          _StatRow(profile: profile, format: format),
+          const SizedBox(height: NpSpace.lg),
+          Text(
+            l10n.profileMapsTitle,
+            style: NpTypography.footnote.copyWith(color: NpColors.contentMuted),
+          ),
+          const SizedBox(height: NpSpace.xs),
+          _MapChips(current: profile.regionId),
+          const SizedBox(height: NpSpace.md),
+          _DistrictProgressCard(profile: profile, format: format),
+          const SizedBox(height: NpSpace.md),
+          const _RankingCard(),
+        ],
       ),
     );
   }
 }
 
-class _StatRow extends StatelessWidget {
-  const _StatRow({required this.player, required this.format});
+/// The avatar, the name and the level line — the three things the player owns
+/// rather than earns.
+class _Identity extends ConsumerWidget {
+  const _Identity({required this.profile});
 
-  final Player player;
+  final ExplorerProfile profile;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final path = profile.avatarPath;
+    // Read from disk, not from the bundle: this is a file the player chose. A
+    // path that no longer resolves — a restore onto another phone, storage
+    // cleared — falls back to the placeholder rather than an error box.
+    final image = (path != null && File(path).existsSync())
+        ? FileImage(File(path))
+        : null;
+
+    return Column(
+      children: [
+        Center(
+          child: Semantics(
+            button: true,
+            label: l10n.profilePhotoChoose,
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () => _editPhoto(context, ref),
+              child: NpAvatar(imageProvider: image),
+            ),
+          ),
+        ),
+        const SizedBox(height: NpSpace.sm),
+        InkWell(
+          onTap: () => _editName(context, ref),
+          borderRadius: BorderRadius.circular(NpRadius.sm),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: NpSpace.sm,
+              vertical: NpSpace.xxs,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    profile.displayName.isEmpty
+                        ? l10n.profileNamePlaceholder
+                        : profile.displayName,
+                    style: NpTypography.headline,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: NpSpace.xs),
+                const Icon(
+                  Icons.edit_outlined,
+                  size: NpSize.iconSm,
+                  color: NpColors.contentMuted,
+                ),
+              ],
+            ),
+          ),
+        ),
+        Text(
+          l10n.profileLevelLine(profile.level, profile.xp),
+          style: NpTypography.footnote,
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Future<void> _editName(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final controller = TextEditingController(text: profile.displayName);
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.profileNameTitle),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(helperText: l10n.profileNameHint),
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.commonNotNow),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: Text(l10n.profileNameSave),
+          ),
+        ],
+      ),
+    );
+
+    controller.dispose();
+    if (name == null) return;
+    await ref.read(preferencesRepositoryProvider).setDisplayName(name);
+  }
+
+  /// One sheet with both answers, because "remove" is only ever wanted by
+  /// somebody who already has a picture — and offering it to everybody else
+  /// would be a dead row.
+  Future<void> _editPhoto(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final store = ref.read(avatarStoreProvider);
+    if (!store.isSupported) return;
+
+    final hasPhoto = profile.avatarPath != null;
+    if (!hasPhoto) {
+      await store.pick();
+      return;
+    }
+
+    final removed = await showNpModalSheet<bool>(
+      context: context,
+      builder: (context) => NpSheetSurface(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            NpListRow(
+              mark: const NpRowMark(
+                background: NpColors.backgroundPanelRaised,
+                foreground: NpColors.contentSecondary,
+                icon: Icons.photo_outlined,
+              ),
+              title: l10n.profilePhotoChoose,
+              onTap: () => Navigator.of(context).pop(false),
+            ),
+            const SizedBox(height: NpSpace.sm),
+            NpListRow(
+              mark: const NpRowMark(
+                background: NpColors.backgroundPanelRaised,
+                foreground: NpColors.contentSecondary,
+                icon: Icons.delete_outline_rounded,
+              ),
+              title: l10n.profilePhotoRemove,
+              onTap: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (removed == null) return;
+    await (removed ? store.clear() : store.pick());
+  }
+}
+
+class _StatRow extends StatelessWidget {
+  const _StatRow({required this.profile, required this.format});
+
+  final ExplorerProfile profile;
   final UnitFormatter format;
 
   @override
@@ -117,7 +265,7 @@ class _StatRow extends StatelessWidget {
             child: NpStatTile(
               icon: Icons.directions_walk_rounded,
               iconBackground: NpColors.statusInfo,
-              value: format.distance(player.distanceTodayMeters),
+              value: format.distance(profile.walk.distanceTodayMeters),
               caption: l10n.profileStatDistanceToday,
             ),
           ),
@@ -126,7 +274,7 @@ class _StatRow extends StatelessWidget {
             child: NpStatTile(
               icon: Icons.location_on_rounded,
               iconBackground: NpColors.statusSuccessMuted,
-              value: format.integer(player.checkInPlaces),
+              value: format.integer(profile.checkInPlaces),
               caption: l10n.profileStatCheckIns,
             ),
           ),
@@ -135,7 +283,7 @@ class _StatRow extends StatelessWidget {
             child: NpStatTile(
               icon: Icons.local_fire_department_rounded,
               iconBackground: NpColors.statusWarning,
-              value: l10n.commonDays(player.streakDays),
+              value: l10n.commonDays(profile.walk.streakDays),
               caption: l10n.profileStatStreak,
             ),
           ),
@@ -145,47 +293,54 @@ class _StatRow extends StatelessWidget {
   }
 }
 
-class _CityChips extends StatelessWidget {
-  const _CityChips({required this.currentCityName});
+/// The maps on this phone, and which one the fog is currently being kept for.
+///
+/// Tapping one switches the map — the same call the arrival sheet makes when
+/// the player crosses a border and picks the other side. A region with no pack
+/// on the device is shown and not selectable: it is a map that exists, which is
+/// worth knowing, and selecting it would open a blank city.
+class _MapChips extends ConsumerWidget {
+  const _MapChips({required this.current});
 
-  final String currentCityName;
+  final String current;
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-
+  Widget build(BuildContext context, WidgetRef ref) {
     return SizedBox(
       height: 38,
-      child: ListView(
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        children: [
-          NpChip(
-            label: l10n.profileCityCurrent(currentCityName),
-            icon: Icons.location_on_rounded,
-            selected: true,
-          ),
-          const SizedBox(width: NpSpace.xs),
-          const NpChip(label: 'Hà Nội'),
-          const SizedBox(width: NpSpace.xs),
-          const NpChip(label: 'Đà Nẵng'),
-          const SizedBox(width: NpSpace.xs),
-          NpChip(label: l10n.profileAddCity),
-        ],
+        itemCount: RegionCatalogue.all.length,
+        separatorBuilder: (_, _) => const SizedBox(width: NpSpace.xs),
+        itemBuilder: (context, index) {
+          final region = RegionCatalogue.all[index];
+          final selected = region.regionId == current;
+          final available = region.bundledAsset != null;
+
+          return NpChip(
+            label: region.name,
+            icon: selected ? Icons.location_on_rounded : null,
+            selected: selected,
+            dimmed: !available,
+            onTap: available && !selected
+                ? () => _select(ref, region)
+                : null,
+          );
+        },
       ),
     );
   }
+
+  void _select(WidgetRef ref, RegionPackSource region) =>
+      ref.read(regionPackSourceProvider.notifier).select(region);
 }
 
-class _CityProgressCard extends StatelessWidget {
-  const _CityProgressCard({
-    required this.cityName,
-    required this.districtCount,
-    required this.districts,
-  });
+/// How much of each district the player has uncovered, most walked first.
+class _DistrictProgressCard extends StatelessWidget {
+  const _DistrictProgressCard({required this.profile, required this.format});
 
-  final String cityName;
-  final int districtCount;
-  final List<District> districts;
+  final ExplorerProfile profile;
+  final UnitFormatter format;
 
   /// Series colours cycle so neighbouring bars stay distinguishable without
   /// assigning meaning to the colour itself.
@@ -198,7 +353,8 @@ class _CityProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final charted = districts.where((d) => d.isDiscovered).length;
+    final shown = profile.districts.take(ProfileScreen._districtsShown).toList();
+    final remaining = profile.districts.length - shown.length;
 
     return NpCard(
       child: Column(
@@ -211,33 +367,47 @@ class _CityProgressCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  l10n.profileCityProgressTitle(cityName),
+                  l10n.profileDistrictProgressTitle(profile.regionName),
                   style: NpTypography.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text(
-                l10n.logsDistrictCount(charted, districtCount),
-                style: NpTypography.footnote,
-              ),
+              if (profile.hasDistrictData)
+                Text(
+                  l10n.logsDistrictCount(
+                    profile.districtsCharted,
+                    profile.districtsKnown,
+                  ),
+                  style: NpTypography.footnote,
+                ),
             ],
           ),
-          const SizedBox(height: NpSpace.md),
-          for (var i = 0; i < districts.length; i++) ...[
-            if (i > 0) const SizedBox(height: NpSpace.md),
+          if (!profile.hasDistrictData || shown.isEmpty) ...[
+            const SizedBox(height: NpSpace.sm),
+            Text(
+              profile.hasDistrictData
+                  ? l10n.profileDistrictsEmpty
+                  : l10n.profileDistrictsUnavailable,
+              style: NpTypography.caption,
+            ),
+          ],
+          for (var i = 0; i < shown.length; i++) ...[
+            const SizedBox(height: NpSpace.md),
             NpProgressRow(
-              label: districts[i].name.isEmpty
-                  ? l10n.commonHidden
-                  : districts[i].name,
-              trailing: districts[i].name.isEmpty
-                  ? l10n.commonLocked
-                  : l10n.profileChartedShare(
-                      (districts[i].chartedFraction * 100).round(),
-                    ),
-              value: districts[i].chartedFraction,
+              label: shown[i].name,
+              trailing: l10n.profileChartedShare(
+                (shown[i].chartedFraction * 100).round(),
+              ),
+              value: shown[i].chartedFraction,
               color: _series[i % _series.length],
-              dimmed: districts[i].name.isEmpty,
+            ),
+          ],
+          if (remaining > 0) ...[
+            const SizedBox(height: NpSpace.sm),
+            Text(
+              l10n.profileDistrictsMore(remaining),
+              style: NpTypography.caption,
             ),
           ],
         ],
@@ -246,51 +416,52 @@ class _CityProgressCard extends StatelessWidget {
   }
 }
 
+/// The leaderboard, honestly.
+///
+/// NoPlace keeps every walk on the phone that walked it — there is no account,
+/// no upload and so nobody to be ranked against. The card stays because the
+/// feature is coming; the numbers do not, because inventing a position out of
+/// seeded data is the one thing a profile screen must never do.
 class _RankingCard extends StatelessWidget {
-  const _RankingCard({required this.player});
-
-  final Player player;
+  const _RankingCard();
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
     return NpCard(
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(NpSpace.xs),
-            decoration: BoxDecoration(
-              color: NpColors.statusRare,
-              borderRadius: BorderRadius.circular(NpRadius.md),
+      child: Opacity(
+        opacity: NpOpacity.locked,
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(NpSpace.xs),
+              decoration: BoxDecoration(
+                color: NpColors.statusLocked,
+                borderRadius: BorderRadius.circular(NpRadius.md),
+              ),
+              child: const Icon(
+                Icons.emoji_events_rounded,
+                size: NpSize.iconXl,
+                color: NpColors.contentMuted,
+              ),
             ),
-            child: const Icon(
-              Icons.emoji_events_rounded,
-              size: NpSize.iconXl,
-              color: NpColors.contentOnStatus,
-            ),
-          ),
-          const SizedBox(width: NpSpace.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(l10n.profileRankingTitle, style: NpTypography.label),
-                if (player.isRanked)
+            const SizedBox(width: NpSpace.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.profileRankingTitle, style: NpTypography.label),
                   Text(
-                    l10n.profileRankingSubtitle(
-                      player.cityRank,
-                      player.cityExplorers,
-                    ),
+                    l10n.profileRankingUnavailable,
                     style: NpTypography.caption,
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if (player.rankTrendPercent > 0)
-            NpPill(label: l10n.profileRankingTrend(player.rankTrendPercent)),
-        ],
+          ],
+        ),
       ),
     );
   }

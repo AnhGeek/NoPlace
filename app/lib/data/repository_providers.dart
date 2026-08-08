@@ -6,6 +6,7 @@ import '../domain/entities/auto_check_in.dart';
 import '../domain/entities/check_in.dart';
 import '../domain/entities/district.dart';
 import '../domain/entities/explored_area.dart';
+import '../domain/entities/explorer_profile.dart';
 import '../domain/entities/fog_settings.dart';
 import '../domain/entities/geo_point.dart';
 import '../domain/entities/log_entry.dart';
@@ -15,13 +16,18 @@ import '../domain/entities/place.dart';
 import '../domain/entities/place_visit.dart';
 import '../domain/entities/player.dart';
 import '../domain/entities/quest.dart';
+import '../domain/entities/walk_history.dart';
 import '../domain/repositories/repositories.dart';
+import '../domain/rules/charting_rules.dart';
 import '../domain/rules/exploration_rules.dart';
 import '../domain/rules/place_visit_rules.dart';
+import '../domain/rules/progression_rules.dart';
 import 'fake/fake_repositories.dart';
 import 'fake/fake_world_store.dart';
 import 'local/app_database.dart';
+import 'local/avatar_store.dart';
 import 'local/backup_service.dart';
+import 'local/district_boundaries.dart';
 import 'local/geolocator_location_repository.dart';
 import 'local/region_catalogue.dart';
 import 'local/region_pack.dart';
@@ -135,6 +141,11 @@ final preferencesStoreProvider = Provider<SqlitePreferencesRepository>((ref) {
 final preferencesRepositoryProvider = Provider<PreferencesRepository>(
   (ref) => ref.watch(preferencesStoreProvider),
 );
+
+/// The player's own picture: picked, copied into app storage, remembered.
+final avatarStoreProvider = Provider<AvatarStore>((ref) {
+  return AvatarStore(ref.watch(preferencesRepositoryProvider));
+});
 
 /// Copies the walk off the device and back on.
 ///
@@ -580,6 +591,112 @@ final placePresenceProvider = Provider<void>((ref) {
     (_) => evaluate(ref.read(fakeWorldStoreProvider).currentPosition),
   );
   ref.onDispose(ticker.cancel);
+});
+
+/// How far the player walked today, and the run of days behind it.
+final walkHistoryProvider = StreamProvider<WalkHistory>((ref) {
+  return ref.watch(explorationTrailRepositoryProvider).watchHistory();
+});
+
+/// What the player calls themselves, and the picture they chose.
+final displayNameProvider = StreamProvider<String>((ref) {
+  return ref.watch(preferencesRepositoryProvider).watchDisplayName();
+});
+
+final avatarPathProvider = StreamProvider<String?>((ref) {
+  return ref.watch(preferencesRepositoryProvider).watchAvatarPath();
+});
+
+/// The districts of the region being walked, with their shapes.
+///
+/// Keyed on the region rather than loaded once: crossing a border changes which
+/// file is the right one, and a hundred kilobytes of polygons is not worth
+/// holding on to for a city the player has left.
+final districtBoundariesProvider = FutureProvider<DistrictBoundaries>((ref) {
+  return DistrictBoundaries.load(ref.watch(regionPackSourceProvider).regionId);
+});
+
+/// Everything the profile screen is about, worked out from this device.
+///
+/// A plain [Provider] and not an async one: every input has an honest value
+/// before its stream has said anything — no trail, no points, no name — so the
+/// screen paints a real (empty) profile on the first frame instead of a
+/// spinner over the player's own data.
+final explorerProfileProvider = Provider<ExplorerProfile>((ref) {
+  final region = ref.watch(regionPackSourceProvider);
+  final trail = ref.watch(exploredAreaProvider).value ?? const ExploredArea.empty();
+  final radius =
+      ref.watch(fogSettingsProvider).value?.clearingRadiusMeters ??
+      ExplorationRules.fogClearingRadiusMeters;
+  final boundaries =
+      ref.watch(districtBoundariesProvider).value ??
+      DistrictBoundaries.empty(region.regionId);
+  final walk = ref.watch(walkHistoryProvider).value ?? const WalkHistory.empty();
+
+  final points = ref.watch(mapPointsProvider).value ?? const <MapPoint>[];
+  final visits =
+      ref.watch(placeVisitsProvider).value ?? const <String, PlaceVisit>{};
+
+  // The charting grid, once. Both the headline and every district row are
+  // counted off the same cells, so the parts add up to the whole.
+  final cells = ChartingRules.cellsOf(trail, radius);
+  final cellArea = ChartingRules.cellAreaSquareMeters(radius);
+
+  final cellsPerDistrict = <String, int>{};
+  for (final cell in cells) {
+    final district = boundaries.at(ChartingRules.centreOf(cell, radius));
+    if (district == null) continue;
+    cellsPerDistrict[district.id] = (cellsPerDistrict[district.id] ?? 0) + 1;
+  }
+
+  final districts = <DistrictProgress>[];
+  for (final district in boundaries.districts) {
+    final charted = cellsPerDistrict[district.id];
+    if (charted == null) continue;
+    districts.add(
+      DistrictProgress(
+        id: district.id,
+        name: district.name,
+        chartedFraction: ChartingRules.fractionOf(
+          charted,
+          district.areaSquareMeters,
+          radius,
+        ),
+        chartedSquareMeters: charted * cellArea,
+        areaSquareMeters: district.areaSquareMeters,
+      ),
+    );
+  }
+
+  // Most walked first: the district somebody has covered the most ground in is
+  // the one they want to see at the top, whatever its size.
+  districts.sort(
+    (a, b) => b.chartedSquareMeters.compareTo(a.chartedSquareMeters),
+  );
+
+  final checkInPlaces =
+      points.where((point) => point.checkInCount > 0).length +
+      visits.values.where((visit) => visit.hasVisited).length;
+
+  final xp = ProgressionRules.xpFor(
+    places: checkInPlaces,
+    districts: districts.length,
+    meters: walk.distanceTotalMeters,
+  );
+
+  return ExplorerProfile(
+    regionId: region.regionId,
+    regionName: region.name,
+    displayName: ref.watch(displayNameProvider).value ?? '',
+    avatarPath: ref.watch(avatarPathProvider).value,
+    level: ProgressionRules.levelFor(xp),
+    xp: xp,
+    chartedSquareMeters: cells.length * cellArea,
+    walk: walk,
+    checkInPlaces: checkInPlaces,
+    districts: districts,
+    districtsKnown: boundaries.districts.length,
+  );
 });
 
 final logEntriesProvider = StreamProvider<List<LogEntry>>((ref) {

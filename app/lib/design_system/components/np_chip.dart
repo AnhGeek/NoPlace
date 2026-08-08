@@ -9,6 +9,7 @@ class NpChip extends StatelessWidget {
     required this.label,
     this.icon,
     this.selected = false,
+    this.dimmed = false,
     this.onTap,
     super.key,
   });
@@ -16,6 +17,13 @@ class NpChip extends StatelessWidget {
   final String label;
   final IconData? icon;
   final bool selected;
+
+  /// For a chip that names something real the player cannot have yet — a map
+  /// that exists but is not on this phone. Shown rather than hidden, because
+  /// "there is a map of Hà Nội" is worth knowing; dimmed and untappable,
+  /// because selecting it would open an empty city.
+  final bool dimmed;
+
   final VoidCallback? onTap;
 
   @override
@@ -24,7 +32,7 @@ class NpChip extends StatelessWidget {
         ? NpColors.accentDefault
         : NpColors.contentMuted;
 
-    return Semantics(
+    final chip = Semantics(
       selected: selected,
       button: onTap != null,
       child: GestureDetector(
@@ -64,5 +72,7 @@ class NpChip extends StatelessWidget {
         ),
       ),
     );
+
+    return dimmed ? Opacity(opacity: NpOpacity.locked, child: chip) : chip;
   }
 }

@@ -54,6 +54,11 @@ class AppL10nVi extends AppL10n {
   }
 
   @override
+  String commonAreaSquareKilometers(String value) {
+    return '$value km²';
+  }
+
+  @override
   String commonDays(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -210,7 +215,27 @@ class AppL10nVi extends AppL10n {
   }
 
   @override
-  String get profileChartedCaption => 'thành phố đã được mở';
+  String profileChartedCaption(String region) {
+    return 'đã mở ở $region';
+  }
+
+  @override
+  String get profileNamePlaceholder => 'Nhà thám hiểm chưa đặt tên';
+
+  @override
+  String get profileNameTitle => 'Tên của bạn';
+
+  @override
+  String get profileNameHint => 'Chỉ lưu trên máy này';
+
+  @override
+  String get profileNameSave => 'Lưu';
+
+  @override
+  String get profilePhotoChoose => 'Chọn ảnh';
+
+  @override
+  String get profilePhotoRemove => 'Xoá ảnh';
 
   @override
   String get profileStatDistanceToday => 'Quãng đường hôm nay';
@@ -222,30 +247,30 @@ class AppL10nVi extends AppL10n {
   String get profileStatStreak => 'Chuỗi ngày liên tục';
 
   @override
-  String profileCityCurrent(String city) {
-    return '$city · hiện tại';
+  String get profileMapsTitle => 'Bản đồ';
+
+  @override
+  String profileDistrictProgressTitle(String region) {
+    return 'Phường xã · $region';
   }
 
   @override
-  String get profileAddCity => '+ Thêm thành phố';
+  String get profileDistrictsEmpty => 'Hãy đi bộ để mở phường xã đầu tiên.';
 
   @override
-  String profileCityProgressTitle(String city) {
-    return 'Tiến độ · $city';
+  String get profileDistrictsUnavailable =>
+      'Bản đồ này chưa có dữ liệu phường xã.';
+
+  @override
+  String profileDistrictsMore(int count) {
+    return 'và $count nơi khác';
   }
 
   @override
   String get profileRankingTitle => 'Xếp hạng thành phố';
 
   @override
-  String profileRankingSubtitle(int rank, int total) {
-    return 'Bạn đứng #$rank trong $total nhà thám hiểm';
-  }
-
-  @override
-  String profileRankingTrend(int percent) {
-    return '+$percent%';
-  }
+  String get profileRankingUnavailable => 'Chưa có';
 
   @override
   String checkInSheetMeta(String category, String distance, String visited) {

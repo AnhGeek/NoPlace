@@ -40,6 +40,19 @@ class UnitFormatter {
   String kilometersCompact(double meters) =>
       NumberFormat('0.#', _localeName).format(meters / _metersPerKilometer);
 
+  /// An area in square kilometres.
+  ///
+  /// Two decimals under one km², one above: the first walk of a new city is
+  /// worth a fraction of a square kilometre and "0.0 km²" would read as nothing
+  /// at all, while "12.42 km²" is a precision the estimate does not have.
+  String squareKilometers(double squareMeters) {
+    final value = squareMeters / 1000000;
+    final pattern = value < 1 ? '0.00' : '0.0';
+    return _l10n.commonAreaSquareKilometers(
+      NumberFormat(pattern, _localeName).format(value),
+    );
+  }
+
   String percent(double fraction) =>
       NumberFormat.decimalPattern(_localeName).format((fraction * 100).round());
 

@@ -95,6 +95,13 @@ flutter:
     # app runs without a basemap until one is put here.
     - assets/maps/
 
+    # The districts of each region: names, shapes and areas, from the
+    # OpenStreetMap administrative boundaries. Cooked *and* committed, unlike
+    # the packs — a couple of hundred kilobytes of polygons per city, and the
+    # profile has nothing to say about progress without them. See
+    # tools/region_cooker/bin/districts.dart.
+    - assets/districts/
+
   fonts:
     - family: Barlow
       fonts:

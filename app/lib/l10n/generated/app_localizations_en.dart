@@ -54,6 +54,11 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
+  String commonAreaSquareKilometers(String value) {
+    return '$value km²';
+  }
+
+  @override
   String commonDays(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -212,7 +217,27 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get profileChartedCaption => 'of the city charted';
+  String profileChartedCaption(String region) {
+    return 'uncovered in $region';
+  }
+
+  @override
+  String get profileNamePlaceholder => 'Unnamed explorer';
+
+  @override
+  String get profileNameTitle => 'Your name';
+
+  @override
+  String get profileNameHint => 'On this phone only';
+
+  @override
+  String get profileNameSave => 'Save';
+
+  @override
+  String get profilePhotoChoose => 'Choose a photo';
+
+  @override
+  String get profilePhotoRemove => 'Remove photo';
 
   @override
   String get profileStatDistanceToday => 'Distance today';
@@ -224,30 +249,31 @@ class AppL10nEn extends AppL10n {
   String get profileStatStreak => 'Active streak';
 
   @override
-  String profileCityCurrent(String city) {
-    return '$city · current';
+  String get profileMapsTitle => 'Maps';
+
+  @override
+  String profileDistrictProgressTitle(String region) {
+    return 'Districts · $region';
   }
 
   @override
-  String get profileAddCity => '+ Add city';
+  String get profileDistrictsEmpty =>
+      'Walk somewhere to chart your first district.';
 
   @override
-  String profileCityProgressTitle(String city) {
-    return 'City progress · $city';
+  String get profileDistrictsUnavailable =>
+      'No district data for this map yet.';
+
+  @override
+  String profileDistrictsMore(int count) {
+    return 'and $count more';
   }
 
   @override
   String get profileRankingTitle => 'City ranking';
 
   @override
-  String profileRankingSubtitle(int rank, int total) {
-    return 'You\'re #$rank of $total explorers';
-  }
-
-  @override
-  String profileRankingTrend(int percent) {
-    return '+$percent%';
-  }
+  String get profileRankingUnavailable => 'Not available yet';
 
   @override
   String checkInSheetMeta(String category, String distance, String visited) {

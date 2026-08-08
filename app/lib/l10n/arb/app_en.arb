@@ -64,6 +64,13 @@
       "kilometers": { "type": "String", "example": "4.2" }
     }
   },
+  "commonAreaSquareKilometers": "{value} km²",
+  "@commonAreaSquareKilometers": {
+    "description": "An area in square kilometres, already rounded.",
+    "placeholders": {
+      "value": { "type": "String", "example": "1.8" }
+    }
+  },
   "commonDays": "{count, plural, =1{1 day} other{{count} days}}",
   "@commonDays": {
     "description": "A number of days, used by the streak counter.",
@@ -266,14 +273,41 @@
   },
   "profileChartedShare": "{percent}%",
   "@profileChartedShare": {
-    "description": "Percentage of the city the player has uncovered.",
+    "description": "Percentage of a district the player has uncovered.",
     "placeholders": {
       "percent": { "type": "int", "example": "38" }
     }
   },
-  "profileChartedCaption": "of the city charted",
+  "profileChartedCaption": "uncovered in {region}",
   "@profileChartedCaption": {
-    "description": "Caption under the big charted percentage."
+    "description": "Caption under the big uncovered-area figure, naming the map being walked.",
+    "placeholders": {
+      "region": { "type": "String", "example": "TP. Hồ Chí Minh" }
+    }
+  },
+  "profileNamePlaceholder": "Unnamed explorer",
+  "@profileNamePlaceholder": {
+    "description": "Stands in for the player's name until they choose one."
+  },
+  "profileNameTitle": "Your name",
+  "@profileNameTitle": {
+    "description": "Title of the dialog that sets the player's display name."
+  },
+  "profileNameHint": "On this phone only",
+  "@profileNameHint": {
+    "description": "Explains that the display name is never sent anywhere."
+  },
+  "profileNameSave": "Save",
+  "@profileNameSave": {
+    "description": "Confirms the display name dialog."
+  },
+  "profilePhotoChoose": "Choose a photo",
+  "@profilePhotoChoose": {
+    "description": "Action that opens the picker for a profile picture."
+  },
+  "profilePhotoRemove": "Remove photo",
+  "@profilePhotoRemove": {
+    "description": "Action that clears the profile picture."
   },
   "profileStatDistanceToday": "Distance today",
   "@profileStatDistanceToday": {
@@ -287,42 +321,39 @@
   "@profileStatStreak": {
     "description": "Stat tile: consecutive days with activity."
   },
-  "profileCityCurrent": "{city} · current",
-  "@profileCityCurrent": {
-    "description": "Chip marking the city the player is exploring right now.",
-    "placeholders": {
-      "city": { "type": "String", "example": "TP.HCM" }
-    }
+  "profileMapsTitle": "Maps",
+  "@profileMapsTitle": {
+    "description": "Label above the row of maps the player can switch between."
   },
-  "profileAddCity": "+ Add city",
-  "@profileAddCity": {
-    "description": "Chip that starts tracking another city."
-  },
-  "profileCityProgressTitle": "City progress · {city}",
-  "@profileCityProgressTitle": {
+  "profileDistrictProgressTitle": "Districts · {region}",
+  "@profileDistrictProgressTitle": {
     "description": "Header of the per-district progress card.",
     "placeholders": {
-      "city": { "type": "String", "example": "TP.HCM" }
+      "region": { "type": "String", "example": "TP. Hồ Chí Minh" }
+    }
+  },
+  "profileDistrictsEmpty": "Walk somewhere to chart your first district.",
+  "@profileDistrictsEmpty": {
+    "description": "Shown in the district card when nothing has been walked in this region yet."
+  },
+  "profileDistrictsUnavailable": "No district data for this map yet.",
+  "@profileDistrictsUnavailable": {
+    "description": "Shown when the region has no cooked boundary file."
+  },
+  "profileDistrictsMore": "and {count} more",
+  "@profileDistrictsMore": {
+    "description": "Footer under the district list when more have been charted than are shown.",
+    "placeholders": {
+      "count": { "type": "int", "example": "7" }
     }
   },
   "profileRankingTitle": "City ranking",
   "@profileRankingTitle": {
     "description": "Header of the leaderboard card."
   },
-  "profileRankingSubtitle": "You''re #{rank} of {total} explorers",
-  "@profileRankingSubtitle": {
-    "description": "Where the player sits on the city leaderboard.",
-    "placeholders": {
-      "rank": { "type": "int", "example": "125" },
-      "total": { "type": "int", "example": "430" }
-    }
-  },
-  "profileRankingTrend": "+{percent}%",
-  "@profileRankingTrend": {
-    "description": "How much the player climbed the leaderboard this week.",
-    "placeholders": {
-      "percent": { "type": "int", "example": "14" }
-    }
+  "profileRankingUnavailable": "Not available yet",
+  "@profileRankingUnavailable": {
+    "description": "Stands in for the leaderboard: NoPlace keeps everything on the device, so there is nobody to rank against."
   },
 
   "checkInSheetMeta": "{category} · {distance} away · {visited, select, never{never visited} other{visited before}}",

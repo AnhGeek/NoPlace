@@ -110,6 +110,84 @@ void main() {
     });
   });
 
+  group('the walking diary', () {
+    /// A point [meters] north of Bến Thành.
+    GeoPoint north(double meters) =>
+        GeoPoint(benThanh.latitude + meters / 111320, benThanh.longitude);
+
+    test('counts the distance walked today', () async {
+      final trail = SqliteTrailRepository(database, regionId: testRegion);
+      await trail.load();
+
+      await trail.record(benThanh);
+      await trail.record(north(30));
+      await trail.record(north(60));
+
+      expect(trail.currentHistory.distanceTodayMeters, closeTo(60, 2));
+      expect(trail.currentHistory.streakDays, 1);
+    });
+
+    test('counts the walk home, which the trail itself cannot', () async {
+      // Back down the street already walked. Every one of these points is a
+      // cell the trail already has, so `trail_points` gains nothing — and the
+      // distance is real and half the walk.
+      final trail = SqliteTrailRepository(database, regionId: testRegion);
+      await trail.load();
+
+      await trail.record(benThanh);
+      await trail.record(north(50));
+      final outbound = trail.currentHistory.distanceTodayMeters;
+
+      await trail.record(benThanh);
+
+      expect(trail.currentHistory.distanceTodayMeters, closeTo(outbound * 2, 2));
+    });
+
+    test('refuses a jump no walk could have made', () async {
+      final trail = SqliteTrailRepository(database, regionId: testRegion);
+      await trail.load();
+
+      await trail.record(benThanh);
+      await trail.record(north(5000));
+
+      // The day is still on the record — the player was out — but five
+      // kilometres between two fixes is a vehicle, and it is not credited.
+      expect(trail.currentHistory.distanceTodayMeters, 0);
+      expect(trail.currentHistory.streakDays, 1);
+    });
+
+    test('survives a restart', () async {
+      final first = SqliteTrailRepository(database, regionId: testRegion);
+      await first.load();
+      await first.record(benThanh);
+      await first.record(north(40));
+      await first.flush();
+
+      final second = SqliteTrailRepository(
+        AppDatabase(directory: directory),
+        regionId: testRegion,
+      );
+      await second.load();
+
+      expect(second.currentHistory.distanceTodayMeters, closeTo(40, 2));
+      expect(second.currentHistory.daysWalked, 1);
+    });
+
+    test('outlives clearing the fog', () async {
+      // Clearing the trail is asking to walk this city again. It is not a claim
+      // that the last four months of mornings never happened.
+      final trail = SqliteTrailRepository(database, regionId: testRegion);
+      await trail.load();
+      await trail.record(benThanh);
+      await trail.record(north(40));
+      await trail.flush();
+
+      await trail.clear();
+
+      expect(trail.currentHistory.distanceTodayMeters, closeTo(40, 2));
+    });
+  });
+
   group('trail is scoped to a region', () {
     // Bến Thành, and a point in Hanoi ~1100 km away.
     const hanoi = GeoPoint(21.0285, 105.8542);
@@ -428,6 +506,70 @@ void main() {
       expect(benThanh.claimedAt, lastVisit);
 
       expect(visits.of('place-tao-dan').isClaimed, isFalse);
+    });
+
+    test('a v5 trail is read back into a walking diary', () async {
+      // The streak and the distance are new in v6, and the only record an
+      // older build left is `trail_points`. A player who has walked every
+      // morning this week must open the new build on the streak they earned.
+      final path = '${directory.path}/${AppDatabase.fileName}';
+      final v5 = await databaseFactory.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: 5,
+          onCreate: (db, _) async {
+            await db.execute('''
+              CREATE TABLE trail_points (
+                region_id   TEXT    NOT NULL,
+                lat_cell    INTEGER NOT NULL,
+                lng_cell    INTEGER NOT NULL,
+                latitude    REAL    NOT NULL,
+                longitude   REAL    NOT NULL,
+                recorded_at INTEGER NOT NULL,
+                PRIMARY KEY (region_id, lat_cell, lng_cell)
+              )
+            ''');
+          },
+        ),
+      );
+
+      final today = DateTime.now();
+      final yesterday = today.subtract(const Duration(days: 1));
+
+      // Each day walks a different street. Ground walked twice is one row in
+      // this table — that is the lossiness the backfill is honest about — so a
+      // fixture that re-walked yesterday's street would be testing the
+      // primary key rather than the migration.
+      Future<void> walk(DateTime at, int metres, {required double street}) async {
+        final longitude = benThanh.longitude + street;
+        for (var metre = 0; metre <= metres; metre += 10) {
+          final latitude = benThanh.latitude + metre / 111320;
+          await v5.insert('trail_points', {
+            'region_id': testRegion,
+            'lat_cell': (latitude * 111320).round(),
+            'lng_cell': (longitude * 111320).round(),
+            'latitude': latitude,
+            'longitude': longitude,
+            'recorded_at': at
+                .add(Duration(seconds: metre))
+                .millisecondsSinceEpoch,
+          });
+        }
+      }
+
+      await walk(yesterday, 100, street: 0);
+      await walk(today, 200, street: 0.001);
+      await v5.close();
+
+      final upgraded = AppDatabase(directory: directory);
+      addTearDown(upgraded.close);
+
+      final trail = SqliteTrailRepository(upgraded, regionId: testRegion);
+      await trail.load();
+
+      expect(trail.currentHistory.daysWalked, 2);
+      expect(trail.currentHistory.streakDays, 2);
+      expect(trail.currentHistory.distanceTodayMeters, closeTo(200, 5));
     });
   });
 

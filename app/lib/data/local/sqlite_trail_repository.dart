@@ -8,8 +8,10 @@ import 'package:sqflite/sqflite.dart';
 import '../../core/async/replay_subject.dart';
 import '../../domain/entities/explored_area.dart';
 import '../../domain/entities/geo_point.dart';
+import '../../domain/entities/walk_history.dart';
 import '../../domain/repositories/repositories.dart';
 import '../../domain/rules/exploration_rules.dart';
+import '../../domain/rules/walk_rules.dart';
 import 'app_database.dart';
 
 /// The walked trail, in SQLite, one region at a time.
@@ -52,10 +54,30 @@ class SqliteTrailRepository implements ExplorationTrailRepository {
 
   static const Duration _flushDelay = Duration(seconds: 3);
 
+  /// Metres walked on each day the player walked at all, keyed by
+  /// [WalkRules.dayOf].
+  ///
+  /// Held in memory in full because it is small — a year of walking is 365
+  /// rows — and because the two questions asked of it, "how far today" and "how
+  /// many days in a row", are both answered from the whole set.
+  final Map<String, double> _daysWalked = {};
+
+  /// Days with metres not yet written. Flushed on the same timer as the points.
+  final Set<String> _dirtyDays = {};
+
+  final ReplaySubject<WalkHistory> _history = ReplaySubject(
+    const WalkHistory.empty(),
+  );
+
   @override
   Stream<ExploredArea> watch() => _area.stream;
 
+  @override
+  Stream<WalkHistory> watchHistory() => _history.stream;
+
   ExploredArea get current => _area.value;
+
+  WalkHistory get currentHistory => _history.value;
 
   /// Reads the whole trail into memory.
   ///
@@ -77,6 +99,7 @@ class SqliteTrailRepository implements ExplorationTrailRepository {
   Future<void> reload() async {
     _loaded = true;
     _lastRecorded = null;
+    _lastRecordedAt = null;
     await _read();
   }
 
@@ -95,7 +118,10 @@ class SqliteTrailRepository implements ExplorationTrailRepository {
     await flush();
 
     _regionId = regionId;
+    // The next fix in the new city is not a step taken from the last one in the
+    // old one, however close the border was.
     _lastRecorded = null;
+    _lastRecordedAt = null;
     _loaded = true;
     await _read();
   }
@@ -117,6 +143,44 @@ class SqliteTrailRepository implements ExplorationTrailRepository {
       // A trail we cannot read must never stop the app from starting.
       debugPrint('Trail: could not be read ($error)');
     }
+
+    await _readDays();
+  }
+
+  /// The walking diary, which unlike the trail is not scoped to a region: a
+  /// streak is a fact about the player, and crossing a river on foot on the
+  /// Tuesday does not cost them the Tuesday.
+  Future<void> _readDays() async {
+    try {
+      final db = await _database.open();
+      final rows = await db.query('walk_days', columns: ['day', 'meters']);
+
+      _daysWalked
+        ..clear()
+        ..addEntries(
+          rows.map(
+            (row) => MapEntry(row['day']! as String, row['meters']! as double),
+          ),
+        );
+      _publishHistory();
+    } on Object catch (error) {
+      debugPrint('Trail: the walking diary could not be read ($error)');
+    }
+  }
+
+  void _publishHistory() {
+    final now = DateTime.now();
+    var total = 0.0;
+    for (final meters in _daysWalked.values) {
+      total += meters;
+    }
+
+    _history.value = WalkHistory(
+      distanceTodayMeters: _daysWalked[WalkRules.dayOf(now)] ?? 0,
+      distanceTotalMeters: total,
+      streakDays: WalkRules.streakOf(_daysWalked.keys.toSet(), now: now),
+      daysWalked: _daysWalked.length,
+    );
   }
 
   /// Minimum distance between two recorded positions.
@@ -130,13 +194,26 @@ class SqliteTrailRepository implements ExplorationTrailRepository {
 
   GeoPoint? _lastRecorded;
 
+  /// When [_lastRecorded] arrived. Half of the test for whether the ground
+  /// between the two was walked — see [WalkRules.countsAsWalking].
+  DateTime? _lastRecordedAt;
+
   @override
   Future<void> record(GeoPoint point) async {
     final last = _lastRecorded;
     if (last != null && last.distanceTo(point) < recordingPrecisionMeters) {
       return;
     }
+
+    final now = DateTime.now();
+    // Before the de-duplication below, deliberately. Walking home down the
+    // street you came up adds no cells — the ground was already uncovered — but
+    // it is half the distance of the walk, and the diary is where that half
+    // would otherwise be lost.
+    _countTowardsToday(from: last, to: point, at: now, since: _lastRecordedAt);
+
     _lastRecorded = point;
+    _lastRecordedAt = now;
 
     final cell = TrailCell.of(point);
     if (_area.value.cells.contains(cell)) return;
@@ -151,9 +228,42 @@ class SqliteTrailRepository implements ExplorationTrailRepository {
     _flushTimer = Timer(_flushDelay, () => unawaited(flush()));
   }
 
+  /// Adds the step from [from] to [to] to today's total, if it was walked.
+  ///
+  /// A day appears in the diary the moment anything is recorded on it, even
+  /// when the step itself is refused: somebody who opened the app on a hilltop
+  /// and stood there was still out, and the streak is about going out.
+  void _countTowardsToday({
+    required GeoPoint? from,
+    required GeoPoint to,
+    required DateTime at,
+    required DateTime? since,
+  }) {
+    final day = WalkRules.dayOf(at);
+    final before = _daysWalked[day];
+    var meters = before ?? 0;
+
+    if (from != null && since != null) {
+      final step = from.distanceTo(to);
+      if (WalkRules.countsAsWalking(step, at.difference(since))) {
+        meters += step;
+      }
+    }
+
+    // A day that gained no metres and was already open is not news, and
+    // re-publishing would rebuild every widget watching the history for
+    // nothing.
+    if (before != null && meters == before) return;
+
+    _daysWalked[day] = meters;
+    _dirtyDays.add(day);
+    _publishHistory();
+  }
+
   @override
   Future<void> flush() async {
     _flushTimer?.cancel();
+    await _writeDays();
     if (_pending.isEmpty) return;
 
     await _inFlight;
@@ -161,6 +271,34 @@ class SqliteTrailRepository implements ExplorationTrailRepository {
     _pending.clear();
     _inFlight = _writeBatch(batchToWrite);
     await _inFlight;
+  }
+
+  Future<void> _writeDays() async {
+    if (_dirtyDays.isEmpty) return;
+
+    final days = Set<String>.of(_dirtyDays);
+    _dirtyDays.clear();
+
+    try {
+      final db = await _database.open();
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final batch = db.batch();
+      for (final day in days) {
+        // The first sighting of a day is whichever write got there first, so
+        // `first_at` is only set on insert; every write moves `last_at`.
+        batch.rawInsert(
+          'INSERT INTO walk_days (day, meters, first_at, last_at) '
+          'VALUES (?, ?, ?, ?) '
+          'ON CONFLICT(day) DO UPDATE SET meters = ?, last_at = ?',
+          [day, _daysWalked[day], now, now, _daysWalked[day], now],
+        );
+      }
+      await batch.commit(noResult: true);
+    } on Object catch (error) {
+      // Put them back so the next flush retries rather than losing the day.
+      _dirtyDays.addAll(days);
+      debugPrint('Trail: the walking diary could not be saved ($error)');
+    }
   }
 
   Future<void> _writeBatch(List<_PendingPoint> points) async {
@@ -189,10 +327,15 @@ class SqliteTrailRepository implements ExplorationTrailRepository {
   ///
   /// Deliberately not "clear everything": a player asking to reset the city
   /// they are standing in has not asked to lose the one they walked last year.
+  ///
+  /// The walking diary survives too, and for the same reason. Clearing the fog
+  /// is asking to walk this city again; it is not a claim that the last four
+  /// months of mornings never happened.
   @override
   Future<void> clear() async {
     _pending.clear();
     _lastRecorded = null;
+    _lastRecordedAt = null;
     _area.value = const ExploredArea.empty();
     final db = await _database.open();
     await db.delete(
@@ -240,6 +383,7 @@ class SqliteTrailRepository implements ExplorationTrailRepository {
     _flushTimer?.cancel();
     await flush();
     await _area.close();
+    await _history.close();
   }
 }
 

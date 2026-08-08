@@ -46,8 +46,16 @@ class DocumentChannel {
   ///
   /// Null when they backed out. Throws [PlatformException] if it could not be
   /// read.
-  Future<Uint8List?> open() async {
+  ///
+  /// [mimeType] is what the picker offers. The default shows everything, which
+  /// is right for a backup — its extension has no registered type, so anything
+  /// narrower greys out the only file worth picking. A caller that genuinely
+  /// wants one kind of file, like the avatar picker asking for `image/*`, says
+  /// so.
+  Future<Uint8List?> open({String mimeType = '*/*'}) async {
     if (!isSupported) return null;
-    return _channel.invokeMethod<Uint8List>('openDocument');
+    return _channel.invokeMethod<Uint8List>('openDocument', {
+      'mimeType': mimeType,
+    });
   }
 }

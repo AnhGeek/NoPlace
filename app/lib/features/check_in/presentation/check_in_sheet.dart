@@ -321,8 +321,11 @@ class _RewardTiles extends StatelessWidget {
         Expanded(
           child: Consumer(
             builder: (context, ref, _) {
+              // The same streak the profile counts, off the same walking
+              // diary. Two screens disagreeing about how many days in a row
+              // somebody has been out would make both of them worthless.
               final streak = ref.watch(
-                playerProvider.select((p) => p.value?.streakDays ?? 0),
+                walkHistoryProvider.select((h) => h.value?.streakDays ?? 0),
               );
               return _RewardTile(
                 value: l10n.commonDays(streak),

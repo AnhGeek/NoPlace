@@ -22,6 +22,7 @@ import '../entities/place.dart';
 import '../entities/place_visit.dart';
 import '../entities/player.dart';
 import '../entities/quest.dart';
+import '../entities/walk_history.dart';
 
 /// The map and everything on it.
 abstract interface class WorldRepository {
@@ -102,6 +103,14 @@ abstract interface class LocationRepository {
 abstract interface class ExplorationTrailRepository {
   Stream<ExploredArea> watch();
 
+  /// How far the player walked today, and the run of days behind it.
+  ///
+  /// Kept here rather than derived from [watch] because the two answer
+  /// different questions and one cannot be computed from the other: the trail
+  /// is *ground*, de-duplicated, and the walk home down the street you came up
+  /// adds nothing to it while adding half the distance of the walk.
+  Stream<WalkHistory> watchHistory();
+
   /// Uncovers the ground around [point]. Cheap to call on every position fix —
   /// points inside an already-explored cell are a no-op.
   Future<void> record(GeoPoint point);
@@ -159,6 +168,24 @@ abstract interface class PlaceVisitRepository {
 
 /// Small persisted choices.
 abstract interface class PreferencesRepository {
+  /// What the player calls themselves, or empty if they never said.
+  ///
+  /// On the device and nowhere else. There is no account, no server and no
+  /// uniqueness check — this is a name on a profile the player alone reads, and
+  /// treating it as an identity would be inventing a system nothing needs yet.
+  Stream<String> watchDisplayName();
+
+  Future<void> setDisplayName(String name);
+
+  /// Absolute path to the picture the player chose, or null.
+  ///
+  /// A path rather than the bytes: the image is copied into the app's own
+  /// storage when it is picked, so it survives the gallery being tidied up, and
+  /// the widget tree gets to load it lazily like any other file.
+  Stream<String?> watchAvatarPath();
+
+  Future<void> setAvatarPath(String? path);
+
   Stream<MapLayerVisibility> watchMapLayerVisibility();
 
   Future<void> setMapLayerVisible(MapPointKind kind, {required bool visible});

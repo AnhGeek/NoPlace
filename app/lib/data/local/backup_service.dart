@@ -32,6 +32,7 @@ import 'sqlite_trail_repository.dart';
 ///   "trail": [["vn-hcmc", 1198572, 11855364, 10.7725, 106.698, 1754...]],
 ///   "mapPoints": [{"id": "...", "kind": "user", ...}],
 ///   "placeVisits": [{"place_id": "place-ben-thanh", "check_in_count": 7, ...}],
+///   "walkDays": [{"day": "2026-08-08", "meters": 4213.5, ...}],
 ///   "preferences": {"fog.clearing_radius_meters": "180.0"}
 /// }
 /// ```
@@ -113,6 +114,7 @@ class BackupService {
     final trail = await db.query('trail_points');
     final mapPoints = await db.query('map_points', orderBy: 'created_at');
     final placeVisits = await db.query('place_visits');
+    final walkDays = await db.query('walk_days');
     final preferences = await db.query('preferences');
 
     final document = <String, Object?>{
@@ -135,6 +137,11 @@ class BackupService {
       ],
       'mapPoints': mapPoints,
       'placeVisits': placeVisits,
+      // The streak and the total distance. Not derivable from `trail`: that
+      // table is de-duplicated by cell, so a walk home down the same street is
+      // not in it, and a restore without this would quietly shorten every day
+      // the player has ever walked.
+      'walkDays': walkDays,
       'preferences': {
         for (final row in preferences) row['key'] as String: row['value'],
       },
@@ -164,6 +171,7 @@ class BackupService {
     final trail = _trailRows(document['trail']);
     final mapPoints = _mapPointRows(document['mapPoints']);
     final placeVisits = _placeVisitRows(document['placeVisits']);
+    final walkDays = _walkDayRows(document['walkDays']);
     final preferences = _preferenceRows(document['preferences']);
 
     final db = await _database.open();
@@ -193,6 +201,21 @@ class BackupService {
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
+      for (final row in walkDays) {
+        // The longer of the two days wins. Both files are records of the same
+        // person's walking, and neither is entitled to shorten a day the other
+        // one saw more of — which is what a plain replace would do to somebody
+        // restoring an old backup onto the phone they have been walking with.
+        batch.rawInsert(
+          'INSERT INTO walk_days (day, meters, first_at, last_at) '
+          'VALUES (?, ?, ?, ?) '
+          'ON CONFLICT(day) DO UPDATE SET '
+          '  meters   = MAX(meters, excluded.meters),'
+          '  first_at = MIN(first_at, excluded.first_at),'
+          '  last_at  = MAX(last_at, excluded.last_at)',
+          [row['day'], row['meters'], row['first_at'], row['last_at']],
+        );
+      }
       for (final row in preferences) {
         batch.insert(
           'preferences',
@@ -202,6 +225,21 @@ class BackupService {
       }
 
       await batch.commit(noResult: true);
+
+      // Then work the diary out again from the trail that has just landed.
+      //
+      // Everything else on the profile is already a calculation over the
+      // restored tables — the fog, the districts, the check-in count, the XP —
+      // so a restore recomputes them by definition. The diary is the one thing
+      // that is *stored*, because the trail cannot answer it: re-walked ground
+      // is one row, and the walk home is half the distance. This is what keeps
+      // it honest anyway. A backup written before the diary existed carries no
+      // `walkDays` at all, and without this pass a player restoring one would
+      // get their whole city back with a streak of zero.
+      //
+      // Days the file knew about keep their numbers: the pass above only ever
+      // raises a day, and what the file carries is the truer figure.
+      await AppDatabase.rebuildWalkDaysFromTrail(txn);
     });
 
     // The map is watching all three. Without this the fog on screen is the fog
@@ -405,6 +443,34 @@ class BackupService {
         // near.
         'stay_started_at': null,
         'stay_last_seen_at': null,
+      });
+    }
+    return rows;
+  }
+
+  /// Days from a backup, keeping only rows that name a day and a distance.
+  ///
+  /// A file written before the diary existed simply has no `walkDays` key, and
+  /// restores exactly as it did before.
+  static List<Map<String, Object?>> _walkDayRows(Object? value) {
+    if (value is! List) return const [];
+
+    final rows = <Map<String, Object?>>[];
+    for (final entry in value) {
+      if (entry is! Map) continue;
+      final day = entry['day'];
+      final meters = entry['meters'];
+      if (day is! String || meters is! num) continue;
+
+      final stamps = [entry['first_at'], entry['last_at']]
+          .whereType<int>()
+          .toList();
+
+      rows.add({
+        'day': day,
+        'meters': meters.toDouble(),
+        'first_at': stamps.isEmpty ? 0 : stamps.first,
+        'last_at': stamps.isEmpty ? 0 : stamps.last,
       });
     }
     return rows;

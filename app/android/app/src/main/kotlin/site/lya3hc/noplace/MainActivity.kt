@@ -86,7 +86,7 @@ class MainActivity : FlutterActivity() {
                 result.success(null)
             }
             "saveDocument" -> saveDocument(call, result)
-            "openDocument" -> openDocument(result)
+            "openDocument" -> openDocument(call, result)
             else -> result.notImplemented()
         }
     }
@@ -117,16 +117,18 @@ class MainActivity : FlutterActivity() {
     }
 
     /** Asks the player for a file and hands its bytes back. */
-    private fun openDocument(result: MethodChannel.Result) {
+    private fun openDocument(call: MethodCall, result: MethodChannel.Result) {
         if (!claimDocumentCall(result)) return
 
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            // Not filtered: a backup's extension has no registered MIME type, so
-            // anything narrower greys out the only file worth picking. Dart
-            // refuses a file that is not a backup, which is the check that can
-            // actually tell.
-            type = "*/*"
+            // Whatever the caller asked for, defaulting to everything: a
+            // backup's extension has no registered MIME type, so anything
+            // narrower greys out the only file worth picking, and Dart refuses a
+            // file that is not a backup — the check that can actually tell. The
+            // avatar picker is the opposite case and asks for `image/*`, which
+            // is what opens the gallery rather than a file tree.
+            type = call.argument<String>("mimeType") ?: "*/*"
         }
         startActivityForResult(intent, OPEN_DOCUMENT_REQUEST)
     }

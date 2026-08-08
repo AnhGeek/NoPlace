@@ -128,6 +128,21 @@ CREATE TABLE districts (
 `boundary` is nullable for the beta: with it null, "which district am I in?"
 falls back to nearest centre. Filling it in is a data change, not a code change.
 
+> **Where they actually are today.** No cooked pack carries this table yet, and
+> the app does not read it. The districts ship *beside* the pack instead, as
+> `app/assets/districts/<region-id>.json` — the same rows, plus the boundary
+> ring and its area, written by `tools/region_cooker/bin/districts.dart` from
+> the OpenStreetMap administrative relations. Two reasons it went there first:
+> the packs are cut from the Protomaps planet build, whose `boundaries` layer is
+> *unnamed lines* and whose `places` layer holds three district-scale names for
+> the whole of Ho Chi Minh City; and folding them in means re-cooking and
+> re-committing a 35 MB binary to change a ward name. Moving them into the pack
+> when the pipeline can produce them is a change to the cooker and to
+> `DistrictBoundaries.load` — this document does not move.
+>
+> A district is `admin_level = 6`, which since Vietnam's 2025 reform is the ward
+> (phường) or commune (xã).
+
 ## Category vocabulary
 
 Closed set. The pipeline maps every source's taxonomy onto exactly these; the

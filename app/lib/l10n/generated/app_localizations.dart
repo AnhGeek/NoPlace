@@ -175,6 +175,12 @@ abstract class AppL10n {
   /// **'{kilometers} km'**
   String commonDistanceKilometers(String kilometers);
 
+  /// An area in square kilometres, already rounded.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} km²'**
+  String commonAreaSquareKilometers(String value);
+
   /// A number of days, used by the streak counter.
   ///
   /// In en, this message translates to:
@@ -379,17 +385,53 @@ abstract class AppL10n {
   /// **'Level {level} Explorer · {xp} XP'**
   String profileLevelLine(int level, int xp);
 
-  /// Percentage of the city the player has uncovered.
+  /// Percentage of a district the player has uncovered.
   ///
   /// In en, this message translates to:
   /// **'{percent}%'**
   String profileChartedShare(int percent);
 
-  /// Caption under the big charted percentage.
+  /// Caption under the big uncovered-area figure, naming the map being walked.
   ///
   /// In en, this message translates to:
-  /// **'of the city charted'**
-  String get profileChartedCaption;
+  /// **'uncovered in {region}'**
+  String profileChartedCaption(String region);
+
+  /// Stands in for the player's name until they choose one.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed explorer'**
+  String get profileNamePlaceholder;
+
+  /// Title of the dialog that sets the player's display name.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get profileNameTitle;
+
+  /// Explains that the display name is never sent anywhere.
+  ///
+  /// In en, this message translates to:
+  /// **'On this phone only'**
+  String get profileNameHint;
+
+  /// Confirms the display name dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get profileNameSave;
+
+  /// Action that opens the picker for a profile picture.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a photo'**
+  String get profilePhotoChoose;
+
+  /// Action that clears the profile picture.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get profilePhotoRemove;
 
   /// Stat tile: how far the player walked today.
   ///
@@ -409,23 +451,35 @@ abstract class AppL10n {
   /// **'Active streak'**
   String get profileStatStreak;
 
-  /// Chip marking the city the player is exploring right now.
+  /// Label above the row of maps the player can switch between.
   ///
   /// In en, this message translates to:
-  /// **'{city} · current'**
-  String profileCityCurrent(String city);
-
-  /// Chip that starts tracking another city.
-  ///
-  /// In en, this message translates to:
-  /// **'+ Add city'**
-  String get profileAddCity;
+  /// **'Maps'**
+  String get profileMapsTitle;
 
   /// Header of the per-district progress card.
   ///
   /// In en, this message translates to:
-  /// **'City progress · {city}'**
-  String profileCityProgressTitle(String city);
+  /// **'Districts · {region}'**
+  String profileDistrictProgressTitle(String region);
+
+  /// Shown in the district card when nothing has been walked in this region yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Walk somewhere to chart your first district.'**
+  String get profileDistrictsEmpty;
+
+  /// Shown when the region has no cooked boundary file.
+  ///
+  /// In en, this message translates to:
+  /// **'No district data for this map yet.'**
+  String get profileDistrictsUnavailable;
+
+  /// Footer under the district list when more have been charted than are shown.
+  ///
+  /// In en, this message translates to:
+  /// **'and {count} more'**
+  String profileDistrictsMore(int count);
 
   /// Header of the leaderboard card.
   ///
@@ -433,17 +487,11 @@ abstract class AppL10n {
   /// **'City ranking'**
   String get profileRankingTitle;
 
-  /// Where the player sits on the city leaderboard.
+  /// Stands in for the leaderboard: NoPlace keeps everything on the device, so there is nobody to rank against.
   ///
   /// In en, this message translates to:
-  /// **'You\'\'re #{rank} of {total} explorers'**
-  String profileRankingSubtitle(int rank, int total);
-
-  /// How much the player climbed the leaderboard this week.
-  ///
-  /// In en, this message translates to:
-  /// **'+{percent}%'**
-  String profileRankingTrend(int percent);
+  /// **'Not available yet'**
+  String get profileRankingUnavailable;
 
   /// Supporting line under the place name in the check-in sheet.
   ///

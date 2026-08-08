@@ -41,6 +41,15 @@ class SqlitePreferencesRepository implements PreferencesRepository {
   static const String _nearbyRadiusKey = 'nearby.radius_meters';
   static const String _backgroundPromptKey = 'background.prompt_seen';
   static const String _lastFixKey = 'location.last_fix';
+  static const String _displayNameKey = 'profile.display_name';
+  static const String _avatarPathKey = 'profile.avatar_path';
+
+  /// Empty until the player names themselves. The profile shows its own
+  /// placeholder for that, translated — a default written here would be in
+  /// whatever language the developer happened to think in.
+  final ReplaySubject<String> _displayName = ReplaySubject('');
+
+  final ReplaySubject<String?> _avatarPath = ReplaySubject(null);
 
   /// Asked once, then never again — see [PreferencesRepository].
   final ReplaySubject<bool> _backgroundPromptSeen = ReplaySubject(false);
@@ -49,6 +58,12 @@ class SqlitePreferencesRepository implements PreferencesRepository {
   /// city they were in — see [PreferencesRepository.lastFix]. A plain field
   /// rather than a subject: nothing on screen renders it.
   GeoPoint? _lastFix;
+
+  @override
+  Stream<String> watchDisplayName() => _displayName.stream;
+
+  @override
+  Stream<String?> watchAvatarPath() => _avatarPath.stream;
 
   @override
   Stream<MapLayerVisibility> watchMapLayerVisibility() => _visibility.stream;
@@ -131,6 +146,14 @@ class SqlitePreferencesRepository implements PreferencesRepository {
       // dialog — so this cannot use `read()`, whose default is true.
       _backgroundPromptSeen.value = values[_backgroundPromptKey] == 'true';
 
+      _displayName.value = values[_displayNameKey] ?? '';
+
+      // An empty row is a picture the player removed, which is a different
+      // answer from never having chosen one — but both draw the placeholder, so
+      // both arrive here as null.
+      final avatar = values[_avatarPathKey];
+      _avatarPath.value = (avatar == null || avatar.isEmpty) ? null : avatar;
+
       _lastFix = _parseFix(values[_lastFixKey]);
     } on Object catch (error) {
       // Falling back to "show everything" is the safe default: a preference we
@@ -138,6 +161,31 @@ class SqlitePreferencesRepository implements PreferencesRepository {
       debugPrint('Preferences: could not be read ($error)');
     }
   }
+
+  /// Trimmed and capped, because this is drawn in one line under an avatar and
+  /// the player is the only person who will ever read it — there is nobody to
+  /// impersonate and nothing to validate against.
+  @override
+  Future<void> setDisplayName(String name) async {
+    final trimmed = name.trim();
+    final capped = trimmed.length > maxDisplayNameLength
+        ? trimmed.substring(0, maxDisplayNameLength)
+        : trimmed;
+
+    if (_displayName.value == capped) return;
+    _displayName.value = capped;
+    await _write(_displayNameKey, capped);
+  }
+
+  /// Null clears the picture, which is a thing the player is allowed to want.
+  @override
+  Future<void> setAvatarPath(String? path) async {
+    if (_avatarPath.value == path) return;
+    _avatarPath.value = path;
+    await _write(_avatarPathKey, path ?? '');
+  }
+
+  static const int maxDisplayNameLength = 24;
 
   @override
   Future<void> setFogSettings(FogSettings settings) async {

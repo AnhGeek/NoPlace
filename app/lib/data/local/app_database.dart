@@ -1,7 +1,11 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
+
+import '../../domain/entities/geo_point.dart';
+import '../../domain/rules/walk_rules.dart';
 
 /// The device's copy of everything the player has made.
 ///
@@ -15,11 +19,14 @@ import 'package:sqflite/sqflite.dart';
 ///     cat databases/noplace.db > noplace.db
 /// ```
 ///
-/// Schema, version 5:
+/// Schema, version 6:
 ///
 /// * `trail_points` — every metre of ground walked, scoped to a region. Primary
 ///   key is the metre-quantised cell, so re-walking a street is an ignored
 ///   insert rather than a duplicate row.
+/// * `walk_days` — one row per day the player walked, with the metres covered.
+///   Not derivable from `trail_points`: that table de-duplicates by cell, so a
+///   loop back down the same street is stored once and walked twice.
 /// * `map_points` — points the player authored: dropped pins and photo points,
 ///   with what they called them, how they rated them, how many times they have
 ///   been there, and how long a stay has to run to count on its own.
@@ -36,7 +43,7 @@ class AppDatabase {
   Database? _database;
 
   static const String fileName = 'noplace.db';
-  static const int schemaVersion = 5;
+  static const int schemaVersion = 6;
 
   /// Where a trail written before the schema was region-scoped is filed.
   ///
@@ -133,7 +140,28 @@ class AppDatabase {
         value TEXT NOT NULL
       )
     ''');
+
+    await _createWalkDays(db);
   }
+
+  /// How far the player walked on each day they walked at all.
+  ///
+  /// A separate table rather than a query over `trail_points`, because that
+  /// table cannot answer it: its primary key is the metre-quantised cell, so
+  /// walking to the market and back records the way there and drops the way
+  /// home. Distance is the thing the player counts, and it has to count the
+  /// walk home.
+  ///
+  /// `day` is a local `YYYY-MM-DD`, not an instant: a streak is about the days
+  /// somebody went outside, and that is a question about their calendar.
+  static Future<void> _createWalkDays(Database db) => db.execute('''
+      CREATE TABLE walk_days (
+        day      TEXT    PRIMARY KEY,
+        meters   REAL    NOT NULL DEFAULT 0,
+        first_at INTEGER NOT NULL,
+        last_at  INTEGER NOT NULL
+      )
+    ''');
 
   /// One `if` per version step, in order, and every step is tested against a
   /// database created by the previous version — see `sqlite_storage_test`.
@@ -253,6 +281,99 @@ class AppDatabase {
         'WHERE check_in_count > 0',
       );
     }
+
+    // v5 → v6: the walk keeps a diary.
+    //
+    // Backfilled from `trail_points`, which is the only record an older build
+    // left. It is a lossy one — the table de-duplicates by cell, so a walk home
+    // down the street you came up is not in it — and the numbers it yields are
+    // therefore floors, not truths. Filling it in anyway is still right: a
+    // player who has walked every day this month should open the new build on
+    // the streak they earned, not on day one.
+    if (oldVersion < 6) {
+      await _createWalkDays(db);
+
+      // The diary is a nicety; the walk itself is not. A backfill that trips
+      // over an old database's idea of the schema must cost the player their
+      // streak, never their trail — and it takes the whole `open()` with it if
+      // it is allowed to throw.
+      try {
+        await rebuildWalkDaysFromTrail(db);
+      } on Object catch (error) {
+        debugPrint('Database: the walking diary could not be rebuilt ($error)');
+      }
+    }
+  }
+
+  /// Reconstructs the daily distances from the points already on disk, without
+  /// ever lowering a day the diary already knows more about.
+  ///
+  /// One pass in date order, applying [WalkRules] exactly as the live recorder
+  /// does, so the gap where the phone was asleep is skipped here for the same
+  /// reason it is skipped there.
+  ///
+  /// Called from two places, and the "without lowering" half is why it is one
+  /// method rather than two:
+  ///
+  ///  * the v6 migration, where the diary does not exist yet and every day this
+  ///    finds is new;
+  ///  * a restored backup, where trail rows have just arrived from another
+  ///    phone. A file written by a build that had no diary carries none, and
+  ///    this is the only thing that gets those days back. A file that *does*
+  ///    carry one has the truer numbers — the trail cannot see the walk home —
+  ///    so those stand and this adds only the days they missed.
+  static Future<void> rebuildWalkDaysFromTrail(DatabaseExecutor db) async {
+    final rows = await db.query(
+      'trail_points',
+      columns: ['latitude', 'longitude', 'recorded_at'],
+      orderBy: 'recorded_at ASC',
+    );
+    if (rows.isEmpty) return;
+
+    final meters = <String, double>{};
+    final firstAt = <String, int>{};
+    final lastAt = <String, int>{};
+
+    GeoPoint? previous;
+    DateTime? previousAt;
+
+    for (final row in rows) {
+      final at = DateTime.fromMillisecondsSinceEpoch(row['recorded_at']! as int);
+      final point = GeoPoint(
+        row['latitude']! as double,
+        row['longitude']! as double,
+      );
+      final day = WalkRules.dayOf(at);
+
+      final stamp = at.millisecondsSinceEpoch;
+      firstAt.putIfAbsent(day, () => stamp);
+      lastAt[day] = stamp;
+      meters.putIfAbsent(day, () => 0);
+
+      if (previous != null && previousAt != null) {
+        final step = previous.distanceTo(point);
+        if (WalkRules.countsAsWalking(step, at.difference(previousAt))) {
+          meters[day] = meters[day]! + step;
+        }
+      }
+
+      previous = point;
+      previousAt = at;
+    }
+
+    final batch = db.batch();
+    for (final day in meters.keys) {
+      batch.rawInsert(
+        'INSERT INTO walk_days (day, meters, first_at, last_at) '
+        'VALUES (?, ?, ?, ?) '
+        'ON CONFLICT(day) DO UPDATE SET '
+        '  meters   = MAX(meters, excluded.meters),'
+        '  first_at = MIN(first_at, excluded.first_at),'
+        '  last_at  = MAX(last_at, excluded.last_at)',
+        [day, meters[day], firstAt[day], lastAt[day]],
+      );
+    }
+    await batch.commit(noResult: true);
   }
 
   Future<void> close() async {

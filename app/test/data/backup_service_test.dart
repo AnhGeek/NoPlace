@@ -130,6 +130,69 @@ void main() {
     },
   );
 
+  test('the walking diary moves too, and no day is shortened', () async {
+    // The streak and the total distance cannot be rebuilt from `trail`: that
+    // table drops the walk home. Losing them on a new phone would be the
+    // player's whole history of going out, gone.
+    // Bến Thành to Tao Đàn is six hundred metres, which two consecutive fixes
+    // never are — that is a gap the rules refuse. Walk it the way it is walked.
+    GeoPoint alongTheStreet(int metres) =>
+        GeoPoint(benThanh.latitude + metres / 111320, benThanh.longitude);
+
+    final old = makeDevice();
+    await old.trail.load();
+
+    for (var metre = 0; metre <= 200; metre += 20) {
+      await old.trail.record(alongTheStreet(metre));
+    }
+    final walked = old.trail.currentHistory.distanceTodayMeters;
+    expect(walked, greaterThan(0));
+
+    final file = await old.backup.export();
+
+    final fresh = makeDevice();
+    await fresh.trail.load();
+    // This phone has already been walked today, further than the backup was.
+    for (var metre = 0; metre <= 400; metre += 20) {
+      await fresh.trail.record(alongTheStreet(metre));
+    }
+    final here = fresh.trail.currentHistory.distanceTodayMeters;
+    expect(here, greaterThan(walked));
+
+    await fresh.backup.import(file);
+
+    expect(fresh.trail.currentHistory.distanceTodayMeters, closeTo(here, 0.5));
+    expect(fresh.trail.currentHistory.streakDays, 1);
+  });
+
+  test('a backup from before the diary existed still restores a streak', () async {
+    // The days are worked out again from the trail that arrives with the file.
+    // Without that, somebody restoring an older backup would get their whole
+    // city back and be told they have never been outside.
+    final old = makeDevice();
+    await old.trail.load();
+    for (var metre = 0; metre <= 200; metre += 20) {
+      await old.trail.record(
+        GeoPoint(benThanh.latitude + metre / 111320, benThanh.longitude),
+      );
+    }
+
+    final file = await old.backup.export();
+    final document =
+        jsonDecode(utf8.decode(gzip.decode(file))) as Map<String, Object?>;
+    document.remove('walkDays');
+    final withoutDiary = Uint8List.fromList(
+      gzip.encode(utf8.encode(jsonEncode(document))),
+    );
+
+    final fresh = makeDevice();
+    await fresh.trail.load();
+    await fresh.backup.import(withoutDiary);
+
+    expect(fresh.trail.currentHistory.streakDays, 1);
+    expect(fresh.trail.currentHistory.distanceTodayMeters, greaterThan(0));
+  });
+
   test('restoring adds to what is there rather than replacing it', () async {
     final old = makeDevice();
     await old.trail.load();

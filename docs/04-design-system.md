@@ -31,7 +31,7 @@ semantic token and expose it through a component parameter.
 | `NpPrimaryButton` | The single orange action on a screen |
 | `NpGhostButton` | The second action ("Not now", "Save changes"); `emphasized` lights it up when it has work waiting |
 | `NpPill` / `NpXpLabel` | Small numeric badges: "+14%", "+100 XP" |
-| `NpChip` | Selectable pill in a horizontal row (city switcher) |
+| `NpChip` | Selectable pill in a horizontal row (the map switcher); `dimmed` for one that names something not on this phone yet |
 | `NpSegmentedControl` | Two or three filters over *the same* list |
 | `NpTopTabs` | Full-width scope switch over the map |
 | `NpBottomNavBar` | The four destinations; goes transparent over the map |
