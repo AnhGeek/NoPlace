@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:noplace/data/repository_providers.dart';
+import 'package:noplace/design_system/components/components.dart';
 import 'package:noplace/domain/entities/auto_check_in.dart';
 import 'package:noplace/domain/entities/geo_point.dart';
 import 'package:noplace/domain/entities/map_point.dart';
@@ -15,6 +16,14 @@ class _RecordingRepository implements MapPointRepository {
   final List<MapPoint> added = [];
   final List<MapPoint> updated = [];
   final List<String> removed = [];
+
+  /// What the store hands back for an id right now. Left empty by most tests,
+  /// which then get exactly the copy the sheet was opened with — seed it to
+  /// stand in for something having written to the row in the meantime.
+  final Map<String, MapPoint> stored = {};
+
+  @override
+  MapPoint? of(String id) => stored[id];
 
   @override
   Future<void> add(MapPoint point) async => added.add(point);
@@ -72,6 +81,14 @@ void main() {
     await tester.pumpAndSettle();
     return repository;
   }
+
+  /// The "Save changes" button, for asking whether it is lit.
+  NpGhostButton saveButton(WidgetTester tester) => tester.widget<NpGhostButton>(
+    find.ancestor(
+      of: find.text('Save changes'),
+      matching: find.byType(NpGhostButton),
+    ),
+  );
 
   group('adding a place', () {
     testWidgets('saves the name, icon, feeling and rating together', (
@@ -177,6 +194,59 @@ void main() {
       expect(repository.updated.single.checkInCount, 3);
     });
 
+    testWidgets('the save button lights up once there is something to save', (
+      tester,
+    ) async {
+      await open(tester, existing: saved);
+
+      // Opened and untouched: nothing to save yet, so it stays quiet.
+      expect(saveButton(tester).emphasized, isFalse);
+
+      await tester.tap(find.text('2 hours'));
+      await tester.pump();
+      expect(saveButton(tester).emphasized, isTrue);
+
+      // ...and drops back when the player puts it exactly as they found it,
+      // which is the half that proves the button is reading the form rather
+      // than just remembering that it was touched.
+      await tester.tap(find.text('1 hour'));
+      await tester.pump();
+      expect(saveButton(tester).emphasized, isFalse);
+
+      // Typing counts too, and it is the field people edit most.
+      await tester.enterText(find.byType(TextField), 'The good bench');
+      await tester.pump();
+      expect(saveButton(tester).emphasized, isTrue);
+    });
+
+    testWidgets('a check-in earned while the sheet was open is not rolled back', (
+      tester,
+    ) async {
+      final repository = await open(tester, existing: saved);
+
+      // An hour on the spot, counted by the presence ticker while the player
+      // sat looking at the form. The sheet is still holding the copy it opened
+      // with, which says three.
+      final earned = DateTime.now();
+      repository.stored[saved.id] = saved.copyWith(
+        checkInCount: 4,
+        lastCheckInAt: earned,
+        stayStartedAt: earned,
+        stayLastSeenAt: earned,
+      );
+
+      await tester.enterText(find.byType(TextField), 'The good bench');
+      await tester.tap(find.text('Save changes'));
+      await tester.pumpAndSettle();
+
+      final place = repository.updated.single;
+      // The edit lands on the row as it stands, rather than on top of it.
+      expect(place.label, 'The good bench');
+      expect(place.checkInCount, 4);
+      expect(place.lastCheckInAt, earned);
+      expect(place.stayStartedAt, earned);
+    });
+
     testWidgets('deleting hands the place back, so it can be undone', (
       tester,
     ) async {
@@ -216,6 +286,60 @@ void main() {
       final place = repository.updated.single;
       expect(place.autoCheckInEvery, AutoCheckIn.off);
       expect(place.autoChecksIn, isFalse);
+    });
+
+    testWidgets('changing the interval starts the wait again from now', (
+      tester,
+    ) async {
+      // A place on "Once a day", stood in since this morning. That mode keeps
+      // the stay running from the moment the player arrived, so the hours
+      // behind this one are worth several check-ins under the hourly rule they
+      // are about to pick — and none of them were earned under it.
+      final arrived = DateTime.now().subtract(const Duration(hours: 3));
+      final seen = DateTime.now().subtract(const Duration(minutes: 2));
+      final repository = await open(
+        tester,
+        existing: saved.copyWith(
+          autoCheckInEvery: AutoCheckIn.daily,
+          stayStartedAt: arrived,
+          stayLastSeenAt: seen,
+        ),
+      );
+
+      await tester.tap(find.text('1 hour'));
+      await tester.pump();
+      await tester.tap(find.text('Save changes'));
+      await tester.pumpAndSettle();
+
+      final place = repository.updated.single;
+      expect(place.autoCheckInEvery, AutoCheckIn.hourly);
+      expect(place.stayStartedAt!.isAfter(arrived), isTrue);
+      // The morning before the change is not paid out, now or on the next fix.
+      expect(place.checkInCount, saved.checkInCount);
+      // The stay itself survives — the player has not gone anywhere, and only
+      // the GPS gets to say otherwise.
+      expect(place.stayLastSeenAt, seen);
+    });
+
+    testWidgets('an edit that leaves the interval alone leaves the stay alone', (
+      tester,
+    ) async {
+      // The other half of the rule above: renaming a place is not a reason to
+      // make somebody wait for the hour they are most of the way through.
+      final arrived = DateTime.now().subtract(const Duration(minutes: 50));
+      final repository = await open(
+        tester,
+        existing: saved.copyWith(
+          stayStartedAt: arrived,
+          stayLastSeenAt: arrived,
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), 'The good bench');
+      await tester.tap(find.text('Save changes'));
+      await tester.pumpAndSettle();
+
+      expect(repository.updated.single.stayStartedAt, arrived);
     });
 
     testWidgets('once a day is on offer, and says it needs no waiting', (

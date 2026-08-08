@@ -84,44 +84,94 @@ class NpPrimaryButton extends StatelessWidget {
 }
 
 /// The quiet way out of a sheet — "Not now", "Skip", "Maybe later".
+///
+/// Quiet, but never grey-on-grey: a second button under the orange one is still
+/// something the player is meant to be able to press, and the muted foreground
+/// this used to wear made it read as disabled.
 class NpGhostButton extends StatelessWidget {
   const NpGhostButton({
     required this.label,
     required this.onPressed,
+    this.icon,
+    this.emphasized = false,
     super.key,
   });
 
   final String label;
   final VoidCallback? onPressed;
 
+  /// Sits before the label. Used where the button does something rather than
+  /// declines something.
+  final IconData? icon;
+
+  /// Lights the button up in the accent colour, for when it has work waiting
+  /// for it — an edited form with unsaved changes, mainly. The change is
+  /// animated, so it reads as an answer to what the player just did rather
+  /// than as a button that was always that colour.
+  final bool emphasized;
+
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(NpRadius.md);
+    final foreground = emphasized
+        ? NpColors.accentHover
+        : NpColors.contentSecondary;
 
     return Semantics(
       button: true,
-      child: Material(
-        color: NpColors.backgroundPanel,
-        borderRadius: radius,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onPressed,
-          child: Container(
-            width: double.infinity,
-            constraints: const BoxConstraints(minHeight: NpSize.touchTarget),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: radius,
-              border: Border.all(
-                color: NpColors.borderSubtle,
-                width: NpBorderWidth.hairline,
+      enabled: onPressed != null,
+      child: Opacity(
+        opacity: onPressed == null ? NpOpacity.locked : 1,
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: radius,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onPressed,
+            child: AnimatedContainer(
+              duration: NpDuration.fast,
+              curve: NpEasing.standard,
+              width: double.infinity,
+              constraints: const BoxConstraints(minHeight: NpSize.touchTarget),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: emphasized
+                    ? NpColors.accentSubtle
+                    : NpColors.backgroundPanel,
+                borderRadius: radius,
+                border: Border.all(
+                  color: emphasized
+                      ? NpColors.accentDefault
+                      : NpColors.borderStrong,
+                  width: emphasized
+                      ? NpBorderWidth.thin
+                      : NpBorderWidth.hairline,
+                ),
               ),
-            ),
-            child: Text(
-              label,
-              style: NpTypography.body.copyWith(
-                color: NpColors.contentMuted,
-                fontWeight: NpFontWeight.semibold,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: NpSize.iconMd, color: foreground),
+                    const SizedBox(width: NpSpace.xs),
+                  ],
+                  Flexible(
+                    child: AnimatedDefaultTextStyle(
+                      duration: NpDuration.fast,
+                      curve: NpEasing.standard,
+                      style: NpTypography.body.copyWith(
+                        color: foreground,
+                        fontWeight: NpFontWeight.semibold,
+                      ),
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

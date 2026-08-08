@@ -92,14 +92,55 @@ class _PlaceSheetState extends ConsumerState<PlaceSheet> {
 
   bool _saving = false;
 
+  /// Whether the form says anything the saved place does not. Drives the save
+  /// button: a button that looks the same before and after an edit gives the
+  /// player no reason to believe the app noticed.
+  bool _edited = false;
+
   MapPoint? get _existing => widget.existing;
 
   bool get _isNew => _existing == null;
 
   @override
+  void initState() {
+    super.initState();
+    // Typing changes the form as much as the pickers do, and the name is the
+    // field people edit most.
+    _name.addListener(_nameChanged);
+  }
+
+  @override
   void dispose() {
-    _name.dispose();
+    _name
+      ..removeListener(_nameChanged)
+      ..dispose();
     super.dispose();
+  }
+
+  /// Runs a change from one of the pickers and re-reads the form against the
+  /// place it was opened on.
+  void _edit(VoidCallback change) {
+    setState(() {
+      change();
+      _edited = _hasEdits;
+    });
+  }
+
+  /// Only rebuilds when the answer actually flips — this runs on every
+  /// keystroke, and the sheet is a screenful of pickers.
+  void _nameChanged() {
+    if (_hasEdits == _edited) return;
+    setState(() => _edited = _hasEdits);
+  }
+
+  bool get _hasEdits {
+    final existing = _existing;
+    if (existing == null) return true;
+    return _name.text.trim() != existing.label ||
+        _iconId != existing.iconId ||
+        _moodId != existing.moodId ||
+        _stars != existing.stars ||
+        _autoCheckInEvery != existing.autoCheckInEvery;
   }
 
   @override
@@ -130,7 +171,7 @@ class _PlaceSheetState extends ConsumerState<PlaceSheet> {
             const SizedBox(height: NpSpace.xs),
             PlaceIconPicker(
               selected: _iconId,
-              onChanged: (id) => setState(() => _iconId = id),
+              onChanged: (id) => _edit(() => _iconId = id),
             ),
             const SizedBox(height: NpSpace.lg),
 
@@ -138,7 +179,7 @@ class _PlaceSheetState extends ConsumerState<PlaceSheet> {
             const SizedBox(height: NpSpace.xs),
             PlaceMoodPicker(
               selected: _moodId,
-              onChanged: (id) => setState(() => _moodId = id),
+              onChanged: (id) => _edit(() => _moodId = id),
             ),
             const SizedBox(height: NpSpace.lg),
 
@@ -146,7 +187,7 @@ class _PlaceSheetState extends ConsumerState<PlaceSheet> {
             const SizedBox(height: NpSpace.xs),
             PlaceStarRating(
               stars: _stars,
-              onChanged: (stars) => setState(() => _stars = stars),
+              onChanged: (stars) => _edit(() => _stars = stars),
             ),
             const SizedBox(height: NpSpace.lg),
 
@@ -157,7 +198,7 @@ class _PlaceSheetState extends ConsumerState<PlaceSheet> {
             const SizedBox(height: NpSpace.xs),
             PlaceAutoCheckInPicker(
               selected: _autoCheckInEvery,
-              onChanged: (every) => setState(() => _autoCheckInEvery = every),
+              onChanged: (every) => _edit(() => _autoCheckInEvery = every),
             ),
             const SizedBox(height: NpSpace.lg),
 
@@ -186,6 +227,12 @@ class _PlaceSheetState extends ConsumerState<PlaceSheet> {
               const SizedBox(height: NpSpace.xs),
               NpGhostButton(
                 label: l10n.placeSave,
+                icon: Icons.save_rounded,
+                // Lights up the moment anything on the form moves. Left
+                // pressable when nothing has: a player who taps it after
+                // changing their mind twice back to where they started should
+                // get their place back, not a dead button.
+                emphasized: _edited,
                 onPressed: _saving
                     ? null
                     : () => unawaited(_submit(checkIn: false)),
@@ -216,7 +263,17 @@ class _PlaceSheetState extends ConsumerState<PlaceSheet> {
   Future<void> _submit({required bool checkIn}) async {
     setState(() => _saving = true);
 
-    final existing = _existing;
+    final now = DateTime.now();
+    final repository = ref.read(mapPointRepositoryProvider);
+    final opened = _existing;
+
+    // The row as it stands now, not as it stood when the sheet opened. The
+    // presence ticker writes check-ins into these points while the player is
+    // looking at one, and a form saved on top of the copy it opened with would
+    // roll that back — the same edit, five minutes apart, quietly costing them
+    // an hour they had actually spent here.
+    final existing = opened == null ? null : repository.of(opened.id) ?? opened;
+
     var place = (existing ?? _blank()).copyWith(
       label: _name.text.trim(),
       iconId: _iconId,
@@ -224,11 +281,16 @@ class _PlaceSheetState extends ConsumerState<PlaceSheet> {
       stars: _stars,
       autoCheckInEvery: _autoCheckInEvery,
     );
+    // Picking a different interval starts the wait again, so the first check-in
+    // it earns is a whole one. See [PlaceVisitRules.intervalChanged] for what
+    // this is protecting against.
+    if (existing != null && _autoCheckInEvery != existing.autoCheckInEvery) {
+      place = PlaceVisitRules.applyIntervalChange(place, now: now);
+    }
     if (checkIn) {
-      place = PlaceVisitRules.checkIn(place, now: DateTime.now());
+      place = PlaceVisitRules.checkIn(place, now: now);
     }
 
-    final repository = ref.read(mapPointRepositoryProvider);
     if (existing == null) {
       await repository.add(place);
     } else {

@@ -144,7 +144,9 @@ abstract final class PlaceVisitRules {
 
     // Already counted today. The stay is still kept, by the same rules as
     // everywhere else, so that switching this place to an interval later in the
-    // day finds a live stay rather than starting one from scratch.
+    // day finds a live stay rather than starting one from scratch — a stay that
+    // [intervalChanged] then rewinds to the moment of the switch, because what
+    // is worth keeping here is the sighting, not the hours behind it.
     final startedAt = visit.stayStartedAt;
     final seenAt = visit.stayLastSeenAt;
     if (startedAt == null ||
@@ -180,6 +182,32 @@ abstract final class PlaceVisitRules {
     );
     return advanced == null ? null : place.withVisit(advanced);
   }
+
+  /// The player changed how often this place pays out.
+  ///
+  /// Restarts the wait without touching the counts, so the first check-in on
+  /// the new interval is a whole one, measured from the moment they picked it.
+  ///
+  /// Without this, the stay already in progress is re-read under the new rule
+  /// and pays for time spent under the old one. [AutoCheckIn.daily] is where it
+  /// bites: that mode keeps a stay running from the moment the player arrived —
+  /// see [_arrived] — so a place they have been sitting in since eight, moved to
+  /// hourly at twenty to eleven, would hand over two check-ins on the next fix
+  /// and eleven if the place was their home and the stay began after midnight.
+  /// An interval is a promise about waiting, and the wait has to start when the
+  /// player says so.
+  ///
+  /// [PlaceVisit.stayLastSeenAt] is deliberately left where it is: whether the
+  /// player is still standing here is the GPS's business, not the picker's, and
+  /// moving it would vouch for a sighting nobody made.
+  static PlaceVisit intervalChanged(
+    PlaceVisit visit, {
+    required DateTime now,
+  }) => visit.copyWith(stayStartedAt: now);
+
+  /// [intervalChanged], for a place the player saved.
+  static MapPoint applyIntervalChange(MapPoint place, {required DateTime now}) =>
+      place.withVisit(intervalChanged(place.visit, now: now));
 
   /// The player said they are here.
   ///

@@ -317,6 +317,52 @@ void main() {
       );
     });
 
+    test('changing the interval restarts the wait rather than backdating it', () {
+      // Once a day keeps a stay running from the moment the player arrived, so
+      // a place they have been sitting in since nine has a stay nearly three
+      // hours old by the time they switch it to hourly. Read straight, that is
+      // two check-ins on the next fix for a morning spent under a rule that
+      // pays once.
+      final switched = opened.add(const Duration(hours: 2, minutes: 42));
+      final seen = switched.subtract(const Duration(minutes: 2));
+      final before = place(
+        startedAt: opened,
+        seenAt: seen,
+        lastCheckInAt: opened,
+        checkIns: 1,
+        every: AutoCheckIn.daily,
+      );
+
+      final changed = PlaceVisitRules.applyIntervalChange(
+        before.copyWith(autoCheckInEvery: AutoCheckIn.hourly),
+        now: switched,
+      );
+
+      expect(changed.checkInCount, 1);
+      expect(changed.stayStartedAt, switched);
+      // Whether the player is still standing here is the GPS's business.
+      expect(changed.stayLastSeenAt, seen);
+
+      // The fix that used to pay out the morning, three minutes later.
+      final soonAfter = PlaceVisitRules.applyFix(
+        changed,
+        position: cafe,
+        now: switched.add(const Duration(minutes: 3)),
+      );
+      expect(soonAfter?.checkInCount, anyOf(isNull, 1));
+
+      // And a whole hour after the change, exactly one — which is what the
+      // player asked for when they picked it.
+      final anHourOn = PlaceVisitRules.applyFix(
+        changed.copyWith(
+          stayLastSeenAt: switched.add(const Duration(minutes: 58)),
+        ),
+        position: cafe,
+        now: switched.add(const Duration(hours: 1)),
+      );
+      expect(anHourOn!.checkInCount, 2);
+    });
+
     test('switching it back on starts a fresh stay, not a backdated one', () {
       // The stay fields left over from before it was switched off are stale by
       // days. Paying them out on the first fix after switching on would hand

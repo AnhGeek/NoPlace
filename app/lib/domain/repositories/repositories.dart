@@ -123,6 +123,15 @@ abstract interface class ExplorationTrailRepository {
 abstract interface class MapPointRepository {
   Stream<List<MapPoint>> watch();
 
+  /// The point with [id] as it stands right now, or null if there is no longer
+  /// one. Named after [PlaceVisitRepository.of], and there for the same kind of
+  /// caller: an editor that has been holding a copy while something else wrote
+  /// to the row. The presence ticker does exactly that — it turns time spent
+  /// standing at a place into check-ins on these points, with no screen
+  /// involved — so a form that saves its own copy back has to merge onto this
+  /// rather than onto what it opened with.
+  MapPoint? of(String id);
+
   Future<void> add(MapPoint point);
 
   Future<void> update(MapPoint point);

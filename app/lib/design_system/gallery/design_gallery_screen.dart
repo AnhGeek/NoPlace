@@ -53,6 +53,13 @@ class _DesignGalleryScreenState extends State<DesignGalleryScreen> {
           const NpPrimaryButton(label: 'Disabled', onPressed: null),
           const SizedBox(height: NpSpace.xs),
           NpGhostButton(label: 'Ghost', onPressed: () {}),
+          const SizedBox(height: NpSpace.xs),
+          NpGhostButton(
+            label: 'Ghost, with something to save',
+            icon: Icons.save_rounded,
+            emphasized: true,
+            onPressed: () {},
+          ),
           const _Section('Selection'),
           NpSegmentedControl<int>(
             selected: _segment,

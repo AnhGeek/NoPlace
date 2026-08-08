@@ -23,6 +23,14 @@ class SqliteMapPointRepository implements MapPointRepository {
 
   List<MapPoint> get current => _points.value;
 
+  @override
+  MapPoint? of(String id) {
+    for (final point in _points.value) {
+      if (point.id == id) return point;
+    }
+    return null;
+  }
+
   Future<void> load() async {
     if (_loaded) return;
     _loaded = true;
